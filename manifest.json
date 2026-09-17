@@ -1,0 +1,9 @@
+{
+  "id": "second-reader-promote",
+  "name": "Second Reader: Promote Candidates",
+  "version": "1.0.0",
+  "minAppVersion": "1.0.0",
+  "description": "Checking a box under '## Permanent note candidates' in a Second Reader literature note creates a new permanent note and turns the line into a link to it.",
+  "author": "Kevin Miller",
+  "isDesktopOnly": false
+}

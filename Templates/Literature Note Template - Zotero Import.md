@@ -19,17 +19,19 @@ date-read:
 **Reference (APA):** {{bibliography}}
 
 ## Why I'm reading this
-*What question or problem am I bringing to it?*
 
+- 
 
 ## Summary (in my own words)
-*Selective - core ideas and findings. If you're copying sentences, stop and write it in your own words.*
 
 - 
 - 
 
 ## Key ideas/findings/arguments
+*Selective - core ideas and findings. If you're copying sentences, stop and write in your own words.*
 
+- 
+- 
 
 ## How this connects to other sources
 

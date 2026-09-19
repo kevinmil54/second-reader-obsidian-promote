@@ -18,12 +18,18 @@ be where you do almost all your writing — but it's worth having a
 lightweight general-purpose one too, for quickly opening a `.md` file
 without launching Obsidian.
 
-**Recommended: [Visual Studio Code](https://code.visualstudio.com/)** — free,
-identical on Mac and Windows, has a built-in markdown preview.
+**Recommended: [Zettlr](https://www.zettlr.com/)** — free, open-source, and
+identical on Mac and Windows. Unlike a general code editor, it's built
+specifically for academic Markdown writing (citations, footnotes, live
+preview), which fits this note-taking system well.
 
-- **Mac:** Download → open the `.zip` → drag `Visual Studio Code.app` to
-  Applications.
-- **Windows:** Download → run the installer → accept the defaults.
+- **Mac:** Download the `.dmg` → open it → drag **Zettlr** to Applications.
+- **Windows:** Download the installer → run it → accept the defaults.
+
+**If you work with R or Quarto:** use **[Positron](https://positron.posit.co/)**
+instead (or alongside Zettlr) — Posit's IDE built for R, Python, and Quarto
+(`.qmd`) documents. Same install pattern on both platforms: download →
+run the installer → open.
 
 **Avoid TextEdit (Mac) and WordPad (Windows) for this** unless you switch
 them to plain-text mode — both default to rich text and will quietly corrupt

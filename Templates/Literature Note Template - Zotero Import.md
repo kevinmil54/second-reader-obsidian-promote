@@ -23,7 +23,7 @@ date-read:
 
 
 ## Summary (in my own words)
-*Selective — the source's core, not every point. If you're copying sentences, stop and reformulate.*
+*Selective - core ideas and findings. If you're copying sentences, stop and write it in your own words.*
 
 - 
 - 
@@ -50,11 +50,16 @@ date-read:
 
 > "..." (p. )
 
+## Figures & images
+*Screenshots, diagrams, or tables worth keeping. Embed with `![[filename]]`, and caption each one in your own words — why does it matter?*
+
+![[]]
+
 ## Permanent note candidates
-*Write your own candidates freely. Second Reader may also propose candidates here, tagged `#sr-candidate` so you can tell them apart — edit the text to refine one, delete the line to reject it, or check the box to accept it as-is (yours or Second Reader's). Checking the box promotes it: a new permanent note gets created automatically and this line becomes a link to it, carrying over any tags you've added above (`literature-note` itself doesn't carry over — the new note is tagged `permanent-note` instead).*
+*Write your own permanent note titles in your own words. These should be "nuggets" — ideas that are interesting to you and/or that you might use in your own work. Checking the box promotes it: a new permanent note gets created automatically and this line becomes a link to it, carrying over any tags you've added above (`literature-note` itself doesn't carry over — the new note is tagged `permanent-note` instead).*
 
 - [ ] 
-- [ ] #sr-candidate 
+- [ ] 
 
 ## Related notes
 - [[]]

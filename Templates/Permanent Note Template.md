@@ -1,7 +1,7 @@
 ---
 title: "{{title}}"
 status: permanent
-tags: [permanent-note]
+tags: [{{tags}}]
 created: {{date}}
 source: "[[{{source}}]]"
 ---

@@ -17,6 +17,10 @@ const { Plugin, PluginSettingTab, Setting, normalizePath, Notice } = require("ob
 
 const CANDIDATE_HEADING = "## permanent note candidates";
 const LIT_NOTE_TAG = "literature-note";
+const PERMANENT_NOTE_TAG = "permanent-note";
+// Status/provenance markers that describe the note's role in the workflow,
+// not its topic — these never carry over to a promoted note.
+const NON_CARRYING_TAGS = new Set([LIT_NOTE_TAG, PERMANENT_NOTE_TAG, "sr-candidate"]);
 const CHECKED_ITEM_RE = /^(\s*-\s*\[[xX]\]\s*)(.*)$/;
 const SR_TAG_RE = /#sr-candidate\b/gi;
 const HEADING_RE = /^#{1,6}\s/;
@@ -45,6 +49,24 @@ function sanitizeFilename(name) {
   out = out.slice(0, 120); // stay well under the 255-char path-component limit
   if (WINDOWS_RESERVED.has(out.toUpperCase())) out = out + " note";
   return out;
+}
+
+// Topical tags on the literature note (e.g. course or subject tags a
+// student added) carry over to a promoted note; status markers like
+// "literature-note" don't — the note is no longer a literature note once
+// promoted, it's a permanent note, so that tag is swapped rather than kept.
+function carryOverTags(sourceTags) {
+  const seen = new Set();
+  const carried = [];
+  for (const t of sourceTags) {
+    const tag = String(t).trim();
+    if (!tag) continue;
+    const key = tag.toLowerCase();
+    if (NON_CARRYING_TAGS.has(key) || seen.has(key)) continue;
+    seen.add(key);
+    carried.push(tag);
+  }
+  return carried;
 }
 
 async function ensureFolder(vault, path) {
@@ -121,7 +143,7 @@ module.exports = class SecondReaderPromotePlugin extends Plugin {
         if (!title) continue;
 
         try {
-          const newFile = await this.createPermanentNote(title, file);
+          const newFile = await this.createPermanentNote(title, file, tagList);
           lines[i] = `${m[1]}[[${newFile.basename}]]`;
           changed = true;
         } catch (e) {
@@ -138,7 +160,7 @@ module.exports = class SecondReaderPromotePlugin extends Plugin {
     }
   }
 
-  async createPermanentNote(rawTitle, sourceFile) {
+  async createPermanentNote(rawTitle, sourceFile, sourceTags) {
     const vault = this.app.vault;
     const folder = this.settings.newNoteFolder
       ? normalizePath(this.settings.newNoteFolder)
@@ -156,17 +178,18 @@ module.exports = class SecondReaderPromotePlugin extends Plugin {
       n++;
     }
 
-    const body = await this.renderNoteBody(rawTitle, sourceFile);
+    const body = await this.renderNoteBody(rawTitle, sourceFile, sourceTags || []);
     return await vault.create(path, body);
   }
 
-  // Fills {{title}}, {{date}}, {{source}} in the configured template file.
-  // Falls back to a minimal built-in body if no template is configured or
-  // it can't be found — promotion should never fail just because the
-  // template went missing.
-  async renderNoteBody(rawTitle, sourceFile) {
+  // Fills {{title}}, {{date}}, {{source}}, {{tags}} in the configured
+  // template file. Falls back to a minimal built-in body if no template is
+  // configured or it can't be found — promotion should never fail just
+  // because the template went missing.
+  async renderNoteBody(rawTitle, sourceFile, sourceTags) {
     const today = new Date().toISOString().slice(0, 10);
     const escapedTitle = rawTitle.replace(/"/g, '\\"');
+    const tagsValue = [PERMANENT_NOTE_TAG, ...carryOverTags(sourceTags)].join(", ");
 
     const templatePath = this.settings.templatePath
       ? normalizePath(this.settings.templatePath)
@@ -180,7 +203,8 @@ module.exports = class SecondReaderPromotePlugin extends Plugin {
       return raw
         .replace(/\{\{\s*title\s*\}\}/g, escapedTitle)
         .replace(/\{\{\s*date\s*\}\}/g, today)
-        .replace(/\{\{\s*source\s*\}\}/g, sourceFile.basename);
+        .replace(/\{\{\s*source\s*\}\}/g, sourceFile.basename)
+        .replace(/\{\{\s*tags\s*\}\}/g, tagsValue);
     }
 
     if (templatePath) {
@@ -192,7 +216,7 @@ module.exports = class SecondReaderPromotePlugin extends Plugin {
       "---",
       `title: "${escapedTitle}"`,
       "status: permanent",
-      "tags: [permanent-note]",
+      `tags: [${tagsValue}]`,
       `created: ${today}`,
       `source: "[[${sourceFile.basename}]]"`,
       "---",
@@ -243,8 +267,10 @@ class SecondReaderPromoteSettingTab extends PluginSettingTab {
       .setName("Template path")
       .setDesc(
         "Vault path to the template used for promoted notes. Supports {{title}}, " +
-          "{{date}}, and {{source}} placeholders. Leave blank to use a minimal " +
-          "built-in template."
+          "{{date}}, {{source}}, and {{tags}} placeholders — {{tags}} is " +
+          "\"permanent-note\" plus the literature note's own tags (its " +
+          "literature-note/status tags are dropped, not carried over). Leave " +
+          "blank to use a minimal built-in template."
       )
       .addText((text) =>
         text

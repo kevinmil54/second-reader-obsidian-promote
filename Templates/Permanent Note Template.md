@@ -11,7 +11,7 @@ source: "[[{{source}}]]"
 ## Core idea
 *State it in one sentence, in your own words — not a copy of the source's wording.*
 
-
+{{details}}
 
 ## Why it matters
 
@@ -19,6 +19,11 @@ source: "[[{{source}}]]"
 
 ## How this connects
 *Does it confirm, extend, or complicate other notes? Name them.*
+
+- [[]]
+
+## Connections
+*Project notes and Evergreen notes (structure notes) that draw on this idea.*
 
 - [[]]
 

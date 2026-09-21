@@ -1,7 +1,7 @@
 ---
 title: "{{title}}"
 author: {{authors}}
-year: {{date | format("YYYY")}}
+year: {% if date %}{{ date | format("YYYY") }}{% else %}{% endif %}
 citekey: {{citekey}}
 zotero: {{desktopURI}}
 source-md: "[[]]"
@@ -58,7 +58,7 @@ date-read:
 ![[]]
 
 ## Permanent note candidates
-*Write your own permanent note titles in your own words. These should be "nuggets" — ideas that are interesting to you and/or that you might use in your own work. Checking the box promotes it: a new permanent note gets created automatically and this line becomes a link to it, carrying over any tags you've added above (`literature-note` itself doesn't carry over — the new note is tagged `permanent-note` instead).*
+*Write your own permanent note titles in your own words. These should be "nuggets" — ideas that are interesting to you and/or that you might use in your own work. Checking the box promotes it: a new permanent note gets created automatically and this line becomes a link to it, carrying over any tags you've added above (`literature-note` itself doesn't carry over — the new note is tagged `permanent-note` instead). Want to say more before you promote it? Press Enter then Tab right after the title to add an indented line or two — that carries over into the new note's Core idea too.*
 
 - [ ] 
 - [ ] 

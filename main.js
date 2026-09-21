@@ -36,7 +36,7 @@ const WINDOWS_RESERVED = new Set([
 
 const DEFAULT_SETTINGS = {
   newNoteFolder: "", // "" = same folder as the literature note
-  templatePath: "x/Templates/Permanent Note Template.md", // "" = built-in fallback body
+  templatePath: "Templates/Permanent Note Template.md", // "" = built-in fallback body
 };
 
 function sanitizeFilename(name) {
@@ -67,6 +67,28 @@ function carryOverTags(sourceTags) {
     carried.push(tag);
   }
   return carried;
+}
+
+// Lines more indented than the candidate's own checkbox — typed by pressing
+// Enter then Tab right after the candidate title — are elaboration that
+// carries over into the promoted note's {{details}}. Re-indented to zero
+// (by the smallest indent among them) so nested structure survives but the
+// leading whitespace doesn't.
+function collectDetailLines(lines, startIdx, parentIndent) {
+  const detailLines = [];
+  let j = startIdx;
+  while (j < lines.length) {
+    const childLine = lines[j];
+    if (childLine.trim() === "") break;
+    const childIndent = (childLine.match(/^(\s*)/) || ["", ""])[1].length;
+    if (childIndent <= parentIndent) break;
+    detailLines.push(childLine);
+    j++;
+  }
+  const indents = detailLines.map((l) => (l.match(/^(\s*)/) || ["", ""])[1].length);
+  const minIndent = indents.length ? Math.min(...indents) : 0;
+  const details = detailLines.map((l) => l.slice(minIndent)).join("\n").trim();
+  return { details, nextIdx: j };
 }
 
 async function ensureFolder(vault, path) {
@@ -142,14 +164,18 @@ module.exports = class SecondReaderPromotePlugin extends Plugin {
         const title = rawText.replace(SR_TAG_RE, "").trim();
         if (!title) continue;
 
+        const itemIndent = (line.match(/^(\s*)/) || ["", ""])[1].length;
+        const { details, nextIdx } = collectDetailLines(lines, i + 1, itemIndent);
+
         try {
-          const newFile = await this.createPermanentNote(title, file, tagList);
+          const newFile = await this.createPermanentNote(title, file, tagList, details);
           lines[i] = `${m[1]}[[${newFile.basename}]]`;
           changed = true;
         } catch (e) {
           console.error("Second Reader promote failed:", e);
           new Notice(`Second Reader: couldn't create note "${title}" — ${e.message}`);
         }
+        i = nextIdx - 1; // skip the detail lines we already consumed (kept as-is in this note)
       }
 
       if (changed) {
@@ -160,7 +186,7 @@ module.exports = class SecondReaderPromotePlugin extends Plugin {
     }
   }
 
-  async createPermanentNote(rawTitle, sourceFile, sourceTags) {
+  async createPermanentNote(rawTitle, sourceFile, sourceTags, details) {
     const vault = this.app.vault;
     const folder = this.settings.newNoteFolder
       ? normalizePath(this.settings.newNoteFolder)
@@ -178,15 +204,15 @@ module.exports = class SecondReaderPromotePlugin extends Plugin {
       n++;
     }
 
-    const body = await this.renderNoteBody(rawTitle, sourceFile, sourceTags || []);
+    const body = await this.renderNoteBody(rawTitle, sourceFile, sourceTags || [], details || "");
     return await vault.create(path, body);
   }
 
-  // Fills {{title}}, {{date}}, {{source}}, {{tags}} in the configured
-  // template file. Falls back to a minimal built-in body if no template is
-  // configured or it can't be found — promotion should never fail just
-  // because the template went missing.
-  async renderNoteBody(rawTitle, sourceFile, sourceTags) {
+  // Fills {{title}}, {{date}}, {{source}}, {{tags}}, {{details}} in the
+  // configured template file. Falls back to a minimal built-in body if no
+  // template is configured or it can't be found — promotion should never
+  // fail just because the template went missing.
+  async renderNoteBody(rawTitle, sourceFile, sourceTags, details) {
     const today = new Date().toISOString().slice(0, 10);
     const escapedTitle = rawTitle.replace(/"/g, '\\"');
     const tagsValue = [PERMANENT_NOTE_TAG, ...carryOverTags(sourceTags)].join(", ");
@@ -204,7 +230,8 @@ module.exports = class SecondReaderPromotePlugin extends Plugin {
         .replace(/\{\{\s*title\s*\}\}/g, escapedTitle)
         .replace(/\{\{\s*date\s*\}\}/g, today)
         .replace(/\{\{\s*source\s*\}\}/g, sourceFile.basename)
-        .replace(/\{\{\s*tags\s*\}\}/g, tagsValue);
+        .replace(/\{\{\s*tags\s*\}\}/g, tagsValue)
+        .replace(/\{\{\s*details\s*\}\}/g, details || "");
     }
 
     if (templatePath) {
@@ -223,6 +250,7 @@ module.exports = class SecondReaderPromotePlugin extends Plugin {
       "",
       `# ${rawTitle}`,
       "",
+      ...(details ? [details, ""] : []),
       "## Related notes",
       `- [[${sourceFile.basename}]]`,
       "",
@@ -267,14 +295,15 @@ class SecondReaderPromoteSettingTab extends PluginSettingTab {
       .setName("Template path")
       .setDesc(
         "Vault path to the template used for promoted notes. Supports {{title}}, " +
-          "{{date}}, {{source}}, and {{tags}} placeholders — {{tags}} is " +
+          "{{date}}, {{source}}, {{tags}}, and {{details}} placeholders — {{tags}} is " +
           "\"permanent-note\" plus the literature note's own tags (its " +
-          "literature-note/status tags are dropped, not carried over). Leave " +
-          "blank to use a minimal built-in template."
+          "literature-note/status tags are dropped, not carried over); {{details}} is " +
+          "whatever's typed on indented lines under a candidate (Enter, then Tab, " +
+          "right after its title). Leave blank to use a minimal built-in template."
       )
       .addText((text) =>
         text
-          .setPlaceholder("x/Templates/Permanent Note Template.md")
+          .setPlaceholder("Templates/Permanent Note Template.md")
           .setValue(this.plugin.settings.templatePath)
           .onChange(async (value) => {
             this.plugin.settings.templatePath = value.trim();

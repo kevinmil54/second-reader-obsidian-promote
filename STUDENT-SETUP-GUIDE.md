@@ -113,8 +113,13 @@ Second Reader plugin below, which isn't in Obsidian's official plugin list.
 1. Command Palette (`Cmd/Ctrl+P`) → **"BRAT: Add a beta plugin for
    testing."**
 2. Paste: `kevinmil54/second-reader-obsidian-promote`
-3. Settings → Community plugins → enable **"Second Reader: Promote
-   Candidates."**
+3. When asked for a version, **pick the specific version number (e.g.
+   `1.1.0`) rather than "Latest version"** — "Latest version" has failed to
+   install for some people even though a specific number works fine.
+4. Settings → Community plugins → enable **"Second Reader: Promote
+   Candidates."** If it doesn't take effect right away, reload Obsidian
+   (Command Palette → "Reload app without saving") and try again — this has
+   occasionally needed a couple of tries.
 
 ### e. Get the two templates into your vault
 Your instructor will give you two files — **`Literature Note Template -
@@ -133,12 +138,20 @@ you put it in step e).
 
 ### g. Configure Zotero Integration's import format
 Settings → **Zotero Integration** → **Import Formats** → add a new format:
+- **Name:** something clear, e.g. **"Literature Note"** — this name matters
+  (see the note below).
 - **Template:** the path to `Templates/Literature Note Template - Zotero
   Import.md`
-- **Output path template:** `Literature notes/{{citekey}}.md` (creates a
-  `Literature notes` folder automatically)
+- **Output path template:** `Literature_notes/{{citekey}}.md` (creates a
+  `Literature_notes` folder automatically)
 - **Bibliography Style:** search **"APA"** → choose **American Psychological
   Association 7th edition**
+
+**Important:** once you save this, Obsidian gets a *new* command named after
+it — **"Zotero Integration: Literature Note"** (or whatever you named it) —
+not the generic **"Zotero Integration: Import notes."** That generic command
+skips your template entirely and creates a bare note with just the citekey.
+Always use the one named after your format.
 
 ### h. (Optional, recommended) Auto-open imported notes
 Same Settings page → toggle **"Open the created or updated note(s) after
@@ -156,19 +169,23 @@ Once setup is done, this is the whole routine per paper:
 2. **Check it saved correctly** — title, authors, and year look right in
    Zotero. If you dragged in a bare PDF and the fields are empty, right-click
    the item → **"Retrieve Metadata for PDF."**
-3. **In Obsidian:** Command Palette → **"Zotero Integration: Import Notes."**
+3. **In Obsidian:** Command Palette → the command named after your import
+   format from step 4g (e.g. **"Zotero Integration: Literature Note"**) —
+   **not** the generic "Zotero Integration: Import notes," which skips your
+   template.
 4. Search for the article by title or author, select it (you can multi-select
    several at once).
-5. If asked which format, pick the one you set up in step 4g.
-6. Obsidian creates the literature note, pre-filled with title, authors,
+5. Obsidian creates the literature note, pre-filled with title, authors,
    year, the Zotero link, and the full APA reference.
-7. **Read and take your own notes** directly in that file — fill in "Why I'm
+6. **Read and take your own notes** directly in that file — fill in "Why I'm
    reading this," "Summary (in my own words)," "Key ideas," and so on as you
    go.
-8. When an idea is worth its own standalone note, write it (or accept a
-   suggested one) under **"Permanent note candidates"** and **check its
-   box** — a new permanent note is created automatically, built from the
-   Permanent Note Template, and that line becomes a link to it.
+7. When an idea is worth its own standalone note, write its title in your
+   own words under **"Permanent note candidates."** Want to add more before
+   promoting it? Press **Enter, then Tab** right after the title to write an
+   indented line or two — that carries over into the new note too.
+8. **Check its box** — a new permanent note is created automatically, built
+   from the Permanent Note Template, and that line becomes a link to it.
 
 ---
 
@@ -176,9 +193,11 @@ Once setup is done, this is the whole routine per paper:
 
 | Symptom | Fix |
 |---|---|
-| "Zotero Integration: Import Notes" doesn't appear in the Command Palette | Plugin isn't enabled, or Obsidian needs a full restart (not just a reload) after enabling it. |
+| Your import format's command doesn't appear in the Command Palette | Plugin isn't enabled, or Obsidian needs a full restart (not just a reload) after enabling it. |
+| "Zotero Integration: Import notes" creates a blank note with just a citekey, no content | That's the generic command — it doesn't use your template. Use the command named after your import format instead (e.g. "Zotero Integration: Literature Note"), set up in step 4g. |
 | Import fails / "could not connect to Zotero" | Zotero desktop must be running. Check Zotero → Settings → Advanced → "Allow other applications to communicate with Zotero" is checked. |
 | Citation key or reference comes out blank, or shows `{{citekey}}` literally | Better BibTeX isn't installed, or Zotero wasn't restarted after installing it. |
+| Import errors on a paper with no publication year | Fixed as of the current template — if you're on an older copy, update to the latest from [the class repo](https://github.com/kevinmil54/second-reader-obsidian-promote/tree/main/Templates). |
 | Checking a candidate box just crosses out the text — no new note appears | The "Second Reader: Promote Candidates" plugin isn't enabled, the note's frontmatter is missing `tags: [literature-note]`, or the heading isn't exactly `## Permanent note candidates`. |
-| BRAT can't find the plugin | Double-check the repo name is exactly `kevinmil54/second-reader-obsidian-promote`. |
+| BRAT can't find the plugin, or "Latest version" won't install | Double-check the repo name is exactly `kevinmil54/second-reader-obsidian-promote`. If "Latest version" fails, pick the specific version number from the dropdown instead. |
 | Reference style isn't APA | You likely set the "Citation Style" (used for inline citations) instead of the **Import Format's own "Bibliography Style"** field — these are two separate settings in Zotero Integration. |

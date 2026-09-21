@@ -35,7 +35,7 @@ const WINDOWS_RESERVED = new Set([
 ]);
 
 const DEFAULT_SETTINGS = {
-  newNoteFolder: "", // "" = same folder as the literature note
+  newNoteFolder: "Permanent notes", // "" = same folder as the literature note
   templatePath: "Templates/Permanent Note Template.md", // "" = built-in fallback body
 };
 
@@ -279,11 +279,11 @@ class SecondReaderPromoteSettingTab extends PluginSettingTab {
       .setName("New note folder")
       .setDesc(
         "Where promoted permanent notes are created. Leave blank to use the same " +
-          "folder as the literature note."
+          "folder as the literature note instead of a dedicated folder."
       )
       .addText((text) =>
         text
-          .setPlaceholder("e.g. Permanent notes")
+          .setPlaceholder("Permanent notes")
           .setValue(this.plugin.settings.newNoteFolder)
           .onChange(async (value) => {
             this.plugin.settings.newNoteFolder = value.trim();

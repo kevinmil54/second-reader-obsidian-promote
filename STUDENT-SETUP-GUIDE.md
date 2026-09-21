@@ -10,6 +10,37 @@ Works on **Mac or Windows**. Steps are marked where they differ.
 
 ---
 
+## How the pieces fit together
+
+Every paper you read becomes a **Literature note** — your own notes on that
+source, plus whatever Second Reader adds. From there, ideas worth keeping on
+their own move through four more note types, each with its own top-level
+folder in your vault:
+
+- **Permanent notes** — one idea per note, in your own words, built to stand
+  alone years from now. You create these by checking a box in a literature
+  note.
+- **Structure notes** — group and map connections among a cluster of
+  Permanent notes on a theme (e.g. "College students are reading less than
+  they once did"). Mostly links — an index, not an essay.
+- **Evergreen notes** — the polished, written-out synthesis a mature
+  Structure note eventually grows into. Closer to a standalone essay than an
+  index.
+- **Project notes** — the argument-and-evidence framework for something
+  you're actually writing (a paper, a talk) — pulls from your Permanent
+  notes so you start from a structure instead of a blank page.
+
+```
+Literature note → Permanent notes → Structure note → Evergreen note
+                                  ↘ Project note
+```
+
+A Permanent note's **Connections** section is where you link it to the
+Structure, Evergreen, and Project notes that draw on it — you build those
+links by hand as your vault grows; nothing does it for you automatically.
+
+---
+
 ## 1. Get a good markdown editor
 
 Your notes are plain text files in a format called **Markdown** (`# heading`,
@@ -95,6 +126,17 @@ This is what saves an article into Zotero straight from your browser.
 
 ## 4. Set up Obsidian for the Second Reader note system
 
+### Vault folders
+Create six folders at the top level of your vault (in Obsidian's file
+explorer, right-click the vault's root → **New folder**, once per name):
+
+**Templates**, **Literature notes**, **Permanent notes**, **Structure
+notes**, **Evergreen notes**, **Project notes**
+
+Everything below — the plugin's defaults, the import format, the
+templates' Connections section — assumes these exist with these exact
+names (plain spaces, no underscores or abbreviations).
+
 ### a. Turn on community plugins
 Settings (gear icon) → **Community plugins** → **Turn on community
 plugins** (you'll see a one-time warning about third-party code — this is
@@ -114,8 +156,10 @@ Second Reader plugin below, which isn't in Obsidian's official plugin list.
    testing."**
 2. Paste: `kevinmil54/second-reader-obsidian-promote`
 3. When asked for a version, **pick the specific version number (e.g.
-   `1.1.0`) rather than "Latest version"** — "Latest version" has failed to
-   install for some people even though a specific number works fine.
+   `1.2.0` — check the [releases page](https://github.com/kevinmil54/second-reader-obsidian-promote/releases)
+   for the latest) rather than "Latest version"** — "Latest version" has
+   failed to install for some people even though a specific number works
+   fine.
 4. Settings → Community plugins → enable **"Second Reader: Promote
    Candidates."** If it doesn't take effect right away, reload Obsidian
    (Command Palette → "Reload app without saving") and try again — this has
@@ -126,15 +170,14 @@ Your instructor will give you two files — **`Literature Note Template -
 Zotero Import.md`** and **`Permanent Note Template.md`** — or you can get
 them from
 **[the class repo's Templates folder](https://github.com/kevinmil54/second-reader-obsidian-promote/tree/main/Templates)**
-(open each file there and use the download button).
-
-Create a `Templates` folder inside your vault (in Obsidian's file explorer,
-right-click → **New folder**) and put both files in it.
+(open each file there and use the download button). Put both into the
+`Templates` folder you created above.
 
 ### f. Point the plugin at the permanent-note template
-Settings → **Second Reader: Promote Candidates** → **Template path** →
-enter `Templates/Permanent Note Template.md` (match the path to wherever
-you put it in step e).
+Settings → **Second Reader: Promote Candidates**. It already defaults to
+`Templates/Permanent Note Template.md` for **Template path** and
+`Permanent notes` for **New note folder** — check both match where you put
+things, and adjust if you used different folder names.
 
 ### g. Configure Zotero Integration's import format
 Settings → **Zotero Integration** → **Import Formats** → add a new format:
@@ -142,8 +185,7 @@ Settings → **Zotero Integration** → **Import Formats** → add a new format:
   (see the note below).
 - **Template:** the path to `Templates/Literature Note Template - Zotero
   Import.md`
-- **Output path template:** `Literature_notes/{{citekey}}.md` (creates a
-  `Literature_notes` folder automatically)
+- **Output path template:** `Literature notes/{{citekey}}.md`
 - **Bibliography Style:** search **"APA"** → choose **American Psychological
   Association 7th edition**
 
@@ -186,6 +228,12 @@ Once setup is done, this is the whole routine per paper:
    indented line or two — that carries over into the new note too.
 8. **Check its box** — a new permanent note is created automatically, built
    from the Permanent Note Template, and that line becomes a link to it.
+9. Over time, gather related Permanent notes into a **Structure note** (in
+   your `Structure notes` folder); once that synthesis is dense enough,
+   write it up as an **Evergreen note**. Use **Project notes** when you're
+   actually writing something and want to pull together the Permanent notes
+   that support it. Link back to a Permanent note's **Connections** section
+   as you build these.
 
 ---
 

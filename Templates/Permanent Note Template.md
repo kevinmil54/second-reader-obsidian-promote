@@ -23,7 +23,7 @@ source: "[[{{source}}]]"
 - [[]]
 
 ## Connections
-*Project notes and Evergreen notes (structure notes) that draw on this idea.*
+*Structure notes, Evergreen notes, and Project notes that draw on this idea.*
 
 - [[]]
 

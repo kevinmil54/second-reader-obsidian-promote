@@ -237,6 +237,28 @@ Once setup is done, this is the whole routine per paper:
 
 ---
 
+## Getting updates later
+
+The plugin improves from time to time. To pick up a new version:
+
+- **Manual:** Command Palette → **"BRAT: Check for updates to all beta
+  plugins and UPDATE."**
+- **Automatic:** Settings → **BRAT** → enable **"Auto-update plugins at
+  startup"** — then every time you open Obsidian, it checks and updates in
+  the background.
+
+If you installed by picking a **specific version number** rather than
+"Latest version" (step 4d, if you hit that BRAT hiccup), the update check
+might not pick up the new release. If "Check for updates" doesn't move you
+forward, remove the plugin (Command Palette → **"BRAT: Remove a beta
+plugin"**) and re-add it — that always works.
+
+Templates don't auto-update — if a template changes, re-download it from
+**[the class repo](https://github.com/kevinmil54/second-reader-obsidian-promote/tree/main/Templates)**
+and replace your copy.
+
+---
+
 ## Troubleshooting
 
 | Symptom | Fix |

@@ -9,8 +9,8 @@ your best ideas into standalone permanent notes. It's a one-time setup
 (30–45 minutes) — after that, each new paper takes seconds to turn into a
 note.
 
-**Already set up from an earlier version?** Skip to
-[Upgrading to Second Reader 2](#upgrading-to-second-reader-2).
+**Already set up from an earlier version?** Don't redo this setup — follow
+**[UPDATING.md](UPDATING.md)** instead.
 
 Works on **Mac or Windows**. Steps are marked where they differ.
 
@@ -328,25 +328,9 @@ and replace your copy.
 
 ### Upgrading to Second Reader 2
 
-Version 2 folds Zotero import into Second Reader and adds highlight sync.
-If you set things up with an earlier version (Promote Candidates plus the
-separate Zotero Integration plugin):
-
-1. **Update Second Reader** as described above. It's the same plugin, so
-   your promote settings carry over. After updating, restart Obsidian; the
-   plugin is now listed as **"Second Reader"** (version 2.0.0 or later).
-2. **Your Zotero import format carries over automatically** the first time
-   Second Reader 2 starts — you'll see a message saying so. Your import
-   command is now called **"Second Reader: Literature Note"** (instead of
-   "Zotero Integration: Literature Note").
-3. **Turn off the "Zotero Integration" plugin** (Settings → Community
-   plugins). Second Reader shows a reminder until you do.
-4. **Replace your literature-note template** with the new one from
-   [the class repo](https://github.com/kevinmil54/second-reader-obsidian-promote/tree/main/Templates)
-   — the highlight sync needs it. Notes you've already created keep working;
-   to use sync in an existing note, copy its **"Quotes worth keeping"**
-   section from a newly created note, or just sync — Second Reader adds the
-   missing quotes block under that heading for you.
+If you set things up earlier this term (with "Second Reader: Promote
+Candidates" plus the separate "Zotero Integration" plugin), follow the
+step-by-step instructions in **[UPDATING.md](UPDATING.md)**.
 
 ---
 

@@ -16,6 +16,7 @@ literature-note workflow. One plugin covers the whole loop:
   template and turns the line into a link to it.
 
 Students' setup instructions: [STUDENT-SETUP-GUIDE.md](STUDENT-SETUP-GUIDE.md).
+Students upgrading from 1.x: [UPDATING.md](UPDATING.md).
 
 Desktop only (macOS, Windows, Linux) — Zotero import talks to the Zotero
 desktop app and runs a PDF helper, which Obsidian mobile can't do.

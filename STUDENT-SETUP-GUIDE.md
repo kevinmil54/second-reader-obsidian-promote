@@ -201,10 +201,11 @@ Same Settings page, further down under **Zotero import & highlight sync** →
   Association 7th edition**
 
 **Important:** once you save this, Obsidian gets a *new* command named after
-it — **"Second Reader: Literature Note"** — which is different from the
-generic **"Second Reader: Import notes."** That generic command skips your
-template entirely and creates a bare note with just the citekey. Always use
-the one named after your format.
+it — **"Second Reader: Literature Note."** That's the command you'll use to
+create every literature note. (The command always takes the format's name,
+so if you named your format something else — or upgraded from an earlier
+version with a differently named format — look for "Second Reader:" followed
+by that name.)
 
 ### g. (Optional, recommended) Auto-open imported notes
 Same Settings page → toggle **"Open the created or updated note(s) after
@@ -230,8 +231,7 @@ Once setup is done, this is the whole routine per paper.
    the item → **"Retrieve Metadata for PDF."**
 3. **Create the literature note.** In Obsidian: Command Palette →
    **"Second Reader: Literature Note"** (the command named after your import
-   format from step 4f — **not** the generic "Second Reader: Import notes,"
-   which skips your template). Search for the article by title or author and
+   format from step 4f). Search for the article by title or author and
    select it. Obsidian creates the note, pre-filled with title, authors,
    year, the Zotero link, and the full APA reference.
 
@@ -335,7 +335,7 @@ separate Zotero Integration plugin):
 | Symptom | Fix |
 |---|---|
 | "Second Reader: Literature Note" doesn't appear in the Command Palette | Plugin isn't enabled, the import format isn't set up yet (step 4f), or Obsidian needs a full restart (not just a reload). If you upgraded, look for "Second Reader: …" — the old "Zotero Integration: …" names are gone. |
-| "Second Reader: Import notes" creates a blank note with just a citekey, no content | That's the generic command — it doesn't use your template. Use the command named after your import format instead ("Second Reader: Literature Note"), set up in step 4f. |
+| An import made an empty note titled with just the citekey (e.g. `smith2023learning`) | That came from the old generic "Import notes" command, which ignores your template (Second Reader 2.0.1 and later no longer have it). Delete the empty note and use the command named after your import format ("Second Reader: Literature Note"). |
 | Every Zotero command appears twice | The old "Zotero Integration" plugin is still on — turn it off in Settings → Community plugins. |
 | Import or sync fails / "could not connect to Zotero" / "is Zotero running?" | Zotero desktop must be running. Check Zotero → Settings → Advanced → "Allow other applications to communicate with Zotero" is checked. |
 | Sync says "No new highlights" but you just highlighted | The highlights were made in another PDF app (Preview, Adobe) — make them in **Zotero's** PDF reader. Also check that the note you have open is the literature note for that paper. |

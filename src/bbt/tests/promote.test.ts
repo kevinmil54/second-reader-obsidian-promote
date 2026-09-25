@@ -76,12 +76,12 @@ describe('Promoter end to end (fake vault)', () => {
     if (template) files.set('Templates/Permanent Note Template.md', template);
     const vault = {
       read: async (f: any) => files.get(f.path),
-      modify: async (f: any, text: string) => void files.set(f.path, text),
+      modify: async (f: any, text: string): Promise<void> => void files.set(f.path, text),
       create: async (p: string, text: string) => {
         files.set(p, text);
         return { path: p, basename: p.split('/').pop()!.replace(/\.md$/, '') };
       },
-      createFolder: async () => undefined,
+      createFolder: async (): Promise<void> => undefined,
       getAbstractFileByPath: (p: string) =>
         files.has(p)
           ? Object.assign(new TFile(), { path: p, extension: 'md' })
@@ -93,7 +93,7 @@ describe('Promoter end to end (fake vault)', () => {
         getFileCache: () => ({ frontmatter: { tags: ['literature-note', 'psych101'] } }),
       },
     };
-    const promoter = new Promoter({ app, registerEvent: () => undefined }, () => ({
+    const promoter = new Promoter({ app, registerEvent: (): void => undefined }, () => ({
       newNoteFolder: 'Permanent notes',
       templatePath: 'Templates/Permanent Note Template.md',
     }));

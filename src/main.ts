@@ -14,7 +14,6 @@ import { LoadingModal } from './bbt/LoadingModal';
 import { getCAYW } from './bbt/cayw';
 import { exportToMarkdown, renderCiteTemplate } from './bbt/export';
 import {
-  filesFromNotes,
   insertNotesIntoCurrentDoc,
   noteExportPrompt,
 } from './bbt/exportNotes';
@@ -122,25 +121,6 @@ export default class ZoteroConnector extends Plugin {
             insertNotesIntoCurrentDoc(editor, notes);
           }
         });
-      },
-    });
-
-    this.addCommand({
-      id: 'zdc-import-notes',
-      name: 'Import notes',
-      callback: () => {
-        const database = {
-          database: this.settings.database,
-          port: this.settings.port,
-        };
-        noteExportPrompt(database, this.settings.noteImportFolder)
-          .then((notes) => {
-            if (notes) {
-              return filesFromNotes(this.settings.noteImportFolder, notes);
-            }
-            return [] as string[];
-          })
-          .then((notes) => this.openNotes(notes));
       },
     });
 

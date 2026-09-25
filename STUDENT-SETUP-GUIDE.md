@@ -1,10 +1,16 @@
 # Setting Up Your Second Reader Note System
 
 This gets your computer ready to take literature notes the Second Reader way:
-import a paper from Zotero into a structured note, take your own notes, and
-promote your best ideas into standalone permanent notes with one click. It's
-a one-time setup (30–45 minutes) — after that, each new paper takes seconds
-to turn into a note.
+import a paper from Zotero into a structured note, then read it in Zotero
+with your note open right beside it — typing your own notes and highlighting
+as you go. One click syncs your highlights into the note as quotes with page
+numbers (without touching anything you've typed), and one checkbox promotes
+your best ideas into standalone permanent notes. It's a one-time setup
+(30–45 minutes) — after that, each new paper takes seconds to turn into a
+note.
+
+**Already set up from an earlier version?** Skip to
+[Upgrading to Second Reader 2](#upgrading-to-second-reader-2).
 
 Works on **Mac or Windows**. Steps are marked where they differ.
 
@@ -142,30 +148,35 @@ Settings (gear icon) → **Community plugins** → **Turn on community
 plugins** (you'll see a one-time warning about third-party code — this is
 expected).
 
-### b. Install "Zotero Integration"
-Settings → Community plugins → **Browse** → search **"Zotero Integration"**
-→ **Install** → **Enable**.
+### b. Install "BRAT"
+Settings → Community plugins → **Browse** → search **"BRAT"** (Beta
+Reviewers Auto-update Tool) → **Install** → **Enable**. BRAT is what lets
+you install the Second Reader plugin below, which isn't in Obsidian's
+official plugin list.
 
-### c. Install "BRAT"
-Same **Browse** search, this time for **"BRAT"** (Beta Reviewers Auto-update
-Tool) → **Install** → **Enable**. BRAT is what lets you install the custom
-Second Reader plugin below, which isn't in Obsidian's official plugin list.
+### c. Install "Second Reader"
+One plugin does everything: imports papers from Zotero, syncs your
+highlights, and promotes permanent-note candidates. You **don't** need the
+separate "Zotero Integration" community plugin — Second Reader includes it.
 
-### d. Install "Second Reader: Promote Candidates"
 1. Command Palette (`Cmd/Ctrl+P`) → **"BRAT: Add a beta plugin for
    testing."**
 2. Paste: `kevinmil54/second-reader-obsidian-promote`
 3. When asked for a version, **pick the specific version number (e.g.
-   `1.2.0` — check the [releases page](https://github.com/kevinmil54/second-reader-obsidian-promote/releases)
+   `2.0.0` — check the [releases page](https://github.com/kevinmil54/second-reader-obsidian-promote/releases)
    for the latest) rather than "Latest version"** — "Latest version" has
    failed to install for some people even though a specific number works
    fine.
-4. Settings → Community plugins → enable **"Second Reader: Promote
-   Candidates."** If it doesn't take effect right away, reload Obsidian
-   (Command Palette → "Reload app without saving") and try again — this has
-   occasionally needed a couple of tries.
+4. Settings → Community plugins → enable **"Second Reader."** If it doesn't
+   take effect right away, reload Obsidian (Command Palette → "Reload app
+   without saving") and try again — this has occasionally needed a couple
+   of tries.
+5. **If you have the "Zotero Integration" plugin from another class, turn
+   it off** (Settings → Community plugins) — otherwise you'll see two sets
+   of look-alike commands. Second Reader reminds you with a message until
+   you do.
 
-### e. Get the two templates into your vault
+### d. Get the two templates into your vault
 Your instructor will give you two files — **`Literature Note Template -
 Zotero Import.md`** and **`Permanent Note Template.md`** — or you can get
 them from
@@ -173,16 +184,16 @@ them from
 (open each file there and use the download button). Put both into the
 `Templates` folder you created above.
 
-### f. Point the plugin at the permanent-note template
-Settings → **Second Reader: Promote Candidates**. It already defaults to
-`Templates/Permanent Note Template.md` for **Template path** and
-`Permanent notes` for **New note folder** — check both match where you put
-things, and adjust if you used different folder names.
+### e. Check the promote settings
+Settings → **Second Reader** → **Promote candidates** (at the top). It
+already defaults to `Templates/Permanent Note Template.md` for **Template
+path** and `Permanent notes` for **New note folder** — check both match
+where you put things, and adjust if you used different folder names.
 
-### g. Configure Zotero Integration's import format
-Settings → **Zotero Integration** → **Import Formats** → add a new format:
-- **Name:** something clear, e.g. **"Literature Note"** — this name matters
-  (see the note below).
+### f. Set up the import format
+Same Settings page, further down under **Zotero import & highlight sync** →
+**Import Formats** → add a new format:
+- **Name:** **"Literature Note"** — this name matters (see the note below).
 - **Template:** the path to `Templates/Literature Note Template - Zotero
   Import.md`
 - **Output path template:** `Literature notes/{{citekey}}.md`
@@ -190,20 +201,26 @@ Settings → **Zotero Integration** → **Import Formats** → add a new format:
   Association 7th edition**
 
 **Important:** once you save this, Obsidian gets a *new* command named after
-it — **"Zotero Integration: Literature Note"** (or whatever you named it) —
-not the generic **"Zotero Integration: Import notes."** That generic command
-skips your template entirely and creates a bare note with just the citekey.
-Always use the one named after your format.
+it — **"Second Reader: Literature Note"** — which is different from the
+generic **"Second Reader: Import notes."** That generic command skips your
+template entirely and creates a bare note with just the citekey. Always use
+the one named after your format.
 
-### h. (Optional, recommended) Auto-open imported notes
+### g. (Optional, recommended) Auto-open imported notes
 Same Settings page → toggle **"Open the created or updated note(s) after
 import"** on, so each new literature note opens automatically.
 
+### h. (Optional, recommended) A shortcut for syncing highlights
+Settings → **Hotkeys** → search **"Sync highlights"** → click `+` → press a
+shortcut you'll remember (e.g. `Cmd/Ctrl + Shift + S`).
+
 ---
 
-## Generating a note for a particular article
+## Reading a paper: notes and highlights together
 
-Once setup is done, this is the whole routine per paper:
+Once setup is done, this is the whole routine per paper.
+
+### Before you start reading
 
 1. **Get the article into Zotero.** On the article's webpage, click the
    Zotero Connector button in your browser (best — pulls in full metadata).
@@ -211,24 +228,56 @@ Once setup is done, this is the whole routine per paper:
 2. **Check it saved correctly** — title, authors, and year look right in
    Zotero. If you dragged in a bare PDF and the fields are empty, right-click
    the item → **"Retrieve Metadata for PDF."**
-3. **In Obsidian:** Command Palette → the command named after your import
-   format from step 4g (e.g. **"Zotero Integration: Literature Note"**) —
-   **not** the generic "Zotero Integration: Import notes," which skips your
-   template.
-4. Search for the article by title or author, select it (you can multi-select
-   several at once).
-5. Obsidian creates the literature note, pre-filled with title, authors,
+3. **Create the literature note.** In Obsidian: Command Palette →
+   **"Second Reader: Literature Note"** (the command named after your import
+   format from step 4f — **not** the generic "Second Reader: Import notes,"
+   which skips your template). Search for the article by title or author and
+   select it. Obsidian creates the note, pre-filled with title, authors,
    year, the Zotero link, and the full APA reference.
-6. **Read and take your own notes** directly in that file — fill in "Why I'm
-   reading this," "Summary (in my own words)," "Key ideas," and so on as you
-   go.
+
+### While you read
+
+4. **Put the paper and the note side by side.** Open the PDF in **Zotero's
+   own reader** (double-click the PDF in Zotero) on one half of your screen,
+   and your literature note in Obsidian on the other.
+   - **Mac:** hover over a window's green button → **Tile Window to Left of
+     Screen**, then click the other window to fill the right side.
+   - **Windows:** press `Win + ←` in one window, then pick the other window
+     to fill the right side.
+5. **Type and highlight in whatever rhythm suits you.** Highlight passages
+   worth keeping in Zotero, and add a comment to a highlight when you have
+   a reaction (click the highlight, then type in its comment box). At the
+   same time, type your own notes into the literature note — "Summary (in my
+   own words)," "Key ideas," questions as they occur to you.
+   Highlight in **Zotero's** reader, not Preview or Adobe — Zotero's reader
+   is what records the real (printed) page number for each highlight.
+6. **Sync whenever you like** — after each section, or only at the end.
+   With your literature note open, click the **highlighter icon** in
+   Obsidian's left-hand ribbon (or Command Palette → **"Second Reader: Sync
+   highlights into current note"**, or your shortcut from step 4h). Every
+   highlight and comment made since your last sync appears under **"Quotes
+   worth keeping,"** each with its page number. Nothing you've typed is
+   touched — it's safe to sync in the middle of a sentence.
+   - Edit, trim, or react to imported quotes freely; syncing again won't
+     undo your edits or duplicate quotes.
+   - You can move a quote into another section (say, next to the idea it
+     supports) — it won't be re-added to the Quotes section.
+   - Each quote ends with a code like `^nb-ABCD1234`. Leave it: it's how
+     sync knows the quote is already in your note, and it lets you link to
+     that exact quote from a permanent note.
+
+### Promoting ideas
+
 7. When an idea is worth its own standalone note, write its title in your
    own words under **"Permanent note candidates."** Want to add more before
    promoting it? Press **Enter, then Tab** right after the title to write an
    indented line or two — that carries over into the new note too.
 8. **Check its box** — a new permanent note is created automatically, built
    from the Permanent Note Template, and that line becomes a link to it.
-9. Over time, gather related Permanent notes into a **Structure note** (in
+9. **Coming back to the paper later?** Keep highlighting in Zotero and sync
+   again — new highlights are added and everything else stays as you left
+   it.
+10. Over time, gather related Permanent notes into a **Structure note** (in
    your `Structure notes` folder); once that synthesis is dense enough,
    write it up as an **Evergreen note**. Use **Project notes** when you're
    actually writing something and want to pull together the Permanent notes
@@ -248,7 +297,7 @@ The plugin improves from time to time. To pick up a new version:
   the background.
 
 If you installed by picking a **specific version number** rather than
-"Latest version" (step 4d, if you hit that BRAT hiccup), the update check
+"Latest version" (step 4c, if you hit that BRAT hiccup), the update check
 might not pick up the new release. If "Check for updates" doesn't move you
 forward, remove the plugin (Command Palette → **"BRAT: Remove a beta
 plugin"**) and re-add it — that always works.
@@ -257,17 +306,45 @@ Templates don't auto-update — if a template changes, re-download it from
 **[the class repo](https://github.com/kevinmil54/second-reader-obsidian-promote/tree/main/Templates)**
 and replace your copy.
 
+### Upgrading to Second Reader 2
+
+Version 2 folds Zotero import into Second Reader and adds highlight sync.
+If you set things up with an earlier version (Promote Candidates plus the
+separate Zotero Integration plugin):
+
+1. **Update Second Reader** as described above. It's the same plugin, so
+   your promote settings carry over. After updating, restart Obsidian; the
+   plugin is now listed as **"Second Reader"** (version 2.0.0 or later).
+2. **Your Zotero import format carries over automatically** the first time
+   Second Reader 2 starts — you'll see a message saying so. Your import
+   command is now called **"Second Reader: Literature Note"** (instead of
+   "Zotero Integration: Literature Note").
+3. **Turn off the "Zotero Integration" plugin** (Settings → Community
+   plugins). Second Reader shows a reminder until you do.
+4. **Replace your literature-note template** with the new one from
+   [the class repo](https://github.com/kevinmil54/second-reader-obsidian-promote/tree/main/Templates)
+   — the highlight sync needs it. Notes you've already created keep working;
+   to use sync in an existing note, copy its **"Quotes worth keeping"**
+   section from a newly created note, or just sync — Second Reader adds the
+   missing quotes block under that heading for you.
+
 ---
 
 ## Troubleshooting
 
 | Symptom | Fix |
 |---|---|
-| Your import format's command doesn't appear in the Command Palette | Plugin isn't enabled, or Obsidian needs a full restart (not just a reload) after enabling it. |
-| "Zotero Integration: Import notes" creates a blank note with just a citekey, no content | That's the generic command — it doesn't use your template. Use the command named after your import format instead (e.g. "Zotero Integration: Literature Note"), set up in step 4g. |
-| Import fails / "could not connect to Zotero" | Zotero desktop must be running. Check Zotero → Settings → Advanced → "Allow other applications to communicate with Zotero" is checked. |
+| "Second Reader: Literature Note" doesn't appear in the Command Palette | Plugin isn't enabled, the import format isn't set up yet (step 4f), or Obsidian needs a full restart (not just a reload). If you upgraded, look for "Second Reader: …" — the old "Zotero Integration: …" names are gone. |
+| "Second Reader: Import notes" creates a blank note with just a citekey, no content | That's the generic command — it doesn't use your template. Use the command named after your import format instead ("Second Reader: Literature Note"), set up in step 4f. |
+| Every Zotero command appears twice | The old "Zotero Integration" plugin is still on — turn it off in Settings → Community plugins. |
+| Import or sync fails / "could not connect to Zotero" / "is Zotero running?" | Zotero desktop must be running. Check Zotero → Settings → Advanced → "Allow other applications to communicate with Zotero" is checked. |
+| Sync says "No new highlights" but you just highlighted | The highlights were made in another PDF app (Preview, Adobe) — make them in **Zotero's** PDF reader. Also check that the note you have open is the literature note for that paper. |
+| Sync says the note "has no citekey in its frontmatter" | Sync only works in a literature note created by the import command, which records the paper's citekey at the top of the note. Don't delete the `citekey:` line. |
+| Quotes show the PDF's sheet number instead of the printed page | The PDF's page numbering is missing or wrong. In Zotero's reader, right-click a page in the thumbnails sidebar → **Rename Page…** to set the correct number; future syncs will use it (quotes already synced keep their old number — edit them by hand). |
+| A quote I deleted from the note came back after syncing | Syncing adds any highlight that isn't in the note yet. To remove a quote for good, delete the highlight in Zotero too. |
+| A highlight you deleted in Zotero is still in the note | Syncing only *adds* quotes; it never removes them. Delete the quote in Obsidian by hand. |
 | Citation key or reference comes out blank, or shows `{{citekey}}` literally | Better BibTeX isn't installed, or Zotero wasn't restarted after installing it. |
 | Import errors on a paper with no publication year | Fixed as of the current template — if you're on an older copy, update to the latest from [the class repo](https://github.com/kevinmil54/second-reader-obsidian-promote/tree/main/Templates). |
-| Checking a candidate box just crosses out the text — no new note appears | The "Second Reader: Promote Candidates" plugin isn't enabled, the note's frontmatter is missing `tags: [literature-note]`, or the heading isn't exactly `## Permanent note candidates`. |
+| Checking a candidate box just crosses out the text — no new note appears | The "Second Reader" plugin isn't enabled, the note's frontmatter is missing `tags: [literature-note]`, or the heading isn't exactly `## Permanent note candidates`. |
 | BRAT can't find the plugin, or "Latest version" won't install | Double-check the repo name is exactly `kevinmil54/second-reader-obsidian-promote`. If "Latest version" fails, pick the specific version number from the dropdown instead. |
-| Reference style isn't APA | You likely set the "Citation Style" (used for inline citations) instead of the **Import Format's own "Bibliography Style"** field — these are two separate settings in Zotero Integration. |
+| Reference style isn't APA | You likely set the "Citation Style" (used for inline citations) instead of the **Import Format's own "Bibliography Style"** field — these are two separate settings in the plugin. |

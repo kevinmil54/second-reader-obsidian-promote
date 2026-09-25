@@ -1,47 +1,89 @@
-# Second Reader: Promote Candidates
+# Second Reader
 
-An Obsidian plugin: checking a box under `## Permanent note candidates` in a
-note tagged `literature-note` creates a new permanent note (from a
-configurable template) and turns that line into a link to it. Built for the
-[Second Reader](https://github.com/kevinmil54/second-reader) project's
-Zettelkasten workflow.
+An Obsidian plugin for the [Second Reader](https://github.com/kevinmil54/second-reader)
+literature-note workflow. One plugin covers the whole loop:
 
-Pure Obsidian-API plugin — no OS-specific code — so it behaves identically on
-macOS, Windows, and Linux.
+- **Import a paper from Zotero** into a structured literature note (title,
+  authors, citekey, APA reference).
+- **Sync highlights while you type.** Read in Zotero's PDF reader with the
+  note open beside it; click the highlighter icon in the left ribbon (or run
+  **"Sync highlights into current note"**) and every new highlight and
+  comment lands under "Quotes worth keeping" with its printed page number —
+  without touching anything typed in the note.
+- **Promote candidates.** Checking a box under `## Permanent note candidates`
+  in a note tagged `literature-note` creates a permanent note from a
+  template and turns the line into a link to it.
 
-## Install via BRAT (recommended — gets updates automatically)
+Students' setup instructions: [STUDENT-SETUP-GUIDE.md](STUDENT-SETUP-GUIDE.md).
+
+Desktop only (macOS, Windows, Linux) — Zotero import talks to the Zotero
+desktop app and runs a PDF helper, which Obsidian mobile can't do.
+
+## Install via BRAT (gets updates automatically)
 
 1. Install the **BRAT** community plugin (Settings → Community plugins →
    Browse → search "BRAT").
 2. Command Palette → **"BRAT: Add a beta plugin for testing."**
 3. Paste this repo: `kevinmil54/second-reader-obsidian-promote`
-4. Enable **"Second Reader: Promote Candidates"** in Settings → Community
-   plugins.
+4. Enable **"Second Reader"** in Settings → Community plugins.
 
-## Install manually
+Requires Zotero 7 with the Better BibTeX plugin, and Zotero's "Allow other
+applications to communicate with Zotero" setting turned on.
 
-1. Download `main.js` and `manifest.json` from this repo (or the latest
-   [Release](../../releases)).
-2. Create a folder `<your vault>/.obsidian/plugins/second-reader-promote/`
-   and put both files in it.
-3. Reload Obsidian (Command Palette → "Reload app without saving," or fully
-   restart), then enable the plugin in Settings → Community plugins.
+## Upgrading from 1.x (Promote Candidates + Zotero Integration)
+
+The plugin id is unchanged (`second-reader-promote`), so BRAT updates 1.x
+installs in place and promote settings carry over. On first start, 2.x copies
+the import formats and other settings from the community **Zotero
+Integration** plugin (`obsidian-zotero-desktop-connector`), then shows a
+reminder until that plugin is turned off. Commands are renamed from
+"Zotero Integration: …" to "Second Reader: …".
 
 ## Templates
 
-`Templates/` has the two templates this plugin and the wider Second Reader
-workflow are built around:
+- **Literature Note Template - Zotero Import.md** — set as the template of
+  an Import Format (plugin settings → Zotero import & highlight sync → Import
+  Formats). Sync uses the format whose template path contains "Literature
+  Note" (else the first format).
+- **Permanent Note Template.md** — filled in when a candidate is promoted.
+  Supports `{{title}}`, `{{date}}`, `{{source}}`, `{{tags}}`, `{{details}}`.
 
-- **Literature Note Template - Zotero Import.md** — used with the Zotero
-  Integration community plugin's "Import Notes" command.
-- **Permanent Note Template.md** — what the plugin fills in when a candidate
-  is promoted. Point the plugin's "Template path" setting at wherever you
-  put this file (default: `Templates/Permanent Note Template.md`).
+## How highlight sync works
 
-## Settings
+Quotes live in a plugin-owned block (`%% begin annotations %% … %% end
+annotations %%`, hidden in Live Preview). Sync and re-import touch only that
+block, through the live editor when the note is open, so typed text, cursor,
+undo history, and unsaved keystrokes are preserved; if a student edits a
+quote while Zotero is being queried, their edit wins and new quotes are
+appended after it. Each quote carries a block id `^nb-<Zotero annotation
+key>`; a highlight is added only if its id isn't already anywhere in the
+note, so edited, trimmed, or moved quotes are never duplicated (and can be
+linked to: `[[smith2023#^nb-ABCD1234]]`). Re-importing an existing note
+never overwrites it. Page numbers use Zotero's page label (the printed page)
+and fall back to the PDF page.
 
-- **New note folder** — where promoted notes are created. Blank = same
-  folder as the literature note.
-- **Template path** — vault path to the permanent-note template. Supports
-  `{{title}}`, `{{date}}`, `{{source}}` placeholders. Blank = a minimal
-  built-in template.
+Template variables added for this: `newAnnotations` (annotations not yet in
+the note) and `a.nbId` (the block-id-safe annotation id).
+
+## Development
+
+The Zotero import code is a fork of
+[obsidian-zotero-integration](https://github.com/mgmeyers/obsidian-zotero-integration)
+v3.2.1 by mgmeyers, which is GPL-3.0; this plugin is therefore distributed
+under GPL-3.0 ([LICENSE.md](LICENSE.md)). Changes from upstream: highlight
+sync and merge-instead-of-overwrite (`src/bbt/sync.ts`, `src/bbt/export.ts`),
+the promote feature (`src/promote.ts`), a one-time settings import from the
+upstream plugin, the PDF helper stored in this plugin's own folder instead of
+upstream's hardcoded one, and a fix for first-page highlights getting no page
+number.
+
+```sh
+npm install
+npm test         # one known upstream failure: "sanely handles new lines"
+npm run build    # produces main.js
+```
+
+**Releasing:** bump `version` in `manifest.json` and `package.json`, add it
+to `versions.json`, build, then create a GitHub release tagged with the
+version (no `v` prefix) with `main.js`, `manifest.json`, and `styles.css`
+attached. `main.js` is build output and isn't committed.

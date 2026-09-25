@@ -1,9 +1,9 @@
 {
   "id": "second-reader-promote",
-  "name": "Second Reader: Promote Candidates",
-  "version": "1.3.0",
-  "minAppVersion": "1.0.0",
-  "description": "Checking a box under '## Permanent note candidates' in a Second Reader literature note creates a new permanent note and turns the line into a link to it.",
+  "name": "Second Reader",
+  "version": "2.0.0",
+  "minAppVersion": "1.1.1",
+  "description": "Second Reader literature notes: import papers from Zotero, sync your Zotero highlights into the note as quotes with page numbers while you type, and promote checked candidates into permanent notes.",
   "author": "Kevin Miller",
-  "isDesktopOnly": false
+  "isDesktopOnly": true
 }

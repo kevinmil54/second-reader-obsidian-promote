@@ -6,8 +6,9 @@ literature-note workflow. One plugin covers the whole loop:
 - **Import a paper from Zotero** into a structured literature note (title,
   authors, citekey, APA reference).
 - **Sync highlights while you type.** Read in Zotero's PDF reader with the
-  note open beside it; click the highlighter icon in the left ribbon (or run
-  **"Sync highlights into current note"**) and every new highlight and
+  note open beside it; click the highlighter button at the top-right of the
+  note (also in the left ribbon), or run
+  **"Sync highlights into current note"**, and every new highlight and
   comment lands under "Quotes worth keeping" with its printed page number —
   without touching anything typed in the note.
 - **Promote candidates.** Checking a box under `## Permanent note candidates`

@@ -2,6 +2,7 @@ import Fuse from 'fuse.js';
 import {
   EditableFileView,
   Events,
+  MarkdownView,
   Notice,
   Plugin,
   TFile,
@@ -33,6 +34,7 @@ import {
   ZoteroConnectorSettings,
 } from './types';
 
+const SYNC_BUTTON_LABEL = 'Sync Zotero highlights into this note';
 const citationCommandIDPrefix = 'zdc-';
 const exportCommandIDPrefix = 'zdc-exp-';
 
@@ -135,7 +137,7 @@ export default class ZoteroConnector extends Plugin {
       },
     });
 
-    this.addRibbonIcon('highlighter', 'Sync Zotero highlights into this note', () => {
+    this.addRibbonIcon('highlighter', SYNC_BUTTON_LABEL, () => {
       const file = this.app.workspace.getActiveFile();
       if (file?.extension === 'md') {
         this.syncHighlights(file);
@@ -143,6 +145,15 @@ export default class ZoteroConnector extends Plugin {
         new Notice('Open a literature note first, then sync.');
       }
     });
+
+    // The ribbon is easy to miss among other plugins' icons, so literature
+    // notes also get the sync button in their own header, where students are
+    // already looking.
+    const refresh = () => this.refreshNoteHeaderButtons();
+    this.registerEvent(this.app.workspace.on('file-open', refresh));
+    this.registerEvent(this.app.workspace.on('layout-change', refresh));
+    this.registerEvent(this.app.metadataCache.on('changed', refresh));
+    this.app.workspace.onLayoutReady(refresh);
 
     this.addCommand({
       id: 'show-zotero-debug-view',
@@ -166,6 +177,9 @@ export default class ZoteroConnector extends Plugin {
   }
 
   onunload() {
+    for (const el of this.noteHeaderButtons.values()) el.remove();
+    this.noteHeaderButtons.clear();
+
     this.settings.citeFormats.forEach((f) => {
       this.removeFormatCommand(f);
     });
@@ -260,6 +274,42 @@ export default class ZoteroConnector extends Plugin {
       },
       [{ key: citekey, library }]
     );
+  }
+
+  private noteHeaderButtons = new Map<MarkdownView, HTMLElement>();
+
+  // A note can be synced only if it has a citekey to match against Zotero.
+  isSyncableNote(file: TFile | null): boolean {
+    if (!file || file.extension !== 'md') return false;
+    const citekey = this.app.metadataCache.getFileCache(file)?.frontmatter?.citekey;
+    return typeof citekey === 'string' && citekey.trim() !== '';
+  }
+
+  refreshNoteHeaderButtons() {
+    const views = new Set<MarkdownView>();
+    for (const leaf of this.app.workspace.getLeavesOfType('markdown')) {
+      if (leaf.view instanceof MarkdownView) views.add(leaf.view);
+    }
+
+    for (const [view, el] of this.noteHeaderButtons) {
+      if (!views.has(view) || !this.isSyncableNote(view.file)) {
+        el.remove();
+        this.noteHeaderButtons.delete(view);
+      }
+    }
+
+    for (const view of views) {
+      if (this.noteHeaderButtons.has(view) || !this.isSyncableNote(view.file)) {
+        continue;
+      }
+      // Reads view.file at click time: a view is reused as the student moves
+      // between notes, and the button is removed when it's no longer valid.
+      const el = view.addAction('highlighter', SYNC_BUTTON_LABEL, () => {
+        if (view.file) this.syncHighlights(view.file);
+      });
+      el.addClass('second-reader-sync-button');
+      this.noteHeaderButtons.set(view, el);
+    }
   }
 
   // Import formats are how students configure the literature-note template;

@@ -48,7 +48,7 @@ date-read:
 - 
 
 ## Quotes worth keeping
-*Your Zotero highlights and comments arrive below, with page numbers, each time you sync (highlighter icon in the left ribbon). Edit or trim them freely. Add your own quotes too — if possible, include a page number.*
+*Your Zotero highlights and comments arrive below, with page numbers, each time you click the highlighter-pen icon at the top-right of this note. Edit or trim them freely. Add your own quotes too — if possible, include a page number.*
 
 {% persist "annotations" %}
 {%- for a in newAnnotations %}

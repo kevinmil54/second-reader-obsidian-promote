@@ -211,9 +211,30 @@ by that name.)
 Same Settings page → toggle **"Open the created or updated note(s) after
 import"** on, so each new literature note opens automatically.
 
-### h. (Optional, recommended) A shortcut for syncing highlights
-Settings → **Hotkeys** → search **"Sync highlights"** → click `+` → press a
-shortcut you'll remember (e.g. `Cmd/Ctrl + Shift + S`).
+### h. Know where the sync button is
+You'll use this every time you read, so it's worth finding now. There are
+three ways to sync your Zotero highlights into a note — use whichever you
+like:
+
+1. **The highlighter button at the top of your literature note (easiest).**
+   When a literature note is open, a small **highlighter-pen icon** appears
+   in the row of icons at the **top-right corner of the note**, next to the
+   `⋮` (more options) button. Hover over it and it says **"Sync Zotero
+   highlights into this note."** It only shows up in literature notes made
+   by the import command, so if you don't see it, you're probably looking at
+   a different note.
+2. **The highlighter button in the ribbon.** The ribbon is the thin vertical
+   strip of icons along the **far-left edge** of the Obsidian window. The
+   same highlighter-pen icon is in there — hover over the icons to find the
+   one that says "Sync Zotero highlights into this note."
+   - Don't see a strip of icons at all? Turn it on: Settings →
+     **Appearance** → **Show ribbon**.
+   - Too many icons to spot it? Drag the highlighter to the top of the
+     strip, or right-click the ribbon to hide icons you don't use.
+3. **A keyboard shortcut (optional).** Settings → **Hotkeys** → search
+   **"Sync highlights"** → click `+` → press a shortcut you'll remember
+   (e.g. `Cmd/Ctrl + Shift + S`). The command is also in the Command
+   Palette as **"Second Reader: Sync highlights into current note."**
 
 ---
 
@@ -252,9 +273,8 @@ Once setup is done, this is the whole routine per paper.
    Highlight in **Zotero's** reader, not Preview or Adobe — Zotero's reader
    is what records the real (printed) page number for each highlight.
 6. **Sync whenever you like** — after each section, or only at the end.
-   With your literature note open, click the **highlighter icon** in
-   Obsidian's left-hand ribbon (or Command Palette → **"Second Reader: Sync
-   highlights into current note"**, or your shortcut from step 4h). Every
+   Click the **highlighter-pen icon at the top-right of your literature
+   note** (or use the ribbon icon or your shortcut — see step 4h). Every
    highlight and comment made since your last sync appears under **"Quotes
    worth keeping,"** each with its page number. Nothing you've typed is
    touched — it's safe to sync in the middle of a sentence.

@@ -38,6 +38,7 @@ import {
   annotationSyncId,
   applySync,
   planSync,
+  countAddedQuotes,
   rebaseRendered,
   unsyncedAnnotations,
 } from './sync';
@@ -628,6 +629,7 @@ async function readLive(file: TFile): Promise<string> {
 export interface MergeResult {
   changed: boolean;
   reinsertedBlocks: string[];
+  addedQuotes: number;
 }
 
 // Merge a render into an existing note, touching only persist blocks. Applied
@@ -641,6 +643,7 @@ export async function mergeIntoNote(
   const editor = openEditorFor(file);
   const current = editor ? editor.getValue() : await app.vault.read(file);
   const plan = planSync(current, rebaseRendered(snapshot, current, rendered));
+  const addedQuotes = countAddedQuotes(current, applySync(current, plan));
 
   if (plan.edits.length) {
     if (editor) {
@@ -656,7 +659,11 @@ export async function mergeIntoNote(
     }
   }
 
-  return { changed: plan.edits.length > 0, reinsertedBlocks: plan.missing };
+  return {
+    changed: plan.edits.length > 0,
+    reinsertedBlocks: plan.missing,
+    addedQuotes,
+  };
 }
 
 export interface SyncTarget {
@@ -890,19 +897,19 @@ export async function exportToMarkdown(
       if (file) {
         // An existing note belongs to the student. Never overwrite
         // it — only merge new highlights into its persist blocks.
-        const newCount = templateData.newAnnotations?.length ?? 0;
         const result = await mergeIntoNote(file, fileContent, rendered);
-        if (target) {
-          new Notice(
-            newCount
-              ? `Synced ${newCount} new highlight${newCount === 1 ? '' : 's'} into ${file.basename}`
-              : `No new highlights for ${file.basename}`
-          );
-        }
         if (result.reinsertedBlocks.length) {
           new Notice(
-            `The imported-quotes block was missing from ${file.basename}, so it was re-added under "Quotes worth keeping".`,
+            `Added a place for imported quotes under "Quotes worth keeping" in ${file.basename}.`,
             8000
+          );
+        }
+        if (target) {
+          const n = result.addedQuotes;
+          new Notice(
+            n
+              ? `Synced ${n} new highlight${n === 1 ? '' : 's'} into ${file.basename}`
+              : `No new highlights for ${file.basename}`
           );
         }
       } else {

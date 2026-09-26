@@ -1,6 +1,6 @@
 {
   "name": "second-reader",
-  "version": "2.0.2",
+  "version": "2.1.0",
   "description": "Second Reader Obsidian plugin: Zotero import + highlight sync + promote candidates",
   "main": "main.js",
   "scripts": {
@@ -64,5 +64,11 @@
     "react-select": "5.7.3",
     "shell-path": "^3.0.0",
     "which": "^3.0.1"
+  },
+  "jest": {
+    "transform": {
+      "\\.[jt]sx?$": "babel-jest",
+      "\\.md$": "<rootDir>/jest.text-transform.js"
+    }
   }
 }

@@ -322,7 +322,12 @@ might not pick up the new release. If "Check for updates" doesn't move you
 forward, remove the plugin (Command Palette → **"BRAT: Remove a beta
 plugin"**) and re-add it — that always works.
 
-Templates don't auto-update — if a template changes, re-download it from
+If your literature-note template is too old to bring in highlights, Second
+Reader offers to update it for you (it asks when Obsidian starts, and again
+if you try to sync). You can also run **"Second Reader: Update
+literature-note template"** from the Command Palette at any time. It only
+changes the "Quotes worth keeping" section and saves a backup of your old
+template first. For any other template change, re-download it from
 **[the class repo](https://github.com/kevinmil54/second-reader-obsidian-promote/tree/main/Templates)**
 and replace your copy.
 

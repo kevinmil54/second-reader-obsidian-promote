@@ -50,6 +50,19 @@ reminder until that plugin is turned off. Commands are renamed from
 - **Permanent Note Template.md** — filled in when a candidate is promoted.
   Supports `{{title}}`, `{{date}}`, `{{source}}`, `{{tags}}`, `{{details}}`.
 
+## Template upgrades
+
+The current literature-note template ships inside the plugin (esbuild text
+loader; `jest.text-transform.js` does the same for tests). If an import
+format points at a Second Reader literature-note template that predates
+highlight import (no `newAnnotations`), the plugin offers to upgrade it: at
+startup (until declined once), before a sync (which it blocks if declined,
+since the sync would add nothing), before an import (optional), and via
+**"Update literature-note template."** Only the `## Quotes worth keeping`
+section is replaced, so other customizations survive; the old file is first
+saved as `… (before Second Reader 2).md`. Templates without that heading
+are never touched (`src/templateUpgrade.ts`).
+
 ## How highlight sync works
 
 Quotes live in a plugin-owned block (`%% begin annotations %% … %% end

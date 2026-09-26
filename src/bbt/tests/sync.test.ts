@@ -2,6 +2,7 @@ import {
   annotationSyncId,
   applySync,
   blockIdFor,
+  countAddedQuotes,
   planSync,
   rebaseRendered,
   unsyncedAnnotations,
@@ -130,5 +131,16 @@ describe('annotation ids and dedupe', () => {
     expect(unsyncedAnnotations(annots, note).map((a) => a.id)).toEqual(['BBBB2222']);
     expect(unsyncedAnnotations(annots, moved)).toHaveLength(0);
     expect(unsyncedAnnotations(annots, '')).toHaveLength(2);
+  });
+});
+
+describe('countAddedQuotes', () => {
+  test('counts only block ids that are new to the note', () => {
+    const before = '> a ^nb-AAAA1111\n';
+    const after = '> a ^nb-AAAA1111\n> b ^nb-BBBB2222\n> c ^nb-CCCC3333\n';
+    expect(countAddedQuotes(before, after)).toBe(2);
+  });
+  test('is zero when a template rendered nothing', () => {
+    expect(countAddedQuotes('same note', 'same note')).toBe(0);
   });
 });

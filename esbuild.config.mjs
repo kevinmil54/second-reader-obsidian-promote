@@ -39,6 +39,8 @@ const context = await esbuild.context({
   sourcemap: prod ? false : 'inline',
   treeShaking: true,
   outfile: 'main.js',
+  // Templates ship inside the plugin so it can upgrade a student's copy.
+  loader: { '.md': 'text' },
   minify: prod,
 });
 

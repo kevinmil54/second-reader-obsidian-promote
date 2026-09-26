@@ -13,7 +13,7 @@ your note open beside it, type notes and highlight at the same time, and
 click one button to bring your highlights in. Nothing you've typed is ever
 changed.
 
-**Time needed:** about 10 minutes. Works the same on Mac and Windows except
+**Time needed:** about 5 minutes. Works the same on Mac and Windows except
 where noted.
 
 **Before you start:** make sure the **Zotero** app is open.
@@ -32,7 +32,7 @@ where noted.
    ```
 
 4. When it asks for a version, choose the **highest number in the list**
-   (**2.0.2** or higher) — not "Latest version."
+   (**2.1.0** or higher) — not "Latest version."
 5. Wait for the message saying the plugin was installed or updated.
 
 > **Why not just "Check for updates"?** For some students, BRAT isn't
@@ -47,11 +47,27 @@ Fully quit — don't just close the note:
 - **Mac:** press **Cmd+Q** while Obsidian is in front.
 - **Windows:** close every Obsidian window.
 
-Then open Obsidian again. Within a few seconds you should see a message:
-**"Second Reader copied your import format and other Zotero settings from
-the Zotero Integration plugin."** That means your import setup carried over
-and you don't need to redo it. (If you don't see it, it's usually fine —
-Step 6 will tell you.)
+Then open Obsidian again. Two things happen within a few seconds:
+
+1. A message: **"Second Reader copied your import format and other Zotero
+   settings from the Zotero Integration plugin."** That means your import
+   setup carried over and you don't need to redo it. (If you don't see it,
+   it's usually fine — Step 5 will tell you.)
+2. A window asking **"Update your literature-note template?"** Click
+   **Update template**. Second Reader updates the "Quotes worth keeping"
+   part of your literature-note template so it can bring in your
+   highlights. Anything else you changed in your template stays, and your
+   notes aren't touched.
+
+   It also saves your old template as a backup, next to it in your
+   Templates folder, named
+   `Literature Note Template - Zotero Import (before Second Reader 2).md`.
+   You can delete that backup once everything's working.
+
+   **Clicked "Not now" by accident?** Open the Command Palette
+   (Cmd/Ctrl+P) and run **Second Reader: Update literature-note template**
+   — the same window appears. (You'll also be asked the first time you try
+   to sync highlights.)
 
 ## Step 3. Turn off Zotero Integration
 
@@ -61,36 +77,13 @@ on gives you two copies of every command.
 1. Settings (the gear icon, bottom-left) → **Community plugins**.
 2. Find **Zotero Integration** and switch it **off**.
 3. While you're there, check that **Second Reader** is switched **on** and
-   shows version **2.0.2** or higher. (Its name is now just "Second Reader"
+   shows version **2.1.0** or higher. (Its name is now just "Second Reader"
    — "Promote Candidates" is gone from the name.)
 
 Until you turn Zotero Integration off, Second Reader shows a reminder each
 time Obsidian starts.
 
-## Step 4. Replace your literature-note template
-
-The highlight import needs the new version of **one** template. (Your
-Permanent Note Template hasn't changed — leave it alone.)
-
-1. Open this page in your web browser:
-   **[Literature Note Template - Zotero Import.md](https://github.com/kevinmil54/second-reader-obsidian-promote/blob/main/Templates/Literature%20Note%20Template%20-%20Zotero%20Import.md)**
-2. Click the **Download raw file** button (a download-arrow icon near the
-   top-right of the file).
-3. Move the downloaded file into your vault's **Templates** folder,
-   **replacing** the old file with the same name:
-   - **Mac:** drag it from Downloads into the Templates folder in Finder;
-     when asked, click **Replace**.
-   - **Windows:** drag it from Downloads into the Templates folder in File
-     Explorer; when asked, choose **Replace the file in the destination**.
-
-   Not sure where your vault is on your computer? In Obsidian, right-click
-   the **Templates** folder in the left sidebar → **Reveal in Finder**
-   (Mac) or **Show in system explorer** (Windows).
-4. Make sure the file name is still exactly
-   `Literature Note Template - Zotero Import.md` — some browsers add
-   ` (1)` or `.txt` to downloaded files. Rename it if needed.
-
-## Step 5. Learn where the sync button is
+## Step 4. Learn where the sync button is
 
 Open any literature note. At the **top-right corner of the note**, next to
 the `⋮` button, you'll now see a small **highlighter-pen icon**. Hover over
@@ -101,7 +94,7 @@ button you'll click to bring your Zotero highlights in.
 far-left edge of Obsidian — and in the Command Palette as **"Second
 Reader: Sync highlights into current note."**)
 
-## Step 6. Try it on a paper you've already started
+## Step 5. Try it on a paper you've already started
 
 1. In Zotero, open a paper that already has a literature note, and
    highlight a sentence or two (in Zotero's own PDF reader — double-click
@@ -110,10 +103,9 @@ Reader: Sync highlights into current note."**)
 3. Click the **highlighter-pen icon** at the top-right of the note.
 
 Your highlights appear under **"Quotes worth keeping,"** each with its page
-number. For notes you made before updating, Second Reader adds the quotes
-area under that heading the first time — you may see a message saying the
-quotes block "was missing" and was added. That's expected, and nothing else
-in your note changes.
+number. For notes you made before updating, the first sync also shows a
+message saying it **"Added a place for imported quotes"** under that
+heading. That's expected, and nothing else in your note changes.
 
 **You're done.** From now on, see "Reading a paper: notes and highlights
 together" in [STUDENT-SETUP-GUIDE.md](STUDENT-SETUP-GUIDE.md) for the new
@@ -144,8 +136,9 @@ reading routine.
 | Second Reader still shows version 1.x | Repeat Step 1 and make sure you pick the highest version number, then Step 2. |
 | Your import command isn't in the Command Palette | Type **Second Reader** in the Command Palette to see its commands. If none are named after your import format, your format didn't carry over: set it up again with step 4f in [STUDENT-SETUP-GUIDE.md](STUDENT-SETUP-GUIDE.md). |
 | Every Zotero command appears twice | Zotero Integration is still on — Step 3. |
-| No highlighter icon at the top-right of the note | That icon only appears in literature notes made by the import command (they have a `citekey:` line at the top). Also check Second Reader is version 2.0.2 or higher. |
-| Clicking sync brings in no quotes | Check that Zotero is open, that you highlighted in **Zotero's** reader (not Preview or Adobe), and that you replaced the template in Step 4. |
+| No highlighter icon at the top-right of the note | That icon only appears in literature notes made by the import command (they have a `citekey:` line at the top). Also check Second Reader is version 2.1.0 or higher. |
+| Clicking sync brings in no quotes | Check that Zotero is open, that you highlighted in **Zotero's** reader (not Preview or Adobe), and that your template is updated: run **Second Reader: Update literature-note template** from the Command Palette (it tells you if it's already up to date). |
+| Still no quotes, and "Update literature-note template" says it's up to date | Your import format may point at a different template file. Download the current template yourself: open [this page](https://github.com/kevinmil54/second-reader-obsidian-promote/blob/main/Templates/Literature%20Note%20Template%20-%20Zotero%20Import.md), click **Download raw file**, and put it in your vault's Templates folder in place of the old one (right-click the Templates folder in Obsidian → **Reveal in Finder** / **Show in system explorer** to find it). Then check Settings → Second Reader → Import Formats points at that file. |
 | A message says the note "has no citekey in its frontmatter" | The note wasn't created by the import command. Sync only works in notes that have a `citekey:` line at the top. |
 | Page numbers look wrong | In Zotero's reader, right-click a page in the thumbnails sidebar → **Rename Page…** to fix the numbering, then sync again for new highlights. |
 

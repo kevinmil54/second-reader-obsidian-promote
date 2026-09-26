@@ -156,6 +156,17 @@ export function annotationSyncId(annot: any): string {
   return 'h' + (h >>> 0).toString(36);
 }
 
+// Quotes added by a sync, counted from the note itself rather than from what
+// Zotero reported, so the count is right even if the template didn't render
+// some annotations.
+export function countAddedQuotes(before: string, after: string): number {
+  const ids = (s: string) => new Set(s.match(/\^nb-[A-Za-z0-9-]+/g) ?? []);
+  const had = ids(before);
+  let added = 0;
+  for (const id of ids(after)) if (!had.has(id)) added++;
+  return added;
+}
+
 export function blockIdFor(annot: any): string {
   return `nb-${annotationSyncId(annot)}`;
 }

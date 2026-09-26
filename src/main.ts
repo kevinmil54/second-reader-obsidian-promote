@@ -22,6 +22,11 @@ import './bbt/template.helpers';
 import { setPluginDir } from './helpers';
 import { DEFAULT_PROMOTE_SETTINGS, Promoter } from './promote';
 import {
+  applyTemplateUpgrade,
+  askToUpgradeTemplates,
+  findOutdatedTemplates,
+} from './templateUpgradeUI';
+import {
   currentVersion,
   downloadAndExtract,
   internalVersion,
@@ -93,7 +98,16 @@ export default class ZoteroConnector extends Plugin {
     this.emitter = new Events();
 
     new Promoter(this, () => this.settings).register();
-    this.app.workspace.onLayoutReady(() => this.warnAboutLegacyPlugins());
+    this.app.workspace.onLayoutReady(() => {
+      this.warnAboutLegacyPlugins();
+      this.offerTemplateUpgrade('startup');
+    });
+
+    this.addCommand({
+      id: 'update-literature-template',
+      name: 'Update literature-note template',
+      callback: () => this.offerTemplateUpgrade('command'),
+    });
 
     this.updatePDFUtility();
     this.addSettingTab(new ZoteroConnectorSettingsTab(this.app, this));
@@ -231,6 +245,9 @@ export default class ZoteroConnector extends Plugin {
       id: `${exportCommandIDPrefix}${format.name}`,
       name: format.name,
       callback: async () => {
+        // Importing still works with an old template (just without quotes),
+        // so this only offers; it never blocks the import.
+        await this.offerTemplateUpgrade('import', [format]);
         const database = {
           database: this.settings.database,
           port: this.settings.port,
@@ -274,6 +291,57 @@ export default class ZoteroConnector extends Plugin {
       },
       [{ key: citekey, library }]
     );
+  }
+
+  // Returns whether the relevant templates can import highlights afterwards.
+  async offerTemplateUpgrade(
+    trigger: 'startup' | 'command' | 'sync' | 'import',
+    formats: ExportFormat[] = this.settings.exportFormats
+  ): Promise<boolean> {
+    const upgrades = await findOutdatedTemplates(this.app, formats);
+    if (!upgrades.length) {
+      if (trigger === 'command') {
+        new Notice('Your literature-note template is already up to date.');
+      }
+      return true;
+    }
+    if (trigger === 'startup' && this.settings._templateUpgradeDeclinedAtStartup) {
+      return false;
+    }
+
+    const reason =
+      trigger === 'sync'
+        ? "Your literature-note template is from an earlier version of Second Reader, so syncing can't bring in your Zotero highlights until the template is updated."
+        : 'Your literature-note template is from an earlier version of Second Reader. Updating it lets your notes bring in Zotero highlights as quotes with page numbers.';
+
+    if (!(await askToUpgradeTemplates(this.app, upgrades, reason))) {
+      if (trigger === 'startup') {
+        this.settings._templateUpgradeDeclinedAtStartup = true;
+        await this.saveSettings();
+      }
+      new Notice(
+        trigger === 'sync'
+          ? 'Highlights weren\'t synced. Run "Second Reader: Update literature-note template" when you\'re ready, then sync again.'
+          : 'No problem — run "Second Reader: Update literature-note template" whenever you\'re ready.',
+        8000
+      );
+      return false;
+    }
+
+    for (const upgrade of upgrades) {
+      try {
+        const backup = await applyTemplateUpgrade(this.app, upgrade);
+        new Notice(
+          `Updated ${upgrade.file.path}. Your previous version was saved as ${backup}.`,
+          10000
+        );
+      } catch (e) {
+        console.error(e);
+        new Notice(`Couldn't update ${upgrade.file.path}: ${e.message}`, 10000);
+        return false;
+      }
+    }
+    return true;
   }
 
   private noteHeaderButtons = new Map<MarkdownView, HTMLElement>();
@@ -343,6 +411,9 @@ export default class ZoteroConnector extends Plugin {
     }
 
     if (this.syncing.has(file.path)) return;
+    // An old template renders no quotes block, so a sync would silently add
+    // nothing.
+    if (!(await this.offerTemplateUpgrade('sync', [format]))) return;
     this.syncing.add(file.path);
     try {
       await exportToMarkdown(

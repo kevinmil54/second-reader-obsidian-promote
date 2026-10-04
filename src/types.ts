@@ -77,10 +77,10 @@ export interface ZoteroConnectorSettings extends PromoteSettings {
   // Set once the old Zotero Integration plugin's settings have been copied in
   // (or there were none to copy), so the import never runs twice.
   _importedLegacyZoteroSettings?: boolean;
-  // A student said "Not now" to the startup offer to update their template;
-  // don't ask again at startup (sync and import still ask, since that's when
-  // it matters).
-  _templateUpgradeDeclinedAtStartup?: boolean;
+  // The plugin version whose startup offer to update the template a student
+  // turned down. Not asked again at startup until a newer version brings a
+  // new reason to update (sync and import still ask when it matters).
+  _templateUpgradeDeclinedVersion?: string;
   citeFormats: CitationFormat[];
   citeSuggestTemplate?: string;
   database: Database;

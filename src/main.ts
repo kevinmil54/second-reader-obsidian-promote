@@ -20,6 +20,16 @@ import {
 } from './bbt/exportNotes';
 import './bbt/template.helpers';
 import { setPluginDir } from './helpers';
+import { getAttachmentsFromCiteKey } from './bbt/jsonRPC';
+import {
+  OPEN_PDF_PARAM,
+  PROTOCOL_ACTION,
+  classCopyPathFor,
+  isClassCopyPath,
+  linktextOf,
+  makeClassCopy,
+} from './classCopy';
+import { LiteratureLinkColors } from './litLinks';
 import { DEFAULT_PROMOTE_SETTINGS, Promoter } from './promote';
 import {
   applyTemplateUpgrade,
@@ -40,6 +50,15 @@ import {
 } from './types';
 
 const SYNC_BUTTON_LABEL = 'Sync Zotero highlights into this note';
+
+// zotero:// links go to the Zotero app; the OS routes them on Mac and Windows.
+function openExternal(url: string) {
+  try {
+    require('electron').shell.openExternal(url);
+  } catch {
+    window.open(url);
+  }
+}
 const citationCommandIDPrefix = 'zdc-';
 const exportCommandIDPrefix = 'zdc-exp-';
 
@@ -98,6 +117,26 @@ export default class ZoteroConnector extends Plugin {
     this.emitter = new Events();
 
     new Promoter(this, () => this.settings).register();
+    new LiteratureLinkColors(this).register();
+
+    // Syllabus "open pdf" links: obsidian://second-reader?open-pdf=<note>
+    this.registerObsidianProtocolHandler(PROTOCOL_ACTION, (params) => {
+      const note = params[OPEN_PDF_PARAM];
+      if (note) this.openPdfForNote(note);
+    });
+
+    this.addCommand({
+      id: 'make-class-copy',
+      name: 'Make class copy of syllabus',
+      checkCallback: (checking) => {
+        const file = this.app.workspace.getActiveFile();
+        if (!file || file.extension !== 'md' || isClassCopyPath(file.path)) {
+          return false;
+        }
+        if (!checking) this.makeClassCopyOf(file);
+        return true;
+      },
+    });
     this.app.workspace.onLayoutReady(() => {
       this.warnAboutLegacyPlugins();
       this.offerTemplateUpgrade('startup');
@@ -293,30 +332,111 @@ export default class ZoteroConnector extends Plugin {
     );
   }
 
+  // Opens the student's own copy of a reading's PDF, found through their
+  // literature note: its `pdf:` property, or else by asking Zotero for the
+  // note's citekey (and remembering the answer in the note).
+  async openPdfForNote(noteLinktext: string) {
+    const linktext = linktextOf(noteLinktext);
+    const source = this.app.workspace.getActiveFile()?.path ?? '';
+    const note = this.app.metadataCache.getFirstLinkpathDest(linktext, source);
+    if (!note) {
+      const command = this.syncFormat()?.name ?? 'Literature Note';
+      new Notice(
+        `You haven't made the literature note for "${linktext}" yet. Run "Second Reader: ${command}", choose this reading, and then click "open pdf" again.`,
+        12000
+      );
+      return;
+    }
+
+    const fm = this.app.metadataCache.getFileCache(note)?.frontmatter;
+    let url: string | null =
+      typeof fm?.pdf === 'string' && fm.pdf.startsWith('zotero://') ? fm.pdf : null;
+
+    if (!url && typeof fm?.citekey === 'string' && fm.citekey.trim()) {
+      const attachments = await getAttachmentsFromCiteKey(
+        { key: fm.citekey.replace(/^@/, ''), library: 1 },
+        { database: this.settings.database, port: this.settings.port }
+      );
+      const pdf = (attachments ?? []).find(
+        (a: any) => typeof a?.open === 'string' && /\.pdf$/i.test(a?.path ?? '')
+      );
+      if (pdf) {
+        url = pdf.open;
+        await this.app.fileManager.processFrontMatter(note, (front) => {
+          front.pdf = url;
+        });
+      }
+    }
+
+    if (!url) {
+      new Notice(
+        `Couldn't find a PDF for "${note.basename}". Make sure Zotero is open and that this reading has its PDF attached in your Zotero library.`,
+        12000
+      );
+      return;
+    }
+    openExternal(url);
+  }
+
+  async makeClassCopyOf(master: TFile) {
+    const { text, rewritten, unmatchedLines } = makeClassCopy(
+      await this.app.vault.read(master),
+      master.basename,
+      window.moment().format('YYYY-MM-DD')
+    );
+    const path = classCopyPathFor(master.path);
+    const existing = this.app.vault.getAbstractFileByPath(path);
+    if (existing instanceof TFile) {
+      await this.app.vault.modify(existing, text);
+    } else {
+      await this.app.vault.create(path, text);
+    }
+
+    const parts = [
+      `${existing ? 'Updated' : 'Made'} "${path.split('/').pop()}".`,
+      `Rewrote ${rewritten} Zotero link${rewritten === 1 ? '' : 's'} so they open each student's own copy of the PDF.`,
+    ];
+    if (unmatchedLines.length) {
+      parts.push(
+        `${unmatchedLines.length} Zotero link${unmatchedLines.length === 1 ? ' had' : 's had'} no literature note on the same line and became plain text (line${unmatchedLines.length === 1 ? '' : 's'} ${unmatchedLines.join(', ')}).`
+      );
+    }
+    new Notice(parts.join(' '), 15000);
+  }
+
   // Returns whether the relevant templates can import highlights afterwards.
   async offerTemplateUpgrade(
     trigger: 'startup' | 'command' | 'sync' | 'import',
     formats: ExportFormat[] = this.settings.exportFormats
   ): Promise<boolean> {
-    const upgrades = await findOutdatedTemplates(this.app, formats);
+    let upgrades = await findOutdatedTemplates(this.app, formats);
+    // A sync only needs highlight import; don't interrupt it for anything else.
+    if (trigger === 'sync') {
+      upgrades = upgrades.filter((u) => u.missingHighlightImport);
+    }
     if (!upgrades.length) {
       if (trigger === 'command') {
         new Notice('Your literature-note template is already up to date.');
       }
       return true;
     }
-    if (trigger === 'startup' && this.settings._templateUpgradeDeclinedAtStartup) {
+    if (
+      trigger === 'startup' &&
+      this.settings._templateUpgradeDeclinedVersion === this.manifest.version
+    ) {
       return false;
     }
 
     const reason =
       trigger === 'sync'
         ? "Your literature-note template is from an earlier version of Second Reader, so syncing can't bring in your Zotero highlights until the template is updated."
-        : 'Your literature-note template is from an earlier version of Second Reader. Updating it lets your notes bring in Zotero highlights as quotes with page numbers.';
+        : upgrades.some((u) => u.missingHighlightImport)
+        ? 'Your literature-note template is from an earlier version of Second Reader. Updating it lets your notes bring in Zotero highlights as quotes with page numbers, and adds an "Open PDF" link to each new note.'
+        : 'Your literature-note template is from an earlier version of Second Reader. Updating it adds an "Open PDF" link to each new note, so the "open pdf" links in your syllabus can open your own copy of each reading.';
 
     if (!(await askToUpgradeTemplates(this.app, upgrades, reason))) {
       if (trigger === 'startup') {
-        this.settings._templateUpgradeDeclinedAtStartup = true;
+        this.settings._templateUpgradeDeclinedVersion = this.manifest.version;
         await this.saveSettings();
       }
       new Notice(

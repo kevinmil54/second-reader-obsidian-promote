@@ -128,6 +128,30 @@ This is what saves an article into Zotero straight from your browser.
    and the PDF, when available — into whichever collection is currently
    selected in the Zotero app. Zotero must be open for this to work.
 
+### 3b. Add the class readings to Zotero
+
+Your instructor posts the course readings on Canvas as a single download
+(a `.zip` file). Importing it puts every reading — with its PDF — into your
+own Zotero library in one step. **Install Better BibTeX (step 3.5) before
+doing this.**
+
+1. Download the readings file from Canvas and unzip it (**Mac:**
+   double-click it; **Windows:** right-click → **Extract All…**). You'll get
+   a folder containing a `.rdf` file and a `files` folder.
+2. In Zotero: **File → Import…** → choose **"A file (BibTeX, RIS, Zotero
+   RDF, etc.)"** → **Next** → select the `.rdf` file inside the folder you
+   just unzipped.
+3. On the options screen:
+   - Leave **"Place imported collections and items into new collection"**
+     checked, so the readings arrive in their own collection.
+   - Under **File Handling**, choose **"Copy files to the Zotero storage
+     folder."**
+4. Click **Next**, then **Finish**. The readings appear in a new collection
+   in your library, each with its PDF.
+
+When your instructor adds readings later, they'll post another file —
+import it the same way.
+
 ---
 
 ## 4. Set up Obsidian for the Second Reader note system
@@ -244,23 +268,29 @@ Once setup is done, this is the whole routine per paper.
 
 ### Before you start reading
 
-1. **Get the article into Zotero.** On the article's webpage, click the
-   Zotero Connector button in your browser (best — pulls in full metadata).
-   Or drag the PDF straight into the Zotero app window.
-2. **Check it saved correctly** — title, authors, and year look right in
-   Zotero. If you dragged in a bare PDF and the fields are empty, right-click
-   the item → **"Retrieve Metadata for PDF."**
-3. **Create the literature note.** In Obsidian: Command Palette →
+1. **Make sure the article is in your Zotero.** Class readings already are,
+   from step 3b. For anything else, click the Zotero Connector button on the
+   article's webpage (best — pulls in full metadata), or drag the PDF
+   straight into the Zotero app window. If you dragged in a bare PDF and
+   the title or authors are blank, right-click the item → **"Retrieve
+   Metadata for PDF."**
+2. **Create the literature note.** In Obsidian: Command Palette →
    **"Second Reader: Literature Note"** (the command named after your import
    format from step 4f). Search for the article by title or author and
    select it. Obsidian creates the note, pre-filled with title, authors,
-   year, the Zotero link, and the full APA reference.
+   year, an **Open PDF** link, the Zotero link, and the full APA reference.
+   Make every class reading's note this way — don't rename the note, so the
+   syllabus can find it.
+3. **Open the paper** with the **Open PDF** link at the top of the note, or
+   with the **open pdf** link next to that reading in the class syllabus
+   (see [Using the class syllabus](#using-the-class-syllabus)).
 
 ### While you read
 
 4. **Put the paper and the note side by side.** Open the PDF in **Zotero's
-   own reader** (double-click the PDF in Zotero) on one half of your screen,
-   and your literature note in Obsidian on the other.
+   own reader** (the **Open PDF** link from step 3 opens it there, or
+   double-click the PDF in Zotero) on one half of your screen, and your
+   literature note in Obsidian on the other.
    - **Mac:** hover over a window's green button → **Tile Window to Left of
      Screen**, then click the other window to fill the right side.
    - **Windows:** press `Win + ←` in one window, then pick the other window
@@ -306,6 +336,33 @@ Once setup is done, this is the whole routine per paper.
 
 ---
 
+## Using the class syllabus
+
+Your instructor gives you the syllabus as an Obsidian note (download it
+from Canvas and put it anywhere in your vault). Each reading in it has two
+links:
+
+> Zotero: **open pdf** · Literature note: **[[Title of the reading]]**
+
+**The literature-note link shows where you are with each reading** by its
+color:
+
+| Link looks like | Meaning |
+|---|---|
+| Dimmed (Obsidian's "not created yet" style) | You haven't made the literature note yet |
+| Normal link color | You've made the note but haven't written in it yet |
+| **Yellow** | You've synced Zotero highlights into it, but haven't typed anything yet |
+| **Green** | You've written your own notes in it |
+
+Click the link to open the note (or to create it, if it's dimmed — but use
+the import command from step 2 above instead, so the note gets filled in).
+
+**"open pdf" opens your own copy of the reading** in Zotero's PDF reader.
+It works once you've made that reading's literature note; if you haven't, a
+message tells you which command to run. (Zotero needs to be open.)
+
+---
+
 ## Getting updates later
 
 The plugin improves from time to time. To pick up a new version:
@@ -348,6 +405,11 @@ step-by-step instructions in **[UPDATING.md](UPDATING.md)**.
 | Every Zotero command appears twice | The old "Zotero Integration" plugin is still on — turn it off in Settings → Community plugins. |
 | Import or sync fails / "could not connect to Zotero" / "is Zotero running?" | Zotero desktop must be running. Check Zotero → Settings → Advanced → "Allow other applications to communicate with Zotero" is checked. |
 | Sync says "No new highlights" but you just highlighted | The highlights were made in another PDF app (Preview, Adobe) — make them in **Zotero's** PDF reader. Also check that the note you have open is the literature note for that paper. |
+| "open pdf" in the syllabus says you haven't made the literature note yet, but you have | The note's name doesn't match the syllabus link — usually because it was renamed. Rename it back to exactly the reading's title as it appears in the syllabus link. |
+| "open pdf" says it couldn't find a PDF | Make sure Zotero is open, and that the reading has its PDF attached in your Zotero library (re-import the class readings file from Canvas if it's missing). |
+| A syllabus link stays dimmed after you made the note | Same as above — the note's name has to match the link exactly. |
+| A syllabus link is green but you haven't written anything | Anything typed in the note body counts — check for a stray word or line. Filling in the top section (your name, course, date read) doesn't count. |
+| Readings import into Zotero without PDFs | When importing the class readings file, choose **"Copy files to the Zotero storage folder"**, and import the `.rdf` from inside the unzipped folder (the `files` folder must sit next to it). |
 | Sync says the note "has no citekey in its frontmatter" | Sync only works in a literature note created by the import command, which records the paper's citekey at the top of the note. Don't delete the `citekey:` line. |
 | Quotes show the PDF's sheet number instead of the printed page | The PDF's page numbering is missing or wrong. In Zotero's reader, right-click a page in the thumbnails sidebar → **Rename Page…** to set the correct number; future syncs will use it (quotes already synced keep their old number — edit them by hand). |
 | A quote I deleted from the note came back after syncing | Syncing adds any highlight that isn't in the note yet. To remove a quote for good, delete the highlight in Zotero too. |

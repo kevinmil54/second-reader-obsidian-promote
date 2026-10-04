@@ -2,16 +2,23 @@ import { App, Modal, Setting, TFile } from 'obsidian';
 
 import bundledLiteratureTemplate from '../Templates/Literature Note Template - Zotero Import.md';
 import { sanitizeObsidianPath } from './bbt/template.helpers';
-import { backupPathFor, upgradeTemplateText } from './templateUpgrade';
+import {
+  backupPathFor,
+  hasHighlightImport,
+  upgradeTemplateText,
+} from './templateUpgrade';
 import { ExportFormat } from './types';
 
 export interface TemplateUpgrade {
   file: TFile;
   upgraded: string;
+  // Without highlight import a sync adds nothing; other upgrades (the PDF
+  // link) are improvements that never need to interrupt a sync.
+  missingHighlightImport: boolean;
 }
 
 // Import-format templates that are Second Reader literature-note templates
-// but predate highlight import.
+// but older than the one bundled in the plugin.
 export async function findOutdatedTemplates(
   app: App,
   formats: ExportFormat[]
@@ -25,11 +32,15 @@ export async function findOutdatedTemplates(
     );
     if (!(file instanceof TFile) || seen.has(file.path)) continue;
     seen.add(file.path);
-    const upgraded = upgradeTemplateText(
-      await app.vault.read(file),
-      bundledLiteratureTemplate
-    );
-    if (upgraded !== null) out.push({ file, upgraded });
+    const current = await app.vault.read(file);
+    const upgraded = upgradeTemplateText(current, bundledLiteratureTemplate);
+    if (upgraded !== null) {
+      out.push({
+        file,
+        upgraded,
+        missingHighlightImport: !hasHighlightImport(current),
+      });
+    }
   }
   return out;
 }
@@ -72,10 +83,9 @@ class TemplateUpgradeModal extends Modal {
     }
     contentEl.createEl('p', {
       text:
-        'Only the "Quotes worth keeping" section of the template is replaced — ' +
-        'anything else you changed in it stays. Your current version is saved ' +
-        'as a backup copy next to it first. Notes you have already written are ' +
-        'not changed.',
+        'Only the parts of the template this needs are changed — anything else ' +
+        'you changed in it stays. Your current version is saved as a backup ' +
+        'copy next to it first. Notes you have already written are not changed.',
     });
 
     new Setting(contentEl)

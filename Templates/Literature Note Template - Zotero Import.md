@@ -4,6 +4,7 @@ author: {{authors}}
 year: {% if date %}{{ date | format("YYYY") }}{% else %}{% endif %}
 citekey: {{citekey}}
 zotero: {{desktopURI}}
+pdf: {% set pdfAtt = (attachments or []) | selectattr("pdfURI") | first %}{{ pdfAtt.pdfURI if pdfAtt else "" }}
 source-md: "[[]]"
 student: 
 course: 
@@ -14,7 +15,7 @@ date-read:
 
 # {{title}}
 
-> **Zotero:** [Open in Zotero]({{desktopURI}}) · **Cite:** [@{{citekey}}] · **Full text (md):** [[source-md]]
+> **Zotero:** {% if pdfAtt %}[Open PDF]({{pdfAtt.pdfURI}}) · {% endif %}[Open in Zotero]({{desktopURI}}) · **Cite:** [@{{citekey}}] · **Full text (md):** [[source-md]]
 
 **Reference (APA):** {{bibliography}}
 

@@ -2,9 +2,11 @@ import { execSync } from 'child_process';
 import { readFileSync } from 'fs';
 import path from 'path';
 
+import { splitTemplateVersions } from '../../litNoteState';
 import {
   backupPathFor,
   hasHighlightImport,
+  hasPdfLink,
   upgradeTemplateText,
 } from '../../templateUpgrade';
 
@@ -23,6 +25,29 @@ describe('upgradeTemplateText', () => {
   test('the 1.x template upgrades to exactly the current template', () => {
     expect(hasHighlightImport(OLD_1X)).toBe(false);
     expect(upgradeTemplateText(OLD_1X, NEW)).toBe(NEW);
+  });
+
+  test('the 2.1 template (highlights, no PDF link) upgrades to exactly the current template', () => {
+    const v21 = execSync(
+      'git show "78b49e8:Templates/Literature Note Template - Zotero Import.md"',
+      { cwd: ROOT, encoding: 'utf8' }
+    );
+    expect(hasHighlightImport(v21)).toBe(true);
+    expect(hasPdfLink(v21)).toBe(false);
+    expect(upgradeTemplateText(v21, NEW)).toBe(NEW);
+  });
+
+  test('every past template version ends up with highlight import and PDF links', () => {
+    const past = splitTemplateVersions(
+      readFileSync(path.join(ROOT, 'src/pastLiteratureTemplates.md'), 'utf8')
+    );
+    for (const t of past) {
+      const upgraded = upgradeTemplateText(t, NEW) ?? t;
+      expect(hasHighlightImport(upgraded)).toBe(true);
+      expect(hasPdfLink(upgraded)).toBe(true);
+      // Running it again changes nothing.
+      expect(upgradeTemplateText(upgraded, NEW)).toBeNull();
+    }
   });
 
   test("a student's customizations outside the Quotes section survive", () => {
@@ -57,13 +82,13 @@ describe('upgradeTemplateText', () => {
 
 test('backupPathFor never collides', () => {
   const taken = new Set([
-    'Templates/Lit (before Second Reader 2).md',
-    'Templates/Lit (before Second Reader 2, 2).md',
+    'Templates/Lit (before Second Reader update).md',
+    'Templates/Lit (before Second Reader update, 2).md',
   ]);
   expect(backupPathFor('Templates/Lit.md', (p) => taken.has(p))).toBe(
-    'Templates/Lit (before Second Reader 2, 3).md'
+    'Templates/Lit (before Second Reader update, 3).md'
   );
   expect(backupPathFor('Templates/Other.md', () => false)).toBe(
-    'Templates/Other (before Second Reader 2).md'
+    'Templates/Other (before Second Reader update).md'
   );
 });

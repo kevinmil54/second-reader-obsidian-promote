@@ -236,3 +236,25 @@
     box-shadow: 0 1em 0 0;
   }
 }
+
+/* Second Reader: links to literature notes, colored by the student's progress.
+   Notes not yet created keep Obsidian's own unresolved-link style.
+   Override these variables in a CSS snippet to change the colors. */
+body {
+  --sr-lit-highlights-color: var(--color-yellow);
+  --sr-lit-worked-color: var(--color-green);
+}
+
+a.internal-link.sr-lit-highlights,
+.sr-lit-highlights,
+.sr-lit-highlights .cm-underline,
+.sr-lit-highlights .cm-hmd-internal-link {
+  color: var(--sr-lit-highlights-color) !important;
+}
+
+a.internal-link.sr-lit-worked,
+.sr-lit-worked,
+.sr-lit-worked .cm-underline,
+.sr-lit-worked .cm-hmd-internal-link {
+  color: var(--sr-lit-worked-color) !important;
+}

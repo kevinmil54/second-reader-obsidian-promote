@@ -1,4 +1,4 @@
-# Second Reader 2.2 — Update Report
+# Second Reader 2.3 — Update Report
 
 *October 4, 2026 · Kevin F. Miller*
 
@@ -89,6 +89,14 @@ which every Zotero link is rewritten to work on the students' computers.
 Checking a box under **"Permanent note candidates"** creates a new
 permanent note from your template and turns the line into a link to it.
 
+### Notes named to match the syllabus
+The syllabus finds each literature note by the reading's title. Earlier
+setup instructions named notes by citation key instead (like `cai2009`). If
+a student's notes are named that way, Second Reader offers — once — to
+rename them to their titles and to switch their import settings so new notes
+are named by title. Links to renamed notes are updated, nothing inside them
+changes, and notes a student named themselves are left alone.
+
 ### Templates update themselves
 When a student's literature-note template is older than the plugin's, a
 window offers to update it. Only the sections that need changing are
@@ -106,6 +114,7 @@ is saved as a backup first. Notes already written are never changed.
 | **2.0.2** | Sept 25, 2026 | Sync button added to the top of each literature note |
 | **2.1.0** | Sept 25, 2026 | Plugin offers to update outdated templates; sync messages count only quotes actually added |
 | **2.2.0** | Oct 4, 2026 | Progress-colored links; Open PDF links; "Make class copy of syllabus"; template updates no longer interrupt syncing unless needed |
+| **2.3.0** | Oct 4, 2026 | Offers to rename citation-key-named notes to their titles (and fixes the import setting) so syllabus links find them; setup guide corrected to name notes by title |
 
 ---
 
@@ -138,9 +147,10 @@ Follow [UPDATING.md](UPDATING.md) (about 5 minutes). In short:
 
 1. In Obsidian, Command Palette (Cmd/Ctrl+P) → **"BRAT: Add a beta plugin
    for testing"** → paste `kevinmil54/second-reader-obsidian-promote` →
-   choose the **highest version number** (2.2.0 or later).
+   choose the **highest version number** (2.3.0 or later).
 2. Quit and reopen Obsidian. Accept the **"Update your literature-note
-   template?"** window.
+   template?"** window, and — if it appears — the **"Name your literature
+   notes by title?"** window.
 3. Turn off the **Zotero Integration** plugin (Settings → Community
    plugins).
 
@@ -148,11 +158,12 @@ Follow [UPDATING.md](UPDATING.md) (about 5 minutes). In short:
 BRAT updates Second Reader automatically each time Obsidian starts (if
 BRAT's "Auto-update plugins at startup" setting is on). To update right
 away: Command Palette → **"BRAT: Check for updates to all beta plugins and
-UPDATE,"** then quit and reopen Obsidian. Accept the template window when it
-appears, then get the new class syllabus from Canvas.
+UPDATE,"** then quit and reopen Obsidian. Accept the template window and the
+"Name your literature notes by title?" window if they appear, then get the
+new class syllabus from Canvas.
 
 ### How to tell you're up to date
-- Settings → Community plugins → **Second Reader** shows **2.2.0** or
+- Settings → Community plugins → **Second Reader** shows **2.3.0** or
   higher.
 - If your literature-note template is from before 2.2, Obsidian shows the
   **"Update your literature-note template?"** window right after the update.
@@ -193,6 +204,9 @@ same line:
   output path of `Literature notes/{{title}}.md`, that's the paper's title,
   with characters a file name can't contain (like `:` and `?`) replaced —
   the same name your own import produces, so copy it from your own note.
+- Students' import settings must also name notes by title. The setup guide
+  now says so, and Second Reader offers to fix students who set up with the
+  earlier citation-key instructions.
 
 ### Each term (or whenever readings change)
 
@@ -309,7 +323,7 @@ highlights synced, nothing typed · **green** = you've written in it.
 | An import made an empty note named like `smith2023learning` | It came from the old "Import notes" command (removed in 2.0.1). Delete it and use "Second Reader: Literature Note." |
 | "open pdf" says the literature note hasn't been made | Make it with the import command — and don't rename it. |
 | "open pdf" says it couldn't find a PDF | Open Zotero; check the reading has its PDF in your library (re-import the readings file if not). |
-| A syllabus link stays dimmed after making the note | The note was renamed — rename it back to the title in the syllabus link. |
+| A syllabus link stays dimmed after making the note | If notes are named by citation key (like `cai2009`), run "Second Reader: Name literature notes by title." Otherwise rename the note to the title in the syllabus link. |
 | Sync brings in no quotes | Zotero must be open; highlight in Zotero's reader; run "Second Reader: Update literature-note template." |
 | No highlighter button at the top of a note | It only appears in literature notes made by the import command. |
 

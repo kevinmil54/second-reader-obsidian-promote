@@ -81,6 +81,8 @@ export interface ZoteroConnectorSettings extends PromoteSettings {
   // turned down. Not asked again at startup until a newer version brings a
   // new reason to update (sync and import still ask when it matters).
   _templateUpgradeDeclinedVersion?: string;
+  // Same, for the offer to name literature notes by title.
+  _noteNamingDeclinedVersion?: string;
   citeFormats: CitationFormat[];
   citeSuggestTemplate?: string;
   database: Database;

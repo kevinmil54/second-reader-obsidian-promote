@@ -30,6 +30,12 @@ import {
   makeClassCopy,
 } from './classCopy';
 import { LiteratureLinkColors } from './litLinks';
+import {
+  applyNamingFix,
+  askToFixNaming,
+  findNamingFix,
+  hasNamingFix,
+} from './noteNamingUI';
 import { DEFAULT_PROMOTE_SETTINGS, Promoter } from './promote';
 import {
   applyTemplateUpgrade,
@@ -137,9 +143,21 @@ export default class ZoteroConnector extends Plugin {
         return true;
       },
     });
-    this.app.workspace.onLayoutReady(() => {
-      this.warnAboutLegacyPlugins();
-      this.offerTemplateUpgrade('startup');
+    // One dialog at a time: the template first, then note names.
+    this.app.workspace.onLayoutReady(async () => {
+      try {
+        this.warnAboutLegacyPlugins();
+        await this.offerTemplateUpgrade('startup');
+        await this.offerNamingFix('startup');
+      } catch (e) {
+        console.error('Second Reader: startup checks failed', e);
+      }
+    });
+
+    this.addCommand({
+      id: 'name-notes-by-title',
+      name: 'Name literature notes by title (to match the syllabus)',
+      callback: () => this.offerNamingFix('command'),
     });
 
     this.addCommand({
@@ -402,6 +420,49 @@ export default class ZoteroConnector extends Plugin {
       );
     }
     new Notice(parts.join(' '), 15000);
+  }
+
+  async offerNamingFix(trigger: 'startup' | 'command') {
+    const fix = findNamingFix(this.app, this.settings.exportFormats);
+    if (!hasNamingFix(fix)) {
+      if (trigger === 'command') {
+        new Notice(
+          fix.blocked.length
+            ? `Your literature notes are already named by title, except ${fix.blocked.length} that can't be renamed because a note with that name already exists.`
+            : 'Your literature notes are already named by title.'
+        );
+      }
+      return;
+    }
+    if (
+      trigger === 'startup' &&
+      this.settings._noteNamingDeclinedVersion === this.manifest.version
+    ) {
+      return;
+    }
+
+    if (!(await askToFixNaming(this.app, fix))) {
+      if (trigger === 'startup') {
+        this.settings._noteNamingDeclinedVersion = this.manifest.version;
+        await this.saveSettings();
+      }
+      new Notice(
+        'No problem — run "Second Reader: Name literature notes by title" whenever you\'re ready.',
+        8000
+      );
+      return;
+    }
+
+    try {
+      const renamed = await applyNamingFix(this.app, fix, () => this.saveSettings());
+      const parts: string[] = [];
+      if (fix.formats.length) parts.push('New literature notes will be named by title.');
+      if (renamed) parts.push(`Renamed ${renamed} literature note${renamed === 1 ? '' : 's'}.`);
+      new Notice(parts.join(' '), 10000);
+    } catch (e) {
+      console.error(e);
+      new Notice(`Renaming stopped partway: ${e.message}. Run the command again to finish.`, 10000);
+    }
   }
 
   // Returns whether the relevant templates can import highlights afterwards.

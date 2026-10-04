@@ -220,7 +220,10 @@ Same Settings page, further down under **Zotero import & highlight sync** →
 - **Name:** **"Literature Note"** — this name matters (see the note below).
 - **Template:** the path to `Templates/Literature Note Template - Zotero
   Import.md`
-- **Output path template:** `Literature notes/{{citekey}}.md`
+- **Output path template:** `Literature notes/{{title}}.md` — this names
+  each note after the reading's title, which is how the class syllabus finds
+  your notes. (If you set this up earlier with `{{citekey}}`, Second Reader
+  offers to fix it for you — see [UPDATING.md](UPDATING.md).)
 - **Bibliography Style:** search **"APA"** → choose **American Psychological
   Association 7th edition**
 
@@ -405,9 +408,9 @@ step-by-step instructions in **[UPDATING.md](UPDATING.md)**.
 | Every Zotero command appears twice | The old "Zotero Integration" plugin is still on — turn it off in Settings → Community plugins. |
 | Import or sync fails / "could not connect to Zotero" / "is Zotero running?" | Zotero desktop must be running. Check Zotero → Settings → Advanced → "Allow other applications to communicate with Zotero" is checked. |
 | Sync says "No new highlights" but you just highlighted | The highlights were made in another PDF app (Preview, Adobe) — make them in **Zotero's** PDF reader. Also check that the note you have open is the literature note for that paper. |
-| "open pdf" in the syllabus says you haven't made the literature note yet, but you have | The note's name doesn't match the syllabus link — usually because it was renamed. Rename it back to exactly the reading's title as it appears in the syllabus link. |
+| "open pdf" in the syllabus says you haven't made the literature note yet, but you have | The note's name doesn't match the syllabus link. If it's named by citation key (like `cai2009`), run **"Second Reader: Name literature notes by title"**; if you renamed it, rename it back to the title shown in the syllabus link. |
 | "open pdf" says it couldn't find a PDF | Make sure Zotero is open, and that the reading has its PDF attached in your Zotero library (re-import the class readings file from Canvas if it's missing). |
-| A syllabus link stays dimmed after you made the note | Same as above — the note's name has to match the link exactly. |
+| A syllabus link stays dimmed after you made the note | The note's name has to match the link exactly. If your notes are named by citation key (like `cai2009`), run **"Second Reader: Name literature notes by title"** — it renames them and fixes your import format. Otherwise rename the note to the title shown in the link. |
 | A syllabus link is green but you haven't written anything | Anything typed in the note body counts — check for a stray word or line. Filling in the top section (your name, course, date read) doesn't count. |
 | Readings import into Zotero without PDFs | When importing the class readings file, choose **"Copy files to the Zotero storage folder"**, and import the `.rdf` from inside the unzipped folder (the `files` folder must sit next to it). |
 | Sync says the note "has no citekey in its frontmatter" | Sync only works in a literature note created by the import command, which records the paper's citekey at the top of the note. Don't delete the `citekey:` line. |

@@ -17,15 +17,18 @@ changed.
 where noted.
 
 > **Already on Second Reader 2** (your plugin is called just "Second
-> Reader")? You only need three things:
+> Reader")? You only need these steps:
 > 1. Get the latest version: Command Palette → **BRAT: Check for updates to
 >    all beta plugins and UPDATE**, then quit and reopen Obsidian. (If
->    Settings → Community plugins doesn't then show **2.2.0** or higher, do
+>    Settings → Community plugins doesn't then show **2.3.0** or higher, do
 >    Step 1 below.)
 > 2. When the **"Update your literature-note template?"** window appears,
 >    click **Update template**. This adds an **Open PDF** link to new
 >    literature notes.
-> 3. Download the new class syllabus note from Canvas and put it in your
+> 3. If a window asks **"Name your literature notes by title?"**, click
+>    **Rename**. (It appears only if your notes are named by citation key,
+>    like `cai2009` — the syllabus finds notes by title.)
+> 4. Download the new class syllabus note from Canvas and put it in your
 >    vault, replacing the old one. Its links now show your progress by color
 >    and its **open pdf** links open your own copy of each reading — see
 >    "Using the class syllabus" in
@@ -49,7 +52,7 @@ where noted.
    ```
 
 4. When it asks for a version, choose the **highest number in the list**
-   (**2.2.0** or higher) — not "Latest version."
+   (**2.3.0** or higher) — not "Latest version."
 5. Wait for the message saying the plugin was installed or updated.
 
 > **Why not just "Check for updates"?** For some students, BRAT isn't
@@ -81,9 +84,16 @@ Then open Obsidian again. Two things happen within a few seconds:
    `Literature Note Template - Zotero Import (before Second Reader update).md`.
    You can delete that backup once everything's working.
 
+   A second window may follow: **"Name your literature notes by title?"**
+   Click **Rename**. The class syllabus finds your notes by each reading's
+   title; this renames notes that are named by citation key (like
+   `cai2009`) and makes new notes use titles. Links to the notes are
+   updated and nothing inside them changes.
+
    **Clicked "Not now" by accident?** Open the Command Palette
    (Cmd/Ctrl+P) and run **Second Reader: Update literature-note template**
-   — the same window appears. (You'll also be asked the first time you try
+   or **Second Reader: Name literature notes by title** — the same window
+   appears. (You'll also be asked the first time you try
    to sync highlights.)
 
 ## Step 3. Turn off Zotero Integration
@@ -94,7 +104,7 @@ on gives you two copies of every command.
 1. Settings (the gear icon, bottom-left) → **Community plugins**.
 2. Find **Zotero Integration** and switch it **off**.
 3. While you're there, check that **Second Reader** is switched **on** and
-   shows version **2.2.0** or higher. (Its name is now just "Second Reader"
+   shows version **2.3.0** or higher. (Its name is now just "Second Reader"
    — "Promote Candidates" is gone from the name.)
 
 Until you turn Zotero Integration off, Second Reader shows a reminder each
@@ -163,7 +173,7 @@ reading routine.
 | Second Reader still shows version 1.x | Repeat Step 1 and make sure you pick the highest version number, then Step 2. |
 | Your import command isn't in the Command Palette | Type **Second Reader** in the Command Palette to see its commands. If none are named after your import format, your format didn't carry over: set it up again with step 4f in [STUDENT-SETUP-GUIDE.md](STUDENT-SETUP-GUIDE.md). |
 | Every Zotero command appears twice | Zotero Integration is still on — Step 3. |
-| No highlighter icon at the top-right of the note | That icon only appears in literature notes made by the import command (they have a `citekey:` line at the top). Also check Second Reader is version 2.2.0 or higher. |
+| No highlighter icon at the top-right of the note | That icon only appears in literature notes made by the import command (they have a `citekey:` line at the top). Also check Second Reader is version 2.3.0 or higher. |
 | Clicking sync brings in no quotes | Check that Zotero is open, that you highlighted in **Zotero's** reader (not Preview or Adobe), and that your template is updated: run **Second Reader: Update literature-note template** from the Command Palette (it tells you if it's already up to date). |
 | Still no quotes, and "Update literature-note template" says it's up to date | Your import format may point at a different template file. Download the current template yourself: open [this page](https://github.com/kevinmil54/second-reader-obsidian-promote/blob/main/Templates/Literature%20Note%20Template%20-%20Zotero%20Import.md), click **Download raw file**, and put it in your vault's Templates folder in place of the old one (right-click the Templates folder in Obsidian → **Reveal in Finder** / **Show in system explorer** to find it). Then check Settings → Second Reader → Import Formats points at that file. |
 | A message says the note "has no citekey in its frontmatter" | The note wasn't created by the import command. Sync only works in notes that have a `citekey:` line at the top. |

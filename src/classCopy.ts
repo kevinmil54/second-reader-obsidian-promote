@@ -42,18 +42,40 @@ function literatureNoteOnLine(line: string): string | null {
 export interface ClassCopyResult {
   text: string;
   rewritten: number;
+  // Literature-note links pointed at the name a student's import gives the
+  // note, where that differs from the instructor's note name.
+  relinked: number;
   // Lines with a Zotero link but no note link to point it at. Their Zotero
   // links are removed, since they can only ever fail for students.
   unmatchedLines: number[];
 }
 
+// Rewrites a [[link]] to the student-side note name, keeping what it
+// displays: [[Instructor name]] → [[Student name|Instructor name]].
+function relink(
+  inner: string,
+  studentNoteName: (linktext: string) => string | null
+): string | null {
+  const [targetAndHeading, alias] = inner.split('|');
+  const [target, ...heading] = targetAndHeading.split('#');
+  const name = studentNoteName(target.trim());
+  if (!name || name === target.trim()) return null;
+  const head = heading.length ? `#${heading.join('#')}` : '';
+  return `${name}${head}|${alias ?? target.trim()}`;
+}
+
+// studentNoteName maps the instructor's note name to the name a student's
+// import will give the same reading's note (null = keep the link as is).
 export function makeClassCopy(
   master: string,
   masterLinktext: string,
-  generatedOn: string
+  generatedOn: string,
+  studentNoteName: (linktext: string) => string | null = () => null
 ): ClassCopyResult {
   let rewritten = 0;
+  let relinked = 0;
   const unmatchedLines: number[] = [];
+  const studentName = (linktext: string) => studentNoteName(linktext) ?? linktext;
 
   const lines = master.split('\n').map((line, i) => {
     if (!new RegExp(ZOTERO_LINK.source).test(line)) return line;
@@ -65,9 +87,16 @@ export function makeClassCopy(
     }
     return line.replace(ZOTERO_LINK, () => {
       rewritten++;
-      return `](${openPdfUrl(note)})`;
+      return `](${openPdfUrl(studentName(note))})`;
     });
-  });
+  }).map((line) =>
+    line.replace(WIKILINK, (whole, inner: string) => {
+      const replacement = relink(inner, studentNoteName);
+      if (!replacement) return whole;
+      relinked++;
+      return `[[${replacement}]]`;
+    })
+  );
 
   const banner =
     `%% Student copy made by Second Reader from [[${masterLinktext}]] on ${generatedOn}. ` +
@@ -80,7 +109,7 @@ export function makeClassCopy(
     ? text.slice(0, fm[0].length) + `\n${banner}\n` + text.slice(fm[0].length)
     : `${banner}\n\n${text}`;
 
-  return { text: withBanner, rewritten, unmatchedLines };
+  return { text: withBanner, rewritten, relinked, unmatchedLines };
 }
 
 export function classCopyPathFor(masterPath: string): string {

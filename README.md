@@ -80,7 +80,12 @@ note named on the same line (the link after "Literature note:", else the
 line's first `[[link]]`). On a student's computer that opens *their* copy:
 the note's `pdf:` property, or, for notes made before 2.2, the PDF found in
 Zotero by the note's citekey (then saved into the note). Zotero links with no
-note on their line become plain text and are listed in the notice. Re-run
+note on their line become plain text and are listed in the notice.
+Literature-note links are also pointed at the name each student's import
+will give the note — computed from the linked note's `title` with the
+import's file-name rules — when that differs from your note's name (e.g. a
+Zotero title ending in a period); they keep displaying as written
+(`[[Student name|Your name]]`). Re-run
 the command after every syllabus edit; the copy carries a do-not-edit banner.
 
 Literature-note links in the syllabus only resolve if students keep the

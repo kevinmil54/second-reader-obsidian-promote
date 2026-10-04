@@ -77,3 +77,34 @@ test('class copy paths', () => {
   expect(isClassCopyPath('Classes/ED 359/Syllabus - student copy.md')).toBe(true);
   expect(isClassCopyPath('Classes/ED 359/Syllabus.md')).toBe(false);
 });
+
+describe('makeClassCopy with student-side note names', () => {
+  const studentNames: Record<string, string> = {
+    'Most people are not WEIRD': 'Most people are not WEIRD.',
+    'The Developmental Niche':
+      'The Developmental Niche - A Conceptualization at the Interface of Child and Culture',
+  };
+  const { text, relinked } = makeClassCopy(
+    SYLLABUS + '6. Super & Harkness (1986).\n   - Zotero: [open pdf](zotero://open-pdf/library/items/VARHWK8Q) · Literature note: [[The Developmental Niche]]\n',
+    'Syllabus',
+    '2026-10-04',
+    (linktext) => studentNames[linktext] ?? null
+  );
+
+  test('links whose student-side name differs point there but read the same', () => {
+    expect(text).toContain('Literature note: [[Most people are not WEIRD.|Most people are not WEIRD]]');
+    expect(text).toContain(
+      'Literature note: [[The Developmental Niche - A Conceptualization at the Interface of Child and Culture|The Developmental Niche]]'
+    );
+    expect(relinked).toBe(2);
+  });
+
+  test('"open pdf" uses the student-side name', () => {
+    expect(text).toContain('(obsidian://second-reader?open-pdf=Most%20people%20are%20not%20WEIRD.)');
+    expect(text).toContain('open-pdf=The%20Developmental%20Niche%20-%20A%20Conceptualization');
+  });
+
+  test('links that already match are left exactly as they were', () => {
+    expect(text).toContain('Literature note: [[Conceptions of effective mathematics teaching within a cultural context - perspectives of teachers from China and the United States]]');
+  });
+});

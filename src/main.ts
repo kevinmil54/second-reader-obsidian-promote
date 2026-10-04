@@ -30,6 +30,7 @@ import {
   makeClassCopy,
 } from './classCopy';
 import { LiteratureLinkColors } from './litLinks';
+import { titleNamedPath } from './noteNaming';
 import {
   applyNamingFix,
   askToFixNaming,
@@ -397,10 +398,22 @@ export default class ZoteroConnector extends Plugin {
   }
 
   async makeClassCopyOf(master: TFile) {
-    const { text, rewritten, unmatchedLines } = makeClassCopy(
+    // Students' notes are named by their import from each reading's title,
+    // which can differ from what the instructor's own note is called.
+    const studentNoteName = (linktext: string): string | null => {
+      const note = this.app.metadataCache.getFirstLinkpathDest(linktext, master.path);
+      if (!note) return null;
+      const fm = this.app.metadataCache.getFileCache(note)?.frontmatter;
+      if (typeof fm?.citekey !== 'string' || typeof fm?.title !== 'string') return null;
+      const title = fm.title.trim();
+      if (!title) return null;
+      return titleNamedPath(note.path, title).split('/').pop().replace(/\.md$/i, '');
+    };
+    const { text, rewritten, relinked, unmatchedLines } = makeClassCopy(
       await this.app.vault.read(master),
       master.basename,
-      window.moment().format('YYYY-MM-DD')
+      window.moment().format('YYYY-MM-DD'),
+      studentNoteName
     );
     const path = classCopyPathFor(master.path);
     const existing = this.app.vault.getAbstractFileByPath(path);
@@ -414,6 +427,11 @@ export default class ZoteroConnector extends Plugin {
       `${existing ? 'Updated' : 'Made'} "${path.split('/').pop()}".`,
       `Rewrote ${rewritten} Zotero link${rewritten === 1 ? '' : 's'} so they open each student's own copy of the PDF.`,
     ];
+    if (relinked) {
+      parts.push(
+        `Pointed ${relinked} literature-note link${relinked === 1 ? '' : 's'} at the name students' imports will give the note (it differs from your note's name), keeping how ${relinked === 1 ? 'it reads' : 'they read'}.`
+      );
+    }
     if (unmatchedLines.length) {
       parts.push(
         `${unmatchedLines.length} Zotero link${unmatchedLines.length === 1 ? ' had' : 's had'} no literature note on the same line and became plain text (line${unmatchedLines.length === 1 ? '' : 's'} ${unmatchedLines.join(', ')}).`

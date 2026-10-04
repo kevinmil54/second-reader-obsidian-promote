@@ -115,6 +115,7 @@ is saved as a backup first. Notes already written are never changed.
 | **2.1.0** | Sept 25, 2026 | Plugin offers to update outdated templates; sync messages count only quotes actually added |
 | **2.2.0** | Oct 4, 2026 | Progress-colored links; Open PDF links; "Make class copy of syllabus"; template updates no longer interrupt syncing unless needed |
 | **2.3.0** | Oct 4, 2026 | Offers to rename citation-key-named notes to their titles (and fixes the import setting) so syllabus links find them; setup guide corrected to name notes by title |
+| **2.4.0** | Oct 4, 2026 | "Make class copy of syllabus" points each literature-note link at the exact name students' notes will have (e.g. when a paper's title ends in a period), while it still reads the same |
 
 ---
 
@@ -224,7 +225,10 @@ mid-term, export just the new ones into a separate file.
 **2. Make the students' syllabus.** Open your master syllabus in Obsidian
 and run **"Second Reader: Make class copy of syllabus"** (Command Palette).
 It creates `<syllabus name> - student copy.md` in the same folder and
-reports how many links it rewrote. A Zotero link with no literature-note
+reports how many links it rewrote. Where a reading's title would give a
+student's note a different name than your own note has (for example, a
+Zotero title ending in a period), the copy's link points at the student's
+name but still reads as you wrote it. A Zotero link with no literature-note
 link on its line is turned into plain text and listed by line number, so
 you can fix the master. Post the copy on Canvas (you can rename it first).
 

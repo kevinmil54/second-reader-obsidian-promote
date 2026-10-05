@@ -20,30 +20,27 @@ Works on **Mac or Windows**. Steps are marked where they differ.
 
 Every paper you read becomes a **Literature note** — your own notes on that
 source, plus whatever Second Reader adds. From there, ideas worth keeping on
-their own move through four more note types, each with its own top-level
+their own move through three more note types, each with its own top-level
 folder in your vault:
 
 - **Permanent notes** — one idea per note, in your own words, built to stand
   alone years from now. You create these by checking a box in a literature
   note.
-- **Structure notes** — group and map connections among a cluster of
-  Permanent notes on a theme (e.g. "College students are reading less than
-  they once did"). Mostly links — an index, not an essay.
-- **Evergreen notes** — the polished, written-out synthesis a mature
-  Structure note eventually grows into. Closer to a standalone essay than an
-  index.
+- **Synthesis notes** — gather your Permanent notes on one topic (e.g.
+  "College students are reading less than they once did") and state what
+  you now think, short enough to reread in two minutes.
 - **Project notes** — the argument-and-evidence framework for something
   you're actually writing (a paper, a talk) — pulls from your Permanent
   notes so you start from a structure instead of a blank page.
 
 ```
-Literature note → Permanent notes → Structure note → Evergreen note
+Literature note → Permanent notes → Synthesis note
                                   ↘ Project note
 ```
 
 A Permanent note's **Connections** section is where you link it to the
-Structure, Evergreen, and Project notes that draw on it — you build those
-links by hand as your vault grows; nothing does it for you automatically.
+Synthesis and Project notes that draw on it — you build those links by hand
+as your vault grows; nothing does it for you automatically.
 
 ---
 
@@ -157,11 +154,14 @@ import it the same way.
 ## 4. Set up Obsidian for the Second Reader note system
 
 ### Vault folders
-Create six folders at the top level of your vault (in Obsidian's file
+Create five folders at the top level of your vault (in Obsidian's file
 explorer, right-click the vault's root → **New folder**, once per name):
 
-**Templates**, **Literature notes**, **Permanent notes**, **Structure
-notes**, **Evergreen notes**, **Project notes**
+**Templates**, **Literature notes**, **Permanent notes**, **Synthesis
+notes**, **Project notes**
+
+If you're using your instructor's starter vault, these folders are already
+there.
 
 Everything below — the plugin's defaults, the import format, the
 templates' Connections section — assumes these exist with these exact
@@ -207,6 +207,12 @@ them from
 **[the class repo's Templates folder](https://github.com/kevinmil54/second-reader-obsidian-promote/tree/main/Templates)**
 (open each file there and use the download button). Put both into the
 `Templates` folder you created above.
+
+Your instructor may also give you a **Synthesis Note Template** and a
+**Project Template** (they're in the starter vault). Put them in
+`Templates` too. The lists of notes they build for you need the
+**Dataview** community plugin (Settings → Community plugins → Browse →
+"Dataview" → Install → Enable); without it, those lists show as code.
 
 ### e. Check the promote settings
 Settings → **Second Reader** → **Promote candidates** (at the top). It
@@ -330,12 +336,12 @@ Once setup is done, this is the whole routine per paper.
 9. **Coming back to the paper later?** Keep highlighting in Zotero and sync
    again — new highlights are added and everything else stays as you left
    it.
-10. Over time, gather related Permanent notes into a **Structure note** (in
-   your `Structure notes` folder); once that synthesis is dense enough,
-   write it up as an **Evergreen note**. Use **Project notes** when you're
-   actually writing something and want to pull together the Permanent notes
-   that support it. Link back to a Permanent note's **Connections** section
-   as you build these.
+10. Over time, gather related Permanent notes into a **Synthesis note** (in
+   your `Synthesis notes` folder) that says what you now think about a
+   topic. Use **Project notes** (in `Project notes`) when you're actually
+   writing something and want to pull together the Permanent notes that
+   support it. Link back to a Permanent note's **Connections** section as
+   you build these.
 
 ---
 

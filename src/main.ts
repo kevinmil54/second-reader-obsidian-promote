@@ -123,8 +123,28 @@ export default class ZoteroConnector extends Plugin {
     await this.importLegacyZoteroSettings();
     this.emitter = new Events();
 
-    new Promoter(this, () => this.settings).register();
+    const promoter = new Promoter(this, () => this.settings);
+    promoter.register();
     new LiteratureLinkColors(this).register();
+
+    this.addCommand({
+      id: 'promote-checked-candidates',
+      name: 'Promote checked candidates in this note',
+      checkCallback: (checking) => {
+        const file = this.app.workspace.getActiveFile();
+        if (!file || file.extension !== 'md') return false;
+        if (!checking) {
+          promoter.handleModify(file).then((n) =>
+            new Notice(
+              n
+                ? `Promoted ${n} candidate${n === 1 ? '' : 's'} to permanent notes.`
+                : 'No checked candidates waiting to be promoted in this note.'
+            )
+          );
+        }
+        return true;
+      },
+    });
 
     // Syllabus "open pdf" links: obsidian://second-reader?open-pdf=<note>
     this.registerObsidianProtocolHandler(PROTOCOL_ACTION, (params) => {

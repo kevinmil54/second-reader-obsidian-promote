@@ -1,4 +1,9 @@
-import { carryOverTags, collectDetailLines, sanitizeFilename } from '../../promote';
+import {
+  candidateTitle,
+  carryOverTags,
+  collectDetailLines,
+  sanitizeFilename,
+} from '../../promote';
 
 jest.mock(
   'obsidian',
@@ -28,6 +33,24 @@ describe('sanitizeFilename (Windows-safe, which is also macOS-safe)', () => {
   });
   test('caps length', () => {
     expect(sanitizeFilename('a'.repeat(300))).toHaveLength(120);
+  });
+  test('caps long sentences at a whole word', () => {
+    const name = sanitizeFilename(
+      'Working judges rolled dice to determine the sentence recommendation prosecutors would make in simulated cases. They gave higher sentences'
+    );
+    expect(name).toBe(
+      'Working judges rolled dice to determine the sentence recommendation prosecutors would make in simulated cases. They gave'
+    );
+  });
+});
+
+describe('candidateTitle', () => {
+  test('drops the Tasks plugin done date in either format', () => {
+    expect(candidateTitle('An idea  [completion:: 2026-10-05]')).toBe('An idea');
+    expect(candidateTitle('An idea ✅ 2026-10-05')).toBe('An idea');
+  });
+  test('drops the #sr-candidate tag', () => {
+    expect(candidateTitle('#sr-candidate An idea')).toBe('An idea');
   });
 });
 
@@ -111,6 +134,16 @@ describe('Promoter end to end (fake vault)', () => {
       '---\ntags: [permanent-note, psych101]\n---\n# Reading is thinking\n- elaboration\nfrom [[smith2023]]\n'
     );
     expect(files.get(note.path)).toContain('- [x] [[Reading is thinking]]\n\t- elaboration\n- [ ] Not yet');
+  });
+
+  test('a Tasks done date stays out of the new note and the link', async () => {
+    const { files, note, promoter } = setup(
+      '## Permanent note candidates\n- [x] Anchors bias judges  [completion:: 2026-10-05]\n\t- [ ] example of anchoring\n- [ ] \n'
+    );
+    expect(await promoter.handleModify(note)).toBe(1);
+    expect(files.has('Permanent notes/Anchors bias judges.md')).toBe(true);
+    expect(files.get('Permanent notes/Anchors bias judges.md')).toContain('# Anchors bias judges\n\n- [ ] example of anchoring');
+    expect(files.get(note.path)).toContain('- [x] [[Anchors bias judges]]\n\t- [ ] example of anchoring');
   });
 
   test('already-promoted links and unchecked boxes are left alone', async () => {

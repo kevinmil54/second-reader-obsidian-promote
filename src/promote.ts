@@ -23,6 +23,20 @@ const PERMANENT_NOTE_TAG = 'permanent-note';
 const NON_CARRYING_TAGS = new Set([LIT_NOTE_TAG, PERMANENT_NOTE_TAG, 'sr-candidate']);
 const CHECKED_ITEM_RE = /^(\s*-\s*\[[xX]\]\s*)(.*)$/;
 const SR_TAG_RE = /#sr-candidate\b/gi;
+// Metadata other plugins add when a box is checked — the Tasks plugin's done
+// date as a Dataview field ("[completion:: 2026-10-05]") or as an emoji
+// ("✅ 2026-10-05") — isn't part of the idea, so it stays out of the title.
+const INLINE_FIELD_RE = /\s*[[(][\w-]+::[^\])]*[\])]/g;
+const TASK_EMOJI_DATE_RE = /\s*[✅➕⏳📅🛫❌]️?\s*\d{4}-\d{2}-\d{2}/gu;
+
+export function candidateTitle(rawText: string): string {
+  return rawText
+    .replace(SR_TAG_RE, '')
+    .replace(INLINE_FIELD_RE, '')
+    .replace(TASK_EMOJI_DATE_RE, '')
+    .replace(/\s+/g, ' ')
+    .trim();
+}
 const HEADING_RE = /^#{1,6}\s/;
 const ALREADY_LINK_RE = /^\[\[.*\]\]$/;
 
@@ -51,7 +65,13 @@ export function sanitizeFilename(name: string): string {
   // Windows also disallows a trailing dot or space.
   out = out.replace(/[. ]+$/, '');
   if (!out) out = 'Untitled permanent note';
-  out = out.slice(0, 120); // stay well under the 255-char path-component limit
+  // Stay well under the 255-char path-component limit, ending on a whole
+  // word; the note's own title keeps the full text.
+  if (out.length > 120) {
+    const cut = out.slice(0, 121);
+    const lastSpace = cut.lastIndexOf(' ');
+    out = (lastSpace > 60 ? cut.slice(0, lastSpace) : out.slice(0, 120)).replace(/[. ]+$/, '');
+  }
   if (WINDOWS_RESERVED.has(out.toUpperCase())) out = out + ' note';
   return out;
 }
@@ -124,18 +144,23 @@ export class Promoter {
   ) {}
 
   register() {
-    this.plugin.registerEvent(
-      this.plugin.app.vault.on('modify', (file) => {
-        this.handleModify(file).catch((e) =>
-          console.error('Second Reader promote:', e)
-        );
-      })
-    );
+    const run = (file: TAbstractFile | null) => {
+      if (!file) return;
+      this.handleModify(file).catch((e) =>
+        console.error('Second Reader promote:', e)
+      );
+    };
+    this.plugin.registerEvent(this.plugin.app.vault.on('modify', run));
+    // Catch-up: a checked box can miss its "modify" event (another plugin
+    // handling the click, Obsidian closing first), so opening the note
+    // promotes anything still waiting.
+    this.plugin.registerEvent(this.plugin.app.workspace.on('file-open', run));
   }
 
-  async handleModify(file: TAbstractFile) {
-    if (!(file instanceof TFile) || file.extension !== 'md') return;
-    if (this.processing.has(file.path)) return;
+  // Returns how many candidates were promoted.
+  async handleModify(file: TAbstractFile): Promise<number> {
+    if (!(file instanceof TFile) || file.extension !== 'md') return 0;
+    if (this.processing.has(file.path)) return 0;
 
     const app = this.plugin.app;
     const cache = app.metadataCache.getFileCache(file);
@@ -144,14 +169,14 @@ export class Promoter {
     const isLiteratureNote = tagList.some(
       (t) => String(t).toLowerCase() === LIT_NOTE_TAG
     );
-    if (!isLiteratureNote) return;
+    if (!isLiteratureNote) return 0;
 
     const content = await app.vault.read(file);
-    if (!content.toLowerCase().includes(CANDIDATE_HEADING)) return;
+    if (!content.toLowerCase().includes(CANDIDATE_HEADING)) return 0;
 
     const lines = content.split('\n');
     let inSection = false;
-    let changed = false;
+    let promoted = 0;
 
     this.processing.add(file.path);
     try {
@@ -171,7 +196,7 @@ export class Promoter {
         const rawText = m[2].trim();
         if (!rawText || ALREADY_LINK_RE.test(rawText)) continue; // nothing to do, or already promoted
 
-        const title = rawText.replace(SR_TAG_RE, '').trim();
+        const title = candidateTitle(rawText);
         if (!title) continue;
 
         const itemIndent = (line.match(/^(\s*)/) || ['', ''])[1].length;
@@ -180,7 +205,7 @@ export class Promoter {
         try {
           const newFile = await this.createPermanentNote(title, file, tagList, details);
           lines[i] = `${m[1]}[[${newFile.basename}]]`;
-          changed = true;
+          promoted++;
         } catch (e) {
           console.error('Second Reader promote failed:', e);
           new Notice(`Second Reader: couldn't create note "${title}" — ${e.message}`);
@@ -188,12 +213,13 @@ export class Promoter {
         i = nextIdx - 1; // skip the detail lines we already consumed (kept as-is in this note)
       }
 
-      if (changed) {
+      if (promoted) {
         await app.vault.modify(file, lines.join('\n'));
       }
     } finally {
       this.processing.delete(file.path);
     }
+    return promoted;
   }
 
   async createPermanentNote(

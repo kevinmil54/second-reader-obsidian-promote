@@ -2,6 +2,7 @@ import {
   candidateTitle,
   carryOverTags,
   collectDetailLines,
+  promotedLink,
   sanitizeFilename,
 } from '../../promote';
 
@@ -51,6 +52,31 @@ describe('candidateTitle', () => {
   });
   test('drops the #sr-candidate tag', () => {
     expect(candidateTitle('#sr-candidate An idea')).toBe('An idea');
+  });
+});
+
+describe('promotedLink', () => {
+  test('a plain link when the filename is the whole candidate', () => {
+    expect(promotedLink('Reading is thinking', 'Reading is thinking')).toBe(
+      '[[Reading is thinking]]'
+    );
+  });
+  test('adds the full wording when the filename was shortened', () => {
+    const title =
+      'Having friends is related to many positive developmental outcomes, although this effect depends in part on whether the friends are themselves socially competent.';
+    const base = sanitizeFilename(title);
+    expect(base.length).toBeLessThan(title.length);
+    expect(promotedLink(base, title)).toBe(`[[${base}|${title}]]`);
+  });
+  test('adds the full wording when characters were stripped from the filename', () => {
+    expect(promotedLink('a secure base for exploring', 'a "secure base" for exploring')).toBe(
+      '[[a secure base for exploring|a "secure base" for exploring]]'
+    );
+  });
+  test('display text never contains a pipe or a closing bracket pair', () => {
+    const link = promotedLink('a b c', 'a | b [[c]]');
+    expect(link).toBe('[[a b c|a - b c]]');
+    expect(link.slice(2, -2).split('|')).toHaveLength(2);
   });
 });
 
@@ -144,6 +170,24 @@ describe('Promoter end to end (fake vault)', () => {
     expect(files.has('Permanent notes/Anchors bias judges.md')).toBe(true);
     expect(files.get('Permanent notes/Anchors bias judges.md')).toContain('# Anchors bias judges\n\n- [ ] example of anchoring');
     expect(files.get(note.path)).toContain('- [x] [[Anchors bias judges]]\n\t- [ ] example of anchoring');
+  });
+
+  test('a long candidate keeps its full wording in the literature note link', async () => {
+    const long =
+      'Ideas about friendship and its importance seem to be continuous across the lifespan from preschool to old age, although other aspects of friendship vary';
+    const { files, note, promoter } = setup(
+      `## Permanent note candidates\n- [x] ${long}\n\t- elaboration\n`
+    );
+    expect(await promoter.handleModify(note)).toBe(1);
+    const base = sanitizeFilename(long);
+    expect(files.has(`Permanent notes/${base}.md`)).toBe(true);
+    expect(files.get(note.path)).toContain(`- [x] [[${base}|${long}]]\n\t- elaboration`);
+    // the new note's own title still has the whole text
+    expect(files.get(`Permanent notes/${base}.md`)).toContain(long);
+    // and a second pass leaves the rewritten line alone
+    const after = files.get(note.path);
+    expect(await promoter.handleModify(note)).toBe(0);
+    expect(files.get(note.path)).toBe(after);
   });
 
   test('already-promoted links and unchecked boxes are left alone', async () => {

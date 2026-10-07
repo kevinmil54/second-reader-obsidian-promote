@@ -76,6 +76,23 @@ export function sanitizeFilename(name: string): string {
   return out;
 }
 
+// The link that replaces a promoted candidate in the literature note. The new
+// note's filename is sanitized and capped at 120 characters, so when it
+// differs from the candidate's own wording the link carries the full wording
+// as its display text ([[filename|full text]]). Obsidian shows the full text,
+// the link still resolves, and anything that reads the literature note later
+// (a handout, a search, a reader) gets the whole candidate rather than a
+// shortened filename.
+export function promotedLink(basename: string, title: string): string {
+  // "|" would end the display text early and "]]" would end the link.
+  const display = title
+    .replace(/\|/g, '-')
+    .replace(/\[\[|\]\]/g, '')
+    .replace(/\s+/g, ' ')
+    .trim();
+  return !display || display === basename ? `[[${basename}]]` : `[[${basename}|${display}]]`;
+}
+
 // Topical tags on the literature note (e.g. course or subject tags a
 // student added) carry over to a promoted note; status markers like
 // "literature-note" don't — the note is no longer a literature note once
@@ -204,7 +221,7 @@ export class Promoter {
 
         try {
           const newFile = await this.createPermanentNote(title, file, tagList, details);
-          lines[i] = `${m[1]}[[${newFile.basename}]]`;
+          lines[i] = `${m[1]}${promotedLink(newFile.basename, title)}`;
           promoted++;
         } catch (e) {
           console.error('Second Reader promote failed:', e);

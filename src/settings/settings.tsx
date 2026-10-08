@@ -480,6 +480,7 @@ export class ZoteroConnectorSettingsTab extends PluginSettingTab {
     containerEl.empty();
 
     this.displayPromoteSettings(containerEl.createDiv());
+    this.displayPackageSettings(containerEl.createDiv());
 
     containerEl.createEl('h2', { text: 'Zotero import & highlight sync' });
     this.reactRoot = containerEl.createDiv();
@@ -496,6 +497,25 @@ export class ZoteroConnectorSettingsTab extends PluginSettingTab {
       />,
       this.reactRoot
     );
+  }
+
+  displayPackageSettings(el: HTMLElement) {
+    el.createEl('h2', { text: 'Packaging notes for upload' });
+    new Setting(el)
+      .setName('Your name')
+      .setDesc(
+        'Used in the name of the zip that "Package my Week N literature notes" makes, ' +
+          'so your instructor can tell whose notes are whose.'
+      )
+      .addText((text) =>
+        text
+          .setPlaceholder('First Last')
+          .setValue(this.plugin.settings.studentName ?? '')
+          .onChange((value) => {
+            this.plugin.settings.studentName = value.trim();
+            this.debouncedSave();
+          })
+      );
   }
 
   displayPromoteSettings(el: HTMLElement) {

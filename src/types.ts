@@ -83,6 +83,8 @@ export interface ZoteroConnectorSettings extends PromoteSettings {
   _templateUpgradeDeclinedVersion?: string;
   // Same, for the offer to name literature notes by title.
   _noteNamingDeclinedVersion?: string;
+  // Goes in the name of the zip made by "Package a week's literature notes".
+  studentName?: string;
   citeFormats: CitationFormat[];
   citeSuggestTemplate?: string;
   database: Database;

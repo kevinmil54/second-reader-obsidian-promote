@@ -17,6 +17,10 @@ literature-note workflow. One plugin covers the whole loop:
 - **"open pdf" that works for every student.** A class copy of the
   instructor's syllabus links each reading through the student's own
   literature note to their own copy of the PDF.
+- **Package a week's notes for upload.** A link under each week of the
+  class copy of the syllabus zips the student's literature notes for that
+  week (one file per reading, the student's name in the zip's name) and
+  shows the zip, ready for Canvas.
 - **Promote candidates.** Checking a box under `## Permanent note candidates`
   in a note tagged `literature-note` creates a permanent note from a
   template and turns the line into a link to it.
@@ -91,6 +95,20 @@ the command after every syllabus edit; the copy carries a do-not-edit banner.
 Literature-note links in the syllabus only resolve if students keep the
 note names the import produces, so the output path template should name
 notes the way the syllabus links do (e.g. `Literature notes/{{title}}.md`).
+
+**Packaging links.** The class copy also gets a line under every `Week N`
+heading (any heading level) whose section links to a note:
+`[Package my Week N literature notes for upload](obsidian://second-reader?package-week=N&syllabus=<copy name>)`.
+On a student's computer it collects the literature notes linked in that
+week's section that the student has made, writes
+`Uploads/<course> Week NN literature notes - <student name>.zip` (the notes
+sit in a folder of that name inside the zip, with any embedded images under
+`attachments/`), and shows the zip in Finder or Explorer. `<course>` comes
+from the syllabus's `course` property ("ED 336/536 & …" → "ED 336"). The
+notes are copied only into the zip, never into the vault, so they can't make
+`[[links]]` ambiguous. Readings without a note are skipped and named in the
+notice. The student's name is asked for once and stored in the plugin
+settings.
 
 **3. Link colors.** Any link to a literature note (frontmatter `citekey` or
 tag `literature-note`) is colored by the student's progress, in reading view

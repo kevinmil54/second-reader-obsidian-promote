@@ -30,6 +30,13 @@ import {
   makeClassCopy,
 } from './classCopy';
 import { LiteratureLinkColors } from './litLinks';
+import { PACKAGE_WEEK_PARAM, SYLLABUS_PARAM, addPackageLinks } from './weekPackage';
+import {
+  WeekPackageHost,
+  chooseWeekAndPackage,
+  findSyllabus,
+  packageWeek,
+} from './weekPackageUI';
 import { titleNamedPath } from './noteNaming';
 import {
   applyNamingFix,
@@ -147,9 +154,37 @@ export default class ZoteroConnector extends Plugin {
     });
 
     // Syllabus "open pdf" links: obsidian://second-reader?open-pdf=<note>
+    // Syllabus "package" links: obsidian://second-reader?package-week=N&syllabus=<note>
     this.registerObsidianProtocolHandler(PROTOCOL_ACTION, (params) => {
       const note = params[OPEN_PDF_PARAM];
       if (note) this.openPdfForNote(note);
+      const week = Number(params[PACKAGE_WEEK_PARAM]);
+      if (params[PACKAGE_WEEK_PARAM] !== undefined) {
+        const syllabus = findSyllabus(this.app, params[SYLLABUS_PARAM]);
+        if (!Number.isInteger(week) || week < 1 || !syllabus) {
+          new Notice('Open your syllabus and use the packaging link under the week you want.');
+        } else {
+          packageWeek(this.weekPackageHost(), week, syllabus).catch((e) => {
+            console.error('Second Reader: packaging failed', e);
+            new Notice(`Couldn't package the notes: ${e?.message ?? e}`, 10000);
+          });
+        }
+      }
+    });
+
+    this.addCommand({
+      id: 'package-week',
+      name: "Package a week's literature notes for upload",
+      checkCallback: (checking) => {
+        const file = this.app.workspace.getActiveFile();
+        if (!file || file.extension !== 'md') return false;
+        if (!checking) {
+          this.app.vault
+            .read(file)
+            .then((text) => chooseWeekAndPackage(this.weekPackageHost(), file, text));
+        }
+        return true;
+      },
     });
 
     this.addCommand({
@@ -371,6 +406,17 @@ export default class ZoteroConnector extends Plugin {
     );
   }
 
+  weekPackageHost(): WeekPackageHost {
+    return {
+      app: this.app,
+      getStudentName: () => this.settings.studentName ?? '',
+      setStudentName: async (name: string) => {
+        this.settings.studentName = name;
+        await this.saveSettings();
+      },
+    };
+  }
+
   // Opens the student's own copy of a reading's PDF, found through their
   // literature note: its `pdf:` property, or else by asking Zotero for the
   // note's citekey (and remembering the answer in the note).
@@ -436,11 +482,13 @@ export default class ZoteroConnector extends Plugin {
       studentNoteName
     );
     const path = classCopyPathFor(master.path);
+    const copyName = path.split('/').pop().replace(/\.md$/i, '');
+    const packaged = addPackageLinks(text, copyName);
     const existing = this.app.vault.getAbstractFileByPath(path);
     if (existing instanceof TFile) {
-      await this.app.vault.modify(existing, text);
+      await this.app.vault.modify(existing, packaged.text);
     } else {
-      await this.app.vault.create(path, text);
+      await this.app.vault.create(path, packaged.text);
     }
 
     const parts = [
@@ -450,6 +498,11 @@ export default class ZoteroConnector extends Plugin {
     if (relinked) {
       parts.push(
         `Pointed ${relinked} literature-note link${relinked === 1 ? '' : 's'} at the name students' imports will give the note (it differs from your note's name), keeping how ${relinked === 1 ? 'it reads' : 'they read'}.`
+      );
+    }
+    if (packaged.added) {
+      parts.push(
+        `Added a "Package my Week N literature notes" link under ${packaged.added} week heading${packaged.added === 1 ? '' : 's'}.`
       );
     }
     if (unmatchedLines.length) {

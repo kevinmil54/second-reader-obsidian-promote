@@ -370,6 +370,24 @@ the import command from step 2 above instead, so the note gets filled in).
 It works once you've made that reading's literature note; if you haven't, a
 message tells you which command to run. (Zotero needs to be open.)
 
+### Handing in a week's literature notes
+
+Under each week's heading in the syllabus there is a link, **Package my
+Week N literature notes for upload**. Click it and Second Reader:
+
+1. finds the literature notes you have made for that week's readings (one
+   file per reading; readings you haven't made a note for are skipped and
+   listed in the message);
+2. puts them in a zip named like `ED 336 Week 05 literature notes - Your Name.zip`
+   in the `Uploads` folder of your vault;
+3. shows the zip in Finder (Explorer on Windows), ready to upload to Canvas.
+
+The first time, it asks for your name; you can change it later under
+Settings → Second Reader → "Your name". Clicking the link again replaces
+that week's zip with a fresh one. You can also run **"Second Reader: Package
+a week's literature notes for upload"** with the syllabus open and pick the
+week.
+
 ---
 
 ## Getting updates later

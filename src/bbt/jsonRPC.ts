@@ -563,6 +563,35 @@ export async function execSearch(term: string, database: DatabaseWithPort) {
   }
 }
 
+// Items in the user's own library whose title contains `text`. Uses Better
+// BibTeX's structured search: its plain-string search builds a condition
+// Zotero 9 rejects ("Invalid condition 'groupStart'").
+export async function searchByTitle(text: string, database: DatabaseWithPort) {
+  const qid = Symbol();
+  try {
+    await ZQueue.wait(qid);
+    const res = await request({
+      method: 'POST',
+      url: `http://127.0.0.1:${getPort(
+        database.database,
+        database.port
+      )}/better-bibtex/json-rpc`,
+      body: JSON.stringify({
+        jsonrpc: '2.0',
+        method: 'item.search',
+        params: [[['ignore_feeds'], ['libraryID', 'is', 1], ['title', 'contains', text]]],
+      }),
+      headers: defaultHeaders,
+    });
+    return JSON.parse(res).result ?? null;
+  } catch (e) {
+    console.error(e);
+    return null;
+  } finally {
+    ZQueue.end(qid);
+  }
+}
+
 const translatorId = 'f4b52ab0-f878-4556-85a0-c7aeedd09dfc';
 export async function getCiteKeyExport(
   database: DatabaseWithPort,

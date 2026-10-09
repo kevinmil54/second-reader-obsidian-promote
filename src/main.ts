@@ -20,7 +20,7 @@ import {
 } from './bbt/exportNotes';
 import './bbt/template.helpers';
 import { setPluginDir } from './helpers';
-import { execSearch, getAttachmentsFromCiteKey } from './bbt/jsonRPC';
+import { getAttachmentsFromCiteKey, searchByTitle } from './bbt/jsonRPC';
 import { pickCitekey, replaceCitekey } from './citekeyRepair';
 import {
   OPEN_PDF_PARAM,
@@ -453,6 +453,7 @@ export default class ZoteroConnector extends Plugin {
     const fm = this.app.metadataCache.getFileCache(note)?.frontmatter;
     let url: string | null =
       typeof fm?.pdf === 'string' && fm.pdf.startsWith('zotero://') ? fm.pdf : null;
+    let problem: string | null = null;
 
     if (!url && typeof fm?.citekey === 'string' && fm.citekey.trim()) {
       const db = { database: this.settings.database, port: this.settings.port };
@@ -466,9 +467,22 @@ export default class ZoteroConnector extends Plugin {
         const key = await this.repairCitekey(note);
         if (key) attachments = await getAttachmentsFromCiteKey({ key, library: 1 }, db);
       }
-      const pdf = (attachments ?? []).find(
-        (a: any) => typeof a?.open === 'string' && /\.pdf$/i.test(a?.path ?? '')
-      );
+      const list: any[] = Array.isArray(attachments) ? attachments : [];
+      // A PDF first; failing that, any attachment Zotero can open (a linked
+      // file, or one whose path Zotero doesn't report).
+      const pdf =
+        list.find((a) => typeof a?.open === 'string' && /\.pdf$/i.test(a?.path ?? '')) ??
+        list.find((a) => typeof a?.open === 'string' && !/\.(html?|md|txt)$/i.test(a?.path ?? ''));
+      if (!pdf) {
+        problem =
+          attachments == null
+            ? `Your Zotero doesn't have this reading under the citekey ${fm.citekey}, and no item in your library has the title "${fm.title ?? note.basename}". Check that the course readings are imported into Zotero.`
+            : list.length === 0
+            ? `Your Zotero item for this reading has no attachments. Attach the PDF to it in Zotero.`
+            : `Your Zotero item for this reading has attachments but no PDF (${list
+                .map((a) => String(a?.path ?? '?').split(/[\\/]/).pop())
+                .join(', ')}).`;
+      }
       if (pdf) {
         url = pdf.open;
         await this.app.fileManager.processFrontMatter(note, (front) => {
@@ -479,8 +493,9 @@ export default class ZoteroConnector extends Plugin {
 
     if (!url) {
       new Notice(
-        `Couldn't find a PDF for "${note.basename}". Make sure Zotero is open and that this reading has its PDF attached in your Zotero library.`,
-        12000
+        `Couldn't find a PDF for "${note.basename}". ` +
+          (problem ?? 'Make sure Zotero is open and that this reading has its PDF attached in your Zotero library.'),
+        15000
       );
       return;
     }
@@ -696,7 +711,9 @@ export default class ZoteroConnector extends Plugin {
     const title = typeof fm?.title === 'string' ? fm.title.trim() : '';
     const oldKey = typeof fm?.citekey === 'string' ? fm.citekey.trim().replace(/^@/, '') : '';
     if (!title) return null;
-    const results = await execSearch(title, {
+    // A leading slice of the title, so punctuation that differs between
+    // libraries doesn't stop the search; pickCitekey then compares in full.
+    const results = await searchByTitle(title.slice(0, 40), {
       database: this.settings.database,
       port: this.settings.port,
     });

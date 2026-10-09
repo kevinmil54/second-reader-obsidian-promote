@@ -1,6 +1,6 @@
 {
   "name": "second-reader",
-  "version": "2.7.0",
+  "version": "2.7.1",
   "description": "Second Reader Obsidian plugin: Zotero import + highlight sync + promote candidates",
   "main": "main.js",
   "scripts": {

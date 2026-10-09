@@ -20,7 +20,8 @@ import {
 } from './bbt/exportNotes';
 import './bbt/template.helpers';
 import { setPluginDir } from './helpers';
-import { getAttachmentsFromCiteKey } from './bbt/jsonRPC';
+import { execSearch, getAttachmentsFromCiteKey } from './bbt/jsonRPC';
+import { pickCitekey, replaceCitekey } from './citekeyRepair';
 import {
   OPEN_PDF_PARAM,
   PROTOCOL_ACTION,
@@ -454,10 +455,17 @@ export default class ZoteroConnector extends Plugin {
       typeof fm?.pdf === 'string' && fm.pdf.startsWith('zotero://') ? fm.pdf : null;
 
     if (!url && typeof fm?.citekey === 'string' && fm.citekey.trim()) {
-      const attachments = await getAttachmentsFromCiteKey(
+      const db = { database: this.settings.database, port: this.settings.port };
+      let attachments = await getAttachmentsFromCiteKey(
         { key: fm.citekey.replace(/^@/, ''), library: 1 },
-        { database: this.settings.database, port: this.settings.port }
+        db
       );
+      // No result at all means Zotero doesn't know this citekey: the note
+      // may carry the key the reading had in the instructor's library.
+      if (attachments == null) {
+        const key = await this.repairCitekey(note);
+        if (key) attachments = await getAttachmentsFromCiteKey({ key, library: 1 }, db);
+      }
       const pdf = (attachments ?? []).find(
         (a: any) => typeof a?.open === 'string' && /\.pdf$/i.test(a?.path ?? '')
       );
@@ -680,8 +688,33 @@ export default class ZoteroConnector extends Plugin {
 
   private syncing = new Set<string>();
 
+  // Finds the student's own Zotero item for a literature note by its title
+  // and year, and switches the note to that item's citekey. Returns the key,
+  // or null if Zotero has no single matching item.
+  async repairCitekey(file: TFile): Promise<string | null> {
+    const fm = this.app.metadataCache.getFileCache(file)?.frontmatter;
+    const title = typeof fm?.title === 'string' ? fm.title.trim() : '';
+    const oldKey = typeof fm?.citekey === 'string' ? fm.citekey.trim().replace(/^@/, '') : '';
+    if (!title) return null;
+    const results = await execSearch(title, {
+      database: this.settings.database,
+      port: this.settings.port,
+    });
+    const key = pickCitekey(results ?? [], title, fm?.year != null ? String(fm.year) : undefined);
+    if (!key) return null;
+    if (key !== oldKey) {
+      await this.app.vault.process(file, (text) =>
+        oldKey
+          ? replaceCitekey(text, oldKey, key)
+          : text.replace(/^(citekey:)[ \t]*$/m, `$1 ${key}`)
+      );
+      new Notice(`Linked "${file.basename}" to your Zotero item (citekey ${key}).`, 6000);
+    }
+    return key;
+  }
+
   async syncHighlights(file: TFile) {
-    const citekey =
+    let citekey =
       this.app.metadataCache.getFileCache(file)?.frontmatter?.citekey;
     if (!citekey || typeof citekey !== 'string') {
       new Notice(
@@ -699,6 +732,16 @@ export default class ZoteroConnector extends Plugin {
     }
 
     if (this.syncing.has(file.path)) return;
+    // A handed-out note can carry a citekey the student's Zotero doesn't
+    // know; find the student's item first.
+    const known = await getAttachmentsFromCiteKey(
+      { key: citekey.replace(/^@/, ''), library: 1 },
+      { database: this.settings.database, port: this.settings.port }
+    );
+    if (known == null) {
+      const repaired = await this.repairCitekey(file);
+      if (repaired) citekey = repaired;
+    }
     // An old template renders no quotes block, so a sync would silently add
     // nothing.
     if (!(await this.offerTemplateUpgrade('sync', [format]))) return;

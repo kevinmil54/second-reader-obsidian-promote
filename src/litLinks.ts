@@ -30,6 +30,8 @@ import {
 } from './litNoteState';
 import pastTemplates from './pastLiteratureTemplates.md';
 
+const BUNDLED_TEMPLATES = [currentTemplate, ...splitTemplateVersions(pastTemplates)];
+
 export const STATE_CLASSES: Record<LitNoteState, string> = {
   untouched: 'sr-lit-untouched',
   highlights: 'sr-lit-highlights',
@@ -47,10 +49,7 @@ export function isLiteratureNote(plugin: Plugin, file: TFile): boolean {
 }
 
 export class LiteratureLinkColors {
-  private boilerplate = buildBoilerplate([
-    currentTemplate,
-    ...splitTemplateVersions(pastTemplates),
-  ]);
+  private boilerplate = buildBoilerplate(BUNDLED_TEMPLATES);
   // null = not a literature note; missing = not computed yet.
   private states = new Map<string, LitNoteState | null>();
   private computing = new Set<string>();
@@ -81,6 +80,21 @@ export class LiteratureLinkColors {
     this.plugin.registerEvent(
       app.metadataCache.on('resolved', () => this.refreshSoon())
     );
+  }
+
+  // Template text from the vault (an instructor's own version of the
+  // template, say) also counts as template text, not student writing.
+  setVaultTemplates(texts: string[]) {
+    this.boilerplate = buildBoilerplate([...BUNDLED_TEMPLATES, ...texts]);
+    this.states.clear();
+    this.refreshSoon();
+  }
+
+  // The note's state worked out now, for callers that can't wait for the
+  // cache (null = not a literature note).
+  async stateNow(file: TFile): Promise<LitNoteState | null> {
+    if (!isLiteratureNote(this.plugin, file)) return null;
+    return literatureNoteState(await this.plugin.app.vault.cachedRead(file), this.boilerplate);
   }
 
   private forget(path: string) {

@@ -106,8 +106,8 @@ sit in a folder of that name inside the zip, with any embedded images under
 `attachments/`), and shows the zip in Finder or Explorer. `<course>` comes
 from the syllabus's `course` property ("ED 336/536 & …" → "ED 336"). The
 notes are copied only into the zip, never into the vault, so they can't make
-`[[links]]` ambiguous. Readings without a note are skipped and named in the
-notice. The student's name is asked for once and stored in the plugin
+`[[links]]` ambiguous. Readings without a note, and notes that are still blank (nothing but
+template text, as for link colors), are skipped and named in the notice. The student's name is asked for once and stored in the plugin
 settings.
 
 **3. Link colors.** Any link to a literature note (frontmatter `citekey` or
@@ -116,7 +116,8 @@ and the editor: no class while the note doesn't exist (Obsidian's unresolved
 style), `sr-lit-untouched`, `sr-lit-highlights`, `sr-lit-worked`. Colors are
 the CSS variables `--sr-lit-highlights-color` and `--sr-lit-worked-color`
 (yellow and green by default) — override them in a CSS snippet. "Worked"
-means any body line that isn't template text (`src/litNoteState.ts`);
+means any body line that isn't template text (`src/litNoteState.ts`; the
+import formats' own template files count as template text too);
 frontmatter and synced quotes don't count.
 
 ## Templates

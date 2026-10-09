@@ -122,6 +122,7 @@ async function fixPath() {
 export default class ZoteroConnector extends Plugin {
   settings: ZoteroConnectorSettings;
   emitter: Events;
+  linkColors: LiteratureLinkColors;
   fuse: Fuse<CiteKeyExport>;
 
   async onload() {
@@ -132,7 +133,9 @@ export default class ZoteroConnector extends Plugin {
 
     const promoter = new Promoter(this, () => this.settings);
     promoter.register();
-    new LiteratureLinkColors(this).register();
+    this.linkColors = new LiteratureLinkColors(this);
+    this.linkColors.register();
+    this.app.workspace.onLayoutReady(() => this.loadVaultTemplates());
 
     this.addCommand({
       id: 'promote-checked-candidates',
@@ -406,9 +409,22 @@ export default class ZoteroConnector extends Plugin {
     );
   }
 
+  // The import formats' own template files, so their text never counts as
+  // student writing when judging how far a note has gotten.
+  async loadVaultTemplates() {
+    const texts: string[] = [];
+    for (const f of this.settings.exportFormats ?? []) {
+      if (!f.templatePath) continue;
+      const file = this.app.vault.getAbstractFileByPath(normalizePath(f.templatePath));
+      if (file instanceof TFile) texts.push(await this.app.vault.cachedRead(file));
+    }
+    if (texts.length) this.linkColors.setVaultTemplates(texts);
+  }
+
   weekPackageHost(): WeekPackageHost {
     return {
       app: this.app,
+      noteState: (file: TFile) => this.linkColors.stateNow(file),
       getStudentName: () => this.settings.studentName ?? '',
       setStudentName: async (name: string) => {
         this.settings.studentName = name;

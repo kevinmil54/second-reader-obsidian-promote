@@ -26,6 +26,8 @@ export interface WeekPackageHost {
   app: App;
   getStudentName(): string;
   setStudentName(name: string): Promise<void>;
+  // 'untouched' notes (template only) are left out of the package.
+  noteState(file: TFile): Promise<'untouched' | 'highlights' | 'worked' | null>;
 }
 
 function isLiteratureNote(app: App, file: TFile): boolean {
@@ -152,9 +154,18 @@ export async function packageWeek(host: WeekPackageHost, week: number, syllabus:
     }
   }
 
+  // A note with nothing but the template in it hasn't been started.
+  const notStarted: string[] = [];
+  for (const note of [...notes]) {
+    if ((await host.noteState(note)) === 'untouched') {
+      notStarted.push(note.basename);
+      notes.splice(notes.indexOf(note), 1);
+    }
+  }
+
   if (!notes.length) {
     new Notice(
-      `You don't have any literature notes for Week ${week} yet, so there is nothing to package.`,
+      `You haven't written in or synced highlights into any of your Week ${week} literature notes yet, so there is nothing to package.`,
       10000
     );
     return;
@@ -200,6 +211,11 @@ export async function packageWeek(host: WeekPackageHost, week: number, syllabus:
   const parts = [
     `Packaged ${notes.length} literature note${notes.length === 1 ? '' : 's'} into "${name}.zip" in your ${UPLOADS_FOLDER} folder. Upload that file.`,
   ];
+  if (notStarted.length) {
+    parts.push(
+      `Not included because ${notStarted.length === 1 ? "it's" : "they're"} still blank: ${notStarted.join('; ')}.`
+    );
+  }
   if (missing.length) {
     parts.push(
       `Not included because you haven't made ${missing.length === 1 ? 'this note' : 'these notes'} yet: ${missing.join('; ')}.`

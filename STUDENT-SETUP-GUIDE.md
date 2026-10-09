@@ -375,9 +375,9 @@ message tells you which command to run. (Zotero needs to be open.)
 Under each week's heading in the syllabus there is a link, **Package my
 Week N literature notes for upload**. Click it and Second Reader:
 
-1. finds the literature notes you have made for that week's readings (one
-   file per reading; readings you haven't made a note for are skipped and
-   listed in the message);
+1. finds the literature notes you have worked on for that week's readings
+   (one file per reading). Notes that are still blank, and readings you
+   haven't made a note for, are skipped and listed in the message;
 2. puts them in a zip named like `ED 336 Week 05 literature notes - Your Name.zip`
    in the `Uploads` folder of your vault;
 3. shows the zip in Finder (Explorer on Windows), ready to upload to Canvas.

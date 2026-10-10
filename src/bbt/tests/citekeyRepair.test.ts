@@ -27,6 +27,20 @@ describe('pickCitekey', () => {
     const r = [item('k', 'Most people are not WEIRD', 2010), item('k', 'Most people are not WEIRD', 2010)];
     expect(pickCitekey(r, 'Most people are not WEIRD', '2010')).toBe('k');
   });
+  test('a title that gained or lost its ending still matches, if only one item does', () => {
+    const r = [item('bm', 'Could AI chatbots undo the harms of social media?: Opinion Data Points')];
+    expect(pickCitekey(r, 'Could AI chatbots undo the harms of social media?')).toBe('bm');
+    expect(pickCitekey([item('x', 'Could AI chatbots undo the harms of social media?')], 'Could AI chatbots undo the harms of social media?: Opinion')).toBe('x');
+    const two = [item('a', 'Could AI chatbots undo the harms of social media? Part 1'), item('b', 'Could AI chatbots undo the harms of social media? Part 2')];
+    expect(pickCitekey(two, 'Could AI chatbots undo the harms of social media?')).toBeNull();
+  });
+  test('a short shared start is not enough', () => {
+    expect(pickCitekey([item('a', 'Introduction to the volume')], 'Introduction')).toBeNull();
+  });
+  test('an exact match wins over a longer title', () => {
+    const r = [item('long', 'Most people are not WEIRD: a reply'), item('exact', 'Most people are not WEIRD')];
+    expect(pickCitekey(r, 'Most people are not WEIRD')).toBe('exact');
+  });
   test('no results or no citekey gives null', () => {
     expect(pickCitekey([], 'x')).toBeNull();
     expect(pickCitekey([item('', 'x')], 'x')).toBeNull();

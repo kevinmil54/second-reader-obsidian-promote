@@ -44,3 +44,37 @@ describe('blank notes made from a vault template', () => {
     expect(literatureNoteState(NOTE.replace("reading this\n\n- ", 'reading this\n\n- For class'), bp)).toBe('worked');
   });
 });
+
+// Course notes arrive with the lead author's details and the paper's own
+// figures already filled in, inside %% begin … %% blocks. Those blocks are
+// handed-out material, so a note with nothing else in it is still blank.
+describe('handed-out author and figure blocks', () => {
+  const WITH_BLOCKS = NOTE.replace(
+    "## Why I'm reading this",
+    [
+      '## Author information',
+      '',
+      '%% begin author-info %%',
+      '![Jane Doe|160](https://example.org/jane.jpg)',
+      '**Jane Doe** (born 1950)',
+      '',
+      'Jane Doe is a professor of psychology.',
+      '%% end author-info %%',
+      '',
+      '## Figures & images',
+      '%% begin paper-figures %%',
+      '![[doe2020 fig01.jpeg]]',
+      '*Caption from the paper:* Fig. 1. A figure. (p. 3)',
+      '%% end paper-figures %%',
+      '',
+      "## Why I'm reading this",
+    ].join('\n')
+  );
+  test('leave a note untouched', () => {
+    expect(literatureNoteState(WITH_BLOCKS, buildBoilerplate([BUNDLED, VAULT]))).toBe('untouched');
+  });
+  test('writing outside the blocks still counts', () => {
+    const worked = WITH_BLOCKS.replace("## Why I'm reading this\n\n- ", "## Why I'm reading this\n\n- To compare cultures");
+    expect(literatureNoteState(worked, buildBoilerplate([BUNDLED, VAULT]))).toBe('worked');
+  });
+});

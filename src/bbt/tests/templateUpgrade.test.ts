@@ -15,6 +15,13 @@ const NEW = readFileSync(
   path.join(ROOT, 'Templates/Literature Note Template - Zotero Import.md'),
   'utf8'
 );
+// The upgrade only fixes highlight import and the PDF link, so an old
+// template upgrades to the template as it stood before later sections
+// (How I read it, Author information) were added.
+const BEFORE_NEW_SECTIONS = execSync(
+  'git show "c268e5a:Templates/Literature Note Template - Zotero Import.md"',
+  { cwd: ROOT, encoding: 'utf8' }
+);
 // The template students were given with Second Reader 1.x.
 const OLD_1X = execSync(
   'git show "1610bfd:Templates/Literature Note Template - Zotero Import.md"',
@@ -22,19 +29,19 @@ const OLD_1X = execSync(
 );
 
 describe('upgradeTemplateText', () => {
-  test('the 1.x template upgrades to exactly the current template', () => {
+  test('the 1.x template upgrades to exactly the pre-2.7.4 template', () => {
     expect(hasHighlightImport(OLD_1X)).toBe(false);
-    expect(upgradeTemplateText(OLD_1X, NEW)).toBe(NEW);
+    expect(upgradeTemplateText(OLD_1X, NEW)).toBe(BEFORE_NEW_SECTIONS);
   });
 
-  test('the 2.1 template (highlights, no PDF link) upgrades to exactly the current template', () => {
+  test('the 2.1 template (highlights, no PDF link) upgrades to exactly the pre-2.7.4 template', () => {
     const v21 = execSync(
       'git show "78b49e8:Templates/Literature Note Template - Zotero Import.md"',
       { cwd: ROOT, encoding: 'utf8' }
     );
     expect(hasHighlightImport(v21)).toBe(true);
     expect(hasPdfLink(v21)).toBe(false);
-    expect(upgradeTemplateText(v21, NEW)).toBe(NEW);
+    expect(upgradeTemplateText(v21, NEW)).toBe(BEFORE_NEW_SECTIONS);
   });
 
   test('every past template version ends up with highlight import and PDF links', () => {

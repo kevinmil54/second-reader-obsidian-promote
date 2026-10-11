@@ -120,6 +120,16 @@ means any body line that isn't template text (`src/litNoteState.ts`; the
 import formats' own template files count as template text too);
 frontmatter and synced quotes don't count.
 
+## Course updates
+
+To send students new or revised literature notes partway through a term, give them a folder that holds `Literature notes/` (and, if needed, `Attachments/` and `Templates/`). Students put the whole folder anywhere in their vault and run **Second Reader: Bring in course update (new literature notes)** from the command palette. For each note in the update:
+
+- if the student has no note with that name, it's added to `Literature notes/`;
+- if the student's note is still blank (only template text), it's replaced with the new version;
+- if the student has written anything in it or synced highlights into it, it's left alone.
+
+Images and other files are added only where nothing with that name exists, and the update's templates replace the vault's. The update folder then goes to the trash, so no note name appears twice. A message lists the notes that were kept.
+
 ## Templates
 
 - **Literature Note Template - Zotero Import.md** — set as the template of

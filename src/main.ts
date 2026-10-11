@@ -31,6 +31,7 @@ import {
   makeClassCopy,
 } from './classCopy';
 import { LiteratureLinkColors } from './litLinks';
+import { chooseAndApplyUpdate } from './courseUpdateUI';
 import { PACKAGE_WEEK_PARAM, SYLLABUS_PARAM, addPackageLinks } from './weekPackage';
 import {
   WeekPackageHost,
@@ -174,6 +175,17 @@ export default class ZoteroConnector extends Plugin {
           });
         }
       }
+    });
+
+    this.addCommand({
+      id: 'bring-in-course-update',
+      name: 'Bring in course update (new literature notes)',
+      callback: () =>
+        chooseAndApplyUpdate({
+          app: this.app,
+          noteState: (file: TFile) => this.linkColors.stateNow(file),
+          reloadTemplates: (extra: string[]) => this.loadVaultTemplates(extra),
+        }),
     });
 
     this.addCommand({
@@ -412,8 +424,8 @@ export default class ZoteroConnector extends Plugin {
 
   // The import formats' own template files, so their text never counts as
   // student writing when judging how far a note has gotten.
-  async loadVaultTemplates() {
-    const texts: string[] = [];
+  async loadVaultTemplates(extra: string[] = []) {
+    const texts: string[] = [...extra];
     for (const f of this.settings.exportFormats ?? []) {
       if (!f.templatePath) continue;
       const file = this.app.vault.getAbstractFileByPath(normalizePath(f.templatePath));

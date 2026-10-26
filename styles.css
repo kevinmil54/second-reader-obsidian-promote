@@ -37,12 +37,12 @@
   resize: vertical;
 }
 
-.zt-format__input-wrapper > *:not(.checkbox-container) {
-  width: 100% !important;
+body .zt-format__input-wrapper.zt-format__input-wrapper > *:not(.checkbox-container) {
+  width: 100%;
 }
 
-.is-deprecated .zt-format__input-wrapper button {
-  width: auto !important;
+body .is-deprecated .zt-format__input-wrapper.zt-format__input-wrapper button {
+  width: auto;
   flex-grow: 0;
   flex-shrink: 0;
   margin-left: 5px;
@@ -63,12 +63,12 @@
   font-size: 13px;
 }
 
-.zt-json-viewer .react-json-view {
+body .zt-json-viewer .react-json-view.react-json-view {
   padding: 1em;
   border-radius: 10px;
   margin-top: 1em;
   overflow: auto;
-  font-family: var(--font-monospace) !important;
+  font-family: var(--font-monospace);
 }
 
 .zt-json-viewer__btns {
@@ -127,9 +127,11 @@
   text-align: left;
 }
 
-.zt-multiselect input {
-  outline: none !important;
-  box-shadow: none !important;
+body .zt-multiselect.zt-multiselect input,
+body .zt-multiselect.zt-multiselect input:focus,
+body .zt-multiselect.zt-multiselect input:hover {
+  outline: none;
+  box-shadow: none;
 }
 
 .zt-format__input-note {
@@ -159,9 +161,9 @@
   margin-right: 5px;
 }
 
-.zt-asset-success__icon svg {
-  width: 1em !important;
-  height: 1em !important;
+body .zt-asset-success__icon.zt-asset-success__icon svg {
+  width: 1em;
+  height: 1em;
 }
 
 .zt-asset-success__message {
@@ -245,16 +247,26 @@ body {
   --sr-lit-worked-color: var(--color-green);
 }
 
-a.internal-link.sr-lit-highlights,
-.sr-lit-highlights,
-.sr-lit-highlights .cm-underline,
-.sr-lit-highlights .cm-hmd-internal-link {
-  color: var(--sr-lit-highlights-color) !important;
+.sr-lit-highlights {
+  --link-color: var(--sr-lit-highlights-color);
+  --link-color-hover: var(--sr-lit-highlights-color);
 }
 
-a.internal-link.sr-lit-worked,
-.sr-lit-worked,
-.sr-lit-worked .cm-underline,
-.sr-lit-worked .cm-hmd-internal-link {
-  color: var(--sr-lit-worked-color) !important;
+body a.internal-link.sr-lit-highlights.sr-lit-highlights,
+body .sr-lit-highlights.sr-lit-highlights,
+body .sr-lit-highlights.sr-lit-highlights .cm-underline,
+body .markdown-source-view .sr-lit-highlights.sr-lit-highlights .cm-hmd-internal-link {
+  color: var(--sr-lit-highlights-color);
+}
+
+.sr-lit-worked {
+  --link-color: var(--sr-lit-worked-color);
+  --link-color-hover: var(--sr-lit-worked-color);
+}
+
+body a.internal-link.sr-lit-worked.sr-lit-worked,
+body .sr-lit-worked.sr-lit-worked,
+body .sr-lit-worked.sr-lit-worked .cm-underline,
+body .markdown-source-view .sr-lit-worked.sr-lit-worked .cm-hmd-internal-link {
+  color: var(--sr-lit-worked-color);
 }

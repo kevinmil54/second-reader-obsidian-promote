@@ -8,6 +8,7 @@ import {
   normalizePath,
 } from 'obsidian';
 import path from 'path';
+import { DEFAULT_CSL_STYLE } from '../defaultFormats';
 
 import { doesEXEExist, getVaultRoot } from '../helpers';
 import {
@@ -700,7 +701,7 @@ export async function exportToMarkdown(
   const createdOrUpdatedMarkdownFiles: string[] = [];
 
   for (const item of itemData) {
-    await processItem(item, importDate, database, exportFormat.cslStyle);
+    await processItem(item, importDate, database, exportFormat.cslStyle || DEFAULT_CSL_STYLE);
   }
 
   const vaultRoot = getVaultRoot();
@@ -952,7 +953,7 @@ export async function renderCiteTemplate(params: RenderCiteTemplateParams) {
   const output: string[] = [];
 
   for (const item of itemData) {
-    await processItem(item, importDate, database, format.cslStyle);
+    await processItem(item, importDate, database, format.cslStyle || DEFAULT_CSL_STYLE);
 
     const attachments = (item.attachments as any[]) || [];
     const firstAnnots = item.attachments.find(
@@ -982,6 +983,8 @@ function getAStyle(settings: ZoteroConnectorSettings) {
   if (citeStyle) {
     return citeStyle.cslStyle;
   }
+
+  return DEFAULT_CSL_STYLE;
 }
 
 export async function dataExplorerPrompt(settings: ZoteroConnectorSettings) {

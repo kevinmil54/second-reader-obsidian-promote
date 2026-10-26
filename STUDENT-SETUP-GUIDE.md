@@ -220,9 +220,12 @@ already defaults to `Templates/Permanent Note Template.md` for **Template
 path** and `Permanent notes` for **New note folder** — check both match
 where you put things, and adjust if you used different folder names.
 
-### f. Set up the import format
-Same Settings page, further down under **Zotero import & highlight sync** →
-**Import Formats** → add a new format:
+### f. Check the import format
+Second Reader comes with this import format already set up, with the
+reference in APA 7th edition. Look under **Zotero import & highlight sync**
+→ **Import Formats** on the same Settings page and check it matches the
+list below. If you have no import format (for example after deleting it),
+add one with these settings:
 - **Name:** **"Literature Note"** — this name matters (see the note below).
 - **Template:** the path to `Templates/Literature Note Template - Zotero
   Import.md`

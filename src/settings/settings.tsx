@@ -2,6 +2,7 @@ import { App, Notice, PluginSettingTab, Setting, debounce } from 'obsidian';
 import React from 'react';
 import ReactDOM from 'react-dom';
 import which from 'which';
+import { DEFAULT_CSL_STYLE } from '../defaultFormats';
 
 import ZoteroConnector from '../main';
 import {
@@ -67,6 +68,7 @@ function SettingsComponent({
       addCiteFormat({
         name: `Format #${citeFormatState.length + 1}`,
         format: 'formatted-citation',
+        cslStyle: DEFAULT_CSL_STYLE,
       })
     );
   }, [addCiteFormat, citeFormatState]);
@@ -96,6 +98,7 @@ function SettingsComponent({
         outputPathTemplate: '{{citekey}}.md',
         imageOutputPathTemplate: '{{citekey}}/',
         imageBaseNameTemplate: 'image',
+        cslStyle: DEFAULT_CSL_STYLE,
       })
     );
   }, [addExportFormat, citeFormatState]);

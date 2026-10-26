@@ -9,6 +9,7 @@ import {
   normalizePath,
 } from 'obsidian';
 import { shellPath } from 'shell-path';
+import { DEFAULT_CSL_STYLE, defaultCiteFormat, defaultLiteratureFormat } from './defaultFormats';
 
 import { DataExplorerView, viewType } from './DataExplorerView';
 import { LoadingModal } from './bbt/LoadingModal';
@@ -131,6 +132,7 @@ export default class ZoteroConnector extends Plugin {
     setPluginDir(this.manifest.dir);
     await this.loadSettings();
     await this.importLegacyZoteroSettings();
+    await this.ensureDefaultFormats();
     this.emitter = new Events();
 
     const promoter = new Promoter(this, () => this.settings);
@@ -836,6 +838,39 @@ export default class ZoteroConnector extends Plugin {
       } else if (note instanceof TFile) {
         await this.app.workspace.getLeaf(true).openFile(note);
       }
+    }
+  }
+
+  // A new install starts with the Literature Note import format and an APA
+  // citation format, and any format left without a style uses APA 7th, so the
+  // reference in a literature note is never blank.
+  async ensureDefaultFormats() {
+    let changed = false;
+    const added: string[] = [];
+    if (!this.settings.exportFormats.length) {
+      this.settings.exportFormats = [defaultLiteratureFormat()];
+      added.push('the "Literature Note" import format');
+      changed = true;
+    }
+    if (!this.settings.citeFormats.length) {
+      this.settings.citeFormats = [defaultCiteFormat()];
+      added.push('an "APA citation" format');
+      changed = true;
+    }
+    for (const f of [...this.settings.exportFormats, ...this.settings.citeFormats]) {
+      if (!f.cslStyle) {
+        f.cslStyle = DEFAULT_CSL_STYLE;
+        changed = true;
+      }
+    }
+    if (!changed) return;
+    await this.saveData(this.settings);
+    if (added.length) {
+      new Notice(
+        `Second Reader set up ${added.join(' and ')}, using APA 7th edition. ` +
+          'You can change them in Settings → Second Reader.',
+        10000
+      );
     }
   }
 

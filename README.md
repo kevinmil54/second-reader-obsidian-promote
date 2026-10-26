@@ -32,7 +32,22 @@ Overview of what's new and how to use it: [UPDATE-REPORT-2.3.md](UPDATE-REPORT-2
 Desktop only (macOS, Windows, Linux) — Zotero import talks to the Zotero
 desktop app and runs a PDF helper, which Obsidian mobile can't do.
 
-## Install via BRAT (gets updates automatically)
+## Install
+
+1. In Obsidian, open Settings → Community plugins and turn off Restricted
+   mode if it's on.
+2. Click Browse, search for "Second Reader", and click Install.
+3. Click Enable.
+4. Open Settings → Second Reader and click the download button next to
+   "PDF Utility". Highlight sync and PDF import need it.
+
+Requires Zotero 7 with the Better BibTeX plugin, and Zotero's "Allow other
+applications to communicate with Zotero" setting turned on.
+
+### Installing through BRAT
+
+Until Second Reader appears in the community directory, install it with
+BRAT instead of steps 1–3:
 
 1. Install the **BRAT** community plugin (Settings → Community plugins →
    Browse → search "BRAT").
@@ -40,8 +55,58 @@ desktop app and runs a PDF helper, which Obsidian mobile can't do.
 3. Paste this repo: `kevinmil54/second-reader-obsidian-promote`
 4. Enable **"Second Reader"** in Settings → Community plugins.
 
-Requires Zotero 7 with the Better BibTeX plugin, and Zotero's "Allow other
-applications to communicate with Zotero" setting turned on.
+If you installed it through BRAT and it's now in the directory, open BRAT's
+settings and remove `kevinmil54/second-reader-obsidian-promote` from its list
+of beta plugins, leaving Second Reader installed. Obsidian then updates it
+from the community directory. The plugin ID hasn't changed, so your settings
+carry over.
+
+## Keeping figures and tables
+
+To keep a figure or table, draw a box around it with the select-area tool in
+Zotero's PDF reader, then sync highlights. The image comes into the note
+under "Quotes worth keeping" with its page number. To add a screenshot from
+somewhere else, put it in the note's "Figures & images" section with
+`![[filename]]`.
+
+## Network use and access outside your vault
+
+Second Reader works with the Zotero desktop app and a small PDF utility, so it
+does a few things beyond reading and writing notes in your vault.
+
+### Network use
+
+- **Zotero on your own computer.** The plugin talks to Zotero's Better BibTeX
+  plugin at `http://127.0.0.1` (port 23119 for Zotero, 24119 for Juris-M, or a
+  port you set). This is how it looks up citations, imports papers, and reads
+  your highlights. The connection stays on your computer.
+- **Downloading the PDF utility from GitHub.** Highlight sync and PDF import use
+  [pdfannots2json](https://github.com/mgmeyers/pdfannots2json), a program by
+  mgmeyers that reads annotations out of PDF files. Second Reader downloads the
+  version for your operating system from that project's GitHub releases page.
+  The first download happens when you click the download button next to
+  "PDF Utility" in the plugin's settings. After a Second Reader update that
+  needs a newer version of the utility, the plugin downloads it again when
+  Obsidian starts. To manage the utility yourself, enter the path to your own
+  copy under "PDF Utility Path Override" in the settings, and Second Reader
+  will never download it.
+
+The plugin makes no other network connections. It does not send your notes,
+highlights or reading activity anywhere, and it collects no usage data.
+
+### Files and programs outside your vault
+
+- **Zotero attachments.** To import highlights and images, the plugin reads PDF
+  files and image files from Zotero's storage folder and copies the images it
+  needs into your vault.
+- **Running the PDF utility.** The plugin runs pdfannots2json on the PDF you're
+  importing from. It also runs Tesseract, if you've installed it and turned on
+  "Image OCR" in the settings.
+- **Showing a week's package.** Packaging a week's notes makes a zip file in the
+  vault's `Uploads` folder and then opens Finder (or Explorer) to show it.
+
+No account or payment is needed. Second Reader is free and open source under
+the GPL-3.0 license.
 
 ## Upgrading from 1.x (Promote Candidates + Zotero Integration)
 

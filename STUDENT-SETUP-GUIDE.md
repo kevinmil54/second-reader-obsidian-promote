@@ -311,6 +311,9 @@ Once setup is done, this is the whole routine per paper.
    own words)," "Key ideas," questions as they occur to you.
    Highlight in **Zotero's** reader, not Preview or Adobe — Zotero's reader
    is what records the real (printed) page number for each highlight.
+   - **Keeping a figure or table:** use the **select-area** tool in Zotero's
+     reader to draw a box around it. When you sync, the image comes into
+     "Quotes worth keeping" with its page number, like a highlight.
 6. **Sync whenever you like** — after each section, or only at the end.
    Click the **highlighter-pen icon at the top-right of your literature
    note** (or use the ribbon icon or your shortcut — see step 4h). Every

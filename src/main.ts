@@ -330,8 +330,6 @@ export default class ZoteroConnector extends Plugin {
     this.settings.exportFormats.forEach((f) => {
       this.removeExportCommand(f);
     });
-
-    this.app.workspace.detachLeavesOfType(viewType);
   }
 
   addFormatCommand(format: CitationFormat) {

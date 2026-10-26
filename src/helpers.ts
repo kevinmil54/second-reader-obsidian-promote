@@ -1,8 +1,9 @@
-import { execa } from 'execa';
 import fs from 'fs';
 import { FileSystemAdapter, Notice } from 'obsidian';
 import os from 'os';
 import path from 'path';
+
+import { runFile } from './runFile';
 
 export function getCurrentWindow() {
   return require('electron').remote.BrowserWindow.getFocusedWindow();
@@ -82,7 +83,7 @@ export function removeLegacyEXE2() {
 
 export async function checkEXEVersion(override?: string) {
   try {
-    const result = await execa(
+    const result = await runFile(
       override || path.join(getExeRoot(), getExeName()),
       ['-v']
     );

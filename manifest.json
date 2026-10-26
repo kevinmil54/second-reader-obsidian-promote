@@ -1,9 +1,9 @@
 {
   "id": "second-reader-promote",
   "name": "Second Reader",
-  "version": "2.8.0",
+  "version": "2.8.1",
   "minAppVersion": "1.1.1",
-  "description": "Second Reader literature notes: import papers from Zotero, sync your Zotero highlights into the note as quotes with page numbers while you type, and promote checked candidates into permanent notes.",
+  "description": "Import papers from Zotero into literature notes, sync your Zotero highlights into the note as quotes with page numbers while you type, and promote checked candidates into permanent notes.",
   "author": "Kevin Miller",
   "isDesktopOnly": true
 }

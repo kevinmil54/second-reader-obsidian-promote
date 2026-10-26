@@ -16,7 +16,7 @@ import { moment } from 'obsidian';
   }
 
   if (typeof obj[val] === 'function') {
-    // eslint-disable-next-line prefer-spread
+    // eslint-disable-next-line prefer-spread -- forwards a template's arguments to the wrapped method with its own `this`
     return (...args: any[]) => obj[val].apply(obj, args);
   }
 

@@ -1,7 +1,7 @@
-import { execa } from 'execa';
 import { Notice } from 'obsidian';
 import path from 'path';
 import { ensureExecutableSync, getExeName, getExeRoot } from 'src/helpers';
+import { runFile } from 'src/runFile';
 
 import { LoadingModal } from './LoadingModal';
 
@@ -72,7 +72,7 @@ export async function extractAnnotations(
       return '[]';
     }
 
-    const result = await execa(
+    const result = await runFile(
       overridePath || path.join(getExeRoot(), getExeName()),
       args
     );

@@ -482,7 +482,7 @@ export class ZoteroConnectorSettingsTab extends PluginSettingTab {
     this.displayPromoteSettings(containerEl.createDiv());
     this.displayPackageSettings(containerEl.createDiv());
 
-    containerEl.createEl('h2', { text: 'Zotero import & highlight sync' });
+    new Setting(containerEl).setName('Zotero import & highlight sync').setHeading();
     this.reactRoot = containerEl.createDiv();
     ReactDOM.render(
       <SettingsComponent
@@ -500,7 +500,7 @@ export class ZoteroConnectorSettingsTab extends PluginSettingTab {
   }
 
   displayPackageSettings(el: HTMLElement) {
-    el.createEl('h2', { text: 'Packaging notes for upload' });
+    new Setting(el).setName('Packaging notes for upload').setHeading();
     new Setting(el)
       .setName('Your name')
       .setDesc(
@@ -519,7 +519,7 @@ export class ZoteroConnectorSettingsTab extends PluginSettingTab {
   }
 
   displayPromoteSettings(el: HTMLElement) {
-    el.createEl('h2', { text: 'Promote candidates' });
+    new Setting(el).setName('Promote candidates').setHeading();
     el.createEl('p', {
       text:
         'Checking a box under “## Permanent note candidates” in a note tagged ' +

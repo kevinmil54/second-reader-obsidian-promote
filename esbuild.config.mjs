@@ -1,4 +1,4 @@
-import builtins from 'builtin-modules';
+import { builtinModules as builtins } from 'node:module';
 import esbuild from 'esbuild';
 import process from 'process';
 

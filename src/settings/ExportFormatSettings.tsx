@@ -312,7 +312,9 @@ export function ExportFormatSettings({
           />
         </div>
         <div className="zt-format__input-note">
-          Note, the chosen style must be installed in Zotero. See{' '}
+          If the template has a line like{' '}
+          <code>{'{#- reference-style: apa -#}'}</code>, that style is used
+          instead. Note, the chosen style must be installed in Zotero. See{' '}
           <a
             target="_blank"
             href="https://www.zotero.org/support/styles"

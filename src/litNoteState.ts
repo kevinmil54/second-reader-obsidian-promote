@@ -7,6 +7,8 @@
 // version of the template students may have received is passed in, so an
 // instruction line from an older template never counts as student writing.
 
+import { splitLeadingComments } from './templateSettings';
+
 export type LitNoteState = 'untouched' | 'highlights' | 'worked';
 
 export const TEMPLATE_VERSION_SEPARATOR = '<<<SECOND-READER-TEMPLATE-VERSION>>>';
@@ -45,8 +47,8 @@ export function buildBoilerplate(templates: string[]): Boilerplate {
   const seenPatterns = new Set<string>();
 
   for (const template of templates) {
-    const body = template
-      .replace(FRONTMATTER, '')
+    const body = splitLeadingComments(template)
+      .body.replace(FRONTMATTER, '')
       .replace(TEMPLATE_PERSIST_BLOCK, '');
     for (const raw of body.split(/\r?\n/)) {
       const line = raw.trim();

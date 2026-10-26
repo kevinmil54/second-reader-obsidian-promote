@@ -1,3 +1,6 @@
+{#- Second Reader settings. These lines never appear in your notes. -#}
+{#- reference-style: apa -#}
+{#- author-info: photos -#}
 ---
 title: "{{title}}"
 author: {{authors}}

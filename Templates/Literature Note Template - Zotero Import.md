@@ -29,7 +29,7 @@ date-read:
 **Reference (APA):** {{bibliography}}
 
 ## Author information
-*Who wrote this? Add the lead author's photo, dates, a short bio, and a link to their university page or Wikipedia.*
+*Filled in automatically: the lead author, with a link to their author note, which holds their photo, dates and links.*
 
 - 
 

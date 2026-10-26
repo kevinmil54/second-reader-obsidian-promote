@@ -1,7 +1,8 @@
 import fs from 'fs';
 import path from 'path';
 
-import { buildBoilerplate } from '../../litNoteState';
+import { buildBoilerplate, splitTemplateVersions } from '../../litNoteState';
+import PAST from '../../pastLiteratureTemplates.md';
 import { readTemplateSettings, splitLeadingComments } from '../../templateSettings';
 import { upgradeTemplateText } from '../../templateUpgrade';
 import { template } from '../template.env';
@@ -45,5 +46,15 @@ describe('template settings', () => {
     expect(upgradeTemplateText(up!, BUNDLED)).toBeNull();
     const custom = '{#- reference-style: modern-language-association -#}\n' + old;
     expect(upgradeTemplateText(custom, BUNDLED)).toBeNull();
+  });
+});
+
+describe('reworded author prompt', () => {
+  test("the old prompt in existing notes still counts as template text", () => {
+    const past = splitTemplateVersions(PAST);
+    const { exact } = buildBoilerplate([BUNDLED, ...past]);
+    expect(
+      [...exact].some((l) => l.startsWith("*Who wrote this? Add the lead author's photo"))
+    ).toBe(true);
   });
 });

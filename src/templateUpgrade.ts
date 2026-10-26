@@ -5,6 +5,8 @@
 //   - the `pdf:` frontmatter line and the "Open PDF" link (opening the
 //     student's own copy of the paper from the syllabus)
 
+import { readTemplateSettings, splitLeadingComments } from './templateSettings';
+
 const QUOTES_HEADING = /^##\s+Quotes worth keeping[ \t]*$/im;
 const NEXT_SECTION = /^#{1,2}\s/m;
 const FRONTMATTER = /^---\r?\n([\s\S]*?)\r?\n---[ \t]*(\r?\n|$)/;
@@ -73,8 +75,19 @@ export function upgradeTemplateText(
   bundled: string
 ): string | null {
   if (!QUOTES_HEADING.test(current)) return null;
-  const upgraded = patchPdfLink(patchQuotes(current, bundled), bundled);
+  const cur = splitLeadingComments(current);
+  const neu = splitLeadingComments(bundled);
+  const body = patchPdfLink(patchQuotes(cur.body, neu.body), neu.body);
+  // Templates from before 2.10 have no settings block; add the bundled one,
+  // which keeps the defaults (APA 7th, author information with photos).
+  const head = hasSettings(cur.head) ? cur.head : neu.head + cur.head;
+  const upgraded = head + body;
   return upgraded === current ? null : upgraded;
+}
+
+function hasSettings(head: string): boolean {
+  const s = readTemplateSettings(head);
+  return !!(s.referenceStyle || s.authorInfo);
 }
 
 export function backupPathFor(path: string, exists: (p: string) => boolean) {

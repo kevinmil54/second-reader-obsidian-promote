@@ -9,6 +9,7 @@ import {
 } from 'obsidian';
 import path from 'path';
 import { DEFAULT_CSL_STYLE } from '../defaultFormats';
+import { readTemplateSettings } from '../templateSettings';
 
 import { doesEXEExist, getVaultRoot } from '../helpers';
 import {
@@ -49,6 +50,7 @@ import {
   getExistingAnnotations,
   getLastExport,
   getTemplates,
+  loadTemplate,
   removeStartingSlash,
   wrapAnnotationTemplate,
 } from './template.helpers';
@@ -700,8 +702,18 @@ export async function exportToMarkdown(
   // Further down below, when the Markdown file path has been sanitized, we associate the path to the key.
   const createdOrUpdatedMarkdownFiles: string[] = [];
 
+  // The template can choose the reference style ({#- reference-style: apa -#});
+  // otherwise the import format's Bibliography Style, otherwise APA 7th.
+  const templateText = exportFormat.templatePath
+    ? await loadTemplate('Import', exportFormat.templatePath)
+    : null;
+  const cslStyle =
+    readTemplateSettings(templateText).referenceStyle ||
+    exportFormat.cslStyle ||
+    DEFAULT_CSL_STYLE;
+
   for (const item of itemData) {
-    await processItem(item, importDate, database, exportFormat.cslStyle || DEFAULT_CSL_STYLE);
+    await processItem(item, importDate, database, cslStyle);
   }
 
   const vaultRoot = getVaultRoot();

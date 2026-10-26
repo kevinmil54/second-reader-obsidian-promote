@@ -174,11 +174,24 @@ export class PersistExtension implements Extension {
       retained = context.ctx._retained[id];
     }
 
-    let trimmed = body() as string;
-    if (retained) trimmed = trimmed.trimStart();
+    const added = body() as string;
+    let content: string;
+    if (!retained) {
+      content = added;
+    } else if (!added.trim()) {
+      // Nothing new: keep the block exactly as it was, so repeated imports
+      // don't pile up blank lines.
+      content = retained;
+    } else if (/^\s/.test(added)) {
+      // New text keeps its own leading spacing (a line break, or a blank
+      // line), measured from the end of the retained text.
+      content = retained.trimEnd() + added;
+    } else {
+      content = retained + added;
+    }
 
     return new nunjucks.runtime.SafeString(
-      `%% begin ${id} %%${retained}${trimmed}%% end ${id} %%`
+      `%% begin ${id} %%${content}%% end ${id} %%`
     );
   }
 

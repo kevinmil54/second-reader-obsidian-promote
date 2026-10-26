@@ -223,6 +223,17 @@ describe('class PersistExtension', () => {
     expect(env.renderString(template, templateData)).toEqual(expected);
   });
 
+  it("doesn't add blank lines when there's nothing new", () => {
+    const env = new nunjucks.Environment(undefined, { autoescape: false });
+    env.addExtension(PersistExtension.id, new PersistExtension());
+    const template = '{% persist "q" %}\n\n{{a}}\n{% endpersist %}';
+    let note = '%% begin q %%\n\nhello\n%% end q %%';
+    for (let i = 0; i < 3; i++) {
+      note = env.renderString(template, PersistExtension.prepareTemplateData({ a: '' }, note));
+    }
+    expect(note).toBe('%% begin q %%\n\nhello\n%% end q %%');
+  });
+
   it('sanely handles new lines', () => {
     const env = new nunjucks.Environment(undefined, {
       autoescape: false,

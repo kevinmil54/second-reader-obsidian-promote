@@ -3,6 +3,7 @@ import { readFileSync } from 'fs';
 import path from 'path';
 
 import { splitTemplateVersions } from '../../litNoteState';
+import { splitLeadingComments } from '../../templateSettings';
 import {
   backupPathFor,
   hasHighlightImport,
@@ -15,13 +16,16 @@ const NEW = readFileSync(
   path.join(ROOT, 'Templates/Literature Note Template - Zotero Import.md'),
   'utf8'
 );
-// The upgrade only fixes highlight import and the PDF link, so an old
-// template upgrades to the template as it stood before later sections
-// (How I read it, Author information) were added.
-const BEFORE_NEW_SECTIONS = execSync(
-  'git show "c268e5a:Templates/Literature Note Template - Zotero Import.md"',
-  { cwd: ROOT, encoding: 'utf8' }
-);
+// The upgrade only fixes highlight import and the PDF link, and adds the
+// settings block (2.10), so an old template upgrades to the template as it
+// stood before later sections (How I read it, Author information) were
+// added, with the current settings block on top.
+const BEFORE_NEW_SECTIONS =
+  splitLeadingComments(NEW).head +
+  execSync('git show "c268e5a:Templates/Literature Note Template - Zotero Import.md"', {
+    cwd: ROOT,
+    encoding: 'utf8',
+  });
 // The template students were given with Second Reader 1.x.
 const OLD_1X = execSync(
   'git show "1610bfd:Templates/Literature Note Template - Zotero Import.md"',
@@ -82,7 +86,7 @@ describe('upgradeTemplateText', () => {
   test('works when Quotes is the last section', () => {
     const t = '# T\n\n## Quotes worth keeping\n> "..." (p. )\n';
     const upgraded = upgradeTemplateText(t, NEW)!;
-    expect(upgraded.startsWith('# T\n\n## Quotes worth keeping')).toBe(true);
+    expect(splitLeadingComments(upgraded).body.startsWith('# T\n\n## Quotes worth keeping')).toBe(true);
     expect(hasHighlightImport(upgraded)).toBe(true);
   });
 });

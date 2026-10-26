@@ -1,7 +1,7 @@
 // The vault side of packaging a week's literature notes: finding the notes,
 // asking for the student's name once, writing the zip, and showing it.
 
-import JSZip from 'jszip';
+import { strToU8, zipSync, Zippable } from 'fflate';
 import {
   App,
   FileSystemAdapter,
@@ -187,11 +187,10 @@ export async function packageWeek(host: WeekPackageHost, week: number, syllabus:
 
   // The notes are copied into a folder inside the zip, not inside the vault:
   // a second copy of each note in the vault would make [[links]] ambiguous.
-  const zip = new JSZip();
-  const folder = zip.folder(name)!;
+  const files: Zippable = {};
   const added = new Set<string>();
   for (const note of notes) {
-    folder.file(`${note.basename}.md`, await app.vault.read(note));
+    files[`${name}/${note.basename}.md`] = strToU8(await app.vault.read(note));
     for (const embed of app.metadataCache.getFileCache(note)?.embeds ?? []) {
       const file = app.metadataCache.getFirstLinkpathDest(
         embed.link.split('#')[0].split('|')[0],
@@ -199,14 +198,15 @@ export async function packageWeek(host: WeekPackageHost, week: number, syllabus:
       );
       if (!file || file.extension === 'md' || added.has(file.path)) continue;
       added.add(file.path);
-      folder.file(`attachments/${file.name}`, await app.vault.readBinary(file));
+      files[`${name}/attachments/${file.name}`] = new Uint8Array(await app.vault.readBinary(file));
     }
   }
 
   await ensureFolder(app, UPLOADS_FOLDER);
   const zipPath = normalizePath(`${UPLOADS_FOLDER}/${name}.zip`);
-  const data = await zip.generateAsync({ type: 'arraybuffer', compression: 'DEFLATE' });
-  await app.vault.adapter.writeBinary(zipPath, data);
+  const zipped = zipSync(files, { level: 6 });
+  const data = zipped.buffer.slice(zipped.byteOffset, zipped.byteOffset + zipped.byteLength);
+  await app.vault.adapter.writeBinary(zipPath, data as ArrayBuffer);
 
   const parts = [
     `Packaged ${notes.length} literature note${notes.length === 1 ? '' : 's'} into "${name}.zip" in your ${UPLOADS_FOLDER} folder. Upload that file.`,

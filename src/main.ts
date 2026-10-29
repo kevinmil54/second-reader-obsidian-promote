@@ -41,6 +41,7 @@ import {
   packageWeek,
 } from './weekPackageUI';
 import { titleNamedPath } from './noteNaming';
+import { applyLineEdits, zoteroLinkEdits } from './zoteroLinks';
 import {
   applyNamingFix,
   askToFixNaming,
@@ -221,11 +222,18 @@ export default class ZoteroConnector extends Plugin {
     this.app.workspace.onLayoutReady(async () => {
       try {
         this.warnAboutLegacyPlugins();
+        await this.fillAllZoteroLinks(false);
         await this.offerTemplateUpgrade('startup');
         await this.offerNamingFix('startup');
       } catch (e) {
         console.error('Second Reader: startup checks failed', e);
       }
+    });
+
+    this.addCommand({
+      id: 'fill-zotero-links',
+      name: 'Fill in Zotero links in literature notes',
+      callback: () => this.fillAllZoteroLinks(true),
     });
 
     this.addCommand({
@@ -462,6 +470,7 @@ export default class ZoteroConnector extends Plugin {
       return;
     }
 
+    await this.fillZoteroLinksSafely(note);
     const fm = this.app.metadataCache.getFileCache(note)?.frontmatter;
     let url: string | null =
       typeof fm?.pdf === 'string' && fm.pdf.startsWith('zotero://') ? fm.pdf : null;
@@ -718,6 +727,77 @@ export default class ZoteroConnector extends Plugin {
   // Finds the student's own Zotero item for a literature note by its title
   // and year, and switches the note to that item's citekey. Returns the key,
   // or null if Zotero has no single matching item.
+  private openEditorFor(file: TFile) {
+    for (const leaf of this.app.workspace.getLeavesOfType('markdown')) {
+      const view = leaf.view;
+      if (view instanceof MarkdownView && view.file === file) return view.editor;
+    }
+    return null;
+  }
+
+  // Literature notes from early course packages have an empty `zotero:`
+  // property and no "Open PDF · Open in Zotero" line. Fills those in and
+  // changes nothing else. In an open editor the edits go through the editor,
+  // so the cursor, undo history and unsaved typing are kept.
+  async fillZoteroLinks(file: TFile): Promise<boolean> {
+    const editor = this.openEditorFor(file);
+    const text = editor ? editor.getValue() : await this.app.vault.read(file);
+    const edits = zoteroLinkEdits(text, file.basename);
+    if (!edits.length) return false;
+    if (editor) {
+      // Bottom-up, so earlier line numbers stay valid.
+      for (const e of [...edits].sort((a, b) => b.line - a.line)) {
+        if (e.insert) {
+          editor.replaceRange(e.text + '\n', { line: e.line, ch: 0 });
+        } else {
+          editor.replaceRange(
+            e.text,
+            { line: e.line, ch: 0 },
+            { line: e.line, ch: editor.getLine(e.line).length }
+          );
+        }
+      }
+    } else {
+      await this.app.vault.process(file, (t) => applyLineEdits(t, zoteroLinkEdits(t, file.basename)));
+    }
+    return true;
+  }
+
+  private async fillZoteroLinksSafely(file: TFile) {
+    try {
+      await this.fillZoteroLinks(file);
+    } catch (e) {
+      console.error('Second Reader: filling in Zotero links failed', e);
+    }
+  }
+
+  // Every note whose properties show a citekey with an empty `zotero:` or no
+  // `pdf:`. Runs at startup (quietly unless it changed something) and from
+  // the command palette.
+  async fillAllZoteroLinks(fromCommand: boolean) {
+    let changed = 0;
+    for (const file of this.app.vault.getMarkdownFiles()) {
+      const fm = this.app.metadataCache.getFileCache(file)?.frontmatter;
+      if (!fm || typeof fm.citekey !== 'string' || !fm.citekey.trim()) continue;
+      const blankZotero = fm.zotero == null || String(fm.zotero).trim() === '';
+      if (!blankZotero && 'pdf' in fm) continue;
+      try {
+        if (await this.fillZoteroLinks(file)) changed++;
+      } catch (e) {
+        console.error(`Second Reader: couldn't fill in Zotero links in ${file.path}`, e);
+      }
+    }
+    if (changed) {
+      new Notice(
+        `Second Reader filled in the Zotero links in ${changed} literature note${changed === 1 ? '' : 's'}. Nothing you wrote was changed.`,
+        10000
+      );
+    } else if (fromCommand) {
+      new Notice('All literature notes already have their Zotero links.');
+    }
+    return changed;
+  }
+
   async repairCitekey(file: TFile): Promise<string | null> {
     const fm = this.app.metadataCache.getFileCache(file)?.frontmatter;
     const title = typeof fm?.title === 'string' ? fm.title.trim() : '';
@@ -771,6 +851,7 @@ export default class ZoteroConnector extends Plugin {
       const repaired = await this.repairCitekey(file);
       if (repaired) citekey = repaired;
     }
+    await this.fillZoteroLinksSafely(file);
     // An old template renders no quotes block, so a sync would silently add
     // nothing.
     if (!(await this.offerTemplateUpgrade('sync', [format]))) return;

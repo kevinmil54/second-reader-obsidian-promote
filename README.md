@@ -185,6 +185,10 @@ means any body line that isn't template text (`src/litNoteState.ts`; the
 import formats' own template files count as template text too);
 frontmatter and synced quotes don't count.
 
+## Zotero links in handed-out notes
+
+Literature notes from early course packages have an empty `zotero:` property and no "Open PDF · Open in Zotero" line under the title. Second Reader fills these in when Obsidian starts, when the student clicks "open pdf" for that reading, and when they sync highlights into the note; **Second Reader: Fill in Zotero links in literature notes** does it for every note at once. Only those lines change (and a `pdf:` property is added if missing), so nothing a student has written is touched (`src/zoteroLinks.ts`).
+
 ## Course updates
 
 To send students new or revised literature notes partway through a term, give them a folder that holds `Literature notes/` (and, if needed, `Attachments/` and `Templates/`). Students put the whole folder anywhere in their vault and run **Second Reader: Bring in course update (new literature notes)** from the command palette. For each note in the update:

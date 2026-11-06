@@ -2,6 +2,7 @@
 title: "{{title}}"
 status: permanent
 tags: [{{tags}}]
+topics: [{{topics}}]
 created: {{date}}
 source: "[[{{source}}]]"
 ---

@@ -643,8 +643,8 @@ export default class ZoteroConnector extends Plugin {
       trigger === 'sync'
         ? "Your literature-note template is from an earlier version of Second Reader, so syncing can't bring in your Zotero highlights until the template is updated."
         : upgrades.some((u) => u.missingHighlightImport)
-        ? 'Your literature-note template is from an earlier version of Second Reader. Updating it lets your notes bring in Zotero highlights as quotes with page numbers, and adds an "Open PDF" link to each new note.'
-        : 'Your literature-note template is from an earlier version of Second Reader. Updating it adds an "Open PDF" link to each new note, so the "open pdf" links in your syllabus can open your own copy of each reading.';
+        ? 'Your literature-note template is from an earlier version of Second Reader. Updating it lets your notes bring in Zotero highlights as quotes with page numbers, and adds an "Open PDF" link and a topics property to each new note.'
+        : 'Your literature-note template is from an earlier version of Second Reader. Updating it adds a topics property to each new note (permanent notes you promote inherit it) and, if missing, an "Open PDF" link so the "open pdf" links in your syllabus can open your own copy of each reading.';
 
     if (!(await askToUpgradeTemplates(this.app, upgrades, reason))) {
       if (trigger === 'startup') {

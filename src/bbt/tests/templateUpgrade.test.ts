@@ -7,6 +7,7 @@ import {
   backupPathFor,
   hasHighlightImport,
   hasPdfLink,
+  hasTopicsLine,
   upgradeTemplateText,
 } from '../../templateUpgrade';
 
@@ -28,10 +29,16 @@ const OLD_1X = execSync(
   { cwd: ROOT, encoding: 'utf8' }
 );
 
+// The upgrade also adds the `topics:` line, which the pre-2.7.4 template lacks.
+const WITH_TOPICS = BEFORE_NEW_SECTIONS.replace(
+  'tags: [literature-note]\n',
+  'tags: [literature-note]\ntopics: []\n'
+);
+
 describe('upgradeTemplateText', () => {
   test('the 1.x template upgrades to exactly the pre-2.7.4 template', () => {
     expect(hasHighlightImport(OLD_1X)).toBe(false);
-    expect(upgradeTemplateText(OLD_1X, NEW)).toBe(BEFORE_NEW_SECTIONS);
+    expect(upgradeTemplateText(OLD_1X, NEW)).toBe(WITH_TOPICS);
   });
 
   test('the 2.1 template (highlights, no PDF link) upgrades to exactly the pre-2.7.4 template', () => {
@@ -41,7 +48,7 @@ describe('upgradeTemplateText', () => {
     );
     expect(hasHighlightImport(v21)).toBe(true);
     expect(hasPdfLink(v21)).toBe(false);
-    expect(upgradeTemplateText(v21, NEW)).toBe(BEFORE_NEW_SECTIONS);
+    expect(upgradeTemplateText(v21, NEW)).toBe(WITH_TOPICS);
   });
 
   test('every past template version ends up with highlight import and PDF links', () => {
@@ -52,6 +59,7 @@ describe('upgradeTemplateText', () => {
       const upgraded = upgradeTemplateText(t, NEW) ?? t;
       expect(hasHighlightImport(upgraded)).toBe(true);
       expect(hasPdfLink(upgraded)).toBe(true);
+      expect(hasTopicsLine(upgraded)).toBe(true);
       // Running it again changes nothing.
       expect(upgradeTemplateText(upgraded, NEW)).toBeNull();
     }
@@ -69,6 +77,17 @@ describe('upgradeTemplateText', () => {
     expect(upgraded).toContain('my-field: keep');
     expect(upgraded).toContain('## Figures & images');
     expect(upgraded.match(/## Quotes worth keeping/g)).toHaveLength(1);
+  });
+
+  test('a template that only lacks topics gets `topics: []` after tags', () => {
+    const noTopics = NEW.replace('topics: []\n', '');
+    expect(hasTopicsLine(noTopics)).toBe(false);
+    expect(upgradeTemplateText(noTopics, NEW)).toBe(NEW);
+  });
+
+  test('an existing topics line is never changed', () => {
+    const mine = NEW.replace('topics: []', 'topics: [memory]');
+    expect(upgradeTemplateText(mine, NEW)).toBeNull();
   });
 
   test('already-upgraded templates are left alone', () => {

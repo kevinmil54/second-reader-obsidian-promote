@@ -206,7 +206,13 @@ Images and other files are added only where nothing with that name exists, and t
   Formats). Sync uses the format whose template path contains "Literature
   Note" (else the first format).
 - **Permanent Note Template.md** — filled in when a candidate is promoted.
-  Supports `{{title}}`, `{{date}}`, `{{source}}`, `{{tags}}`, `{{details}}`.
+  Supports `{{title}}`, `{{date}}`, `{{source}}`, `{{tags}}`, `{{topics}}`,
+  `{{details}}`. `{{topics}}` is the literature note's `topics:` property
+  (list or comma-separated text), so a paper's topics become the starting
+  topics of each permanent note promoted from it; edit them on the permanent
+  note when one idea belongs to a different topic. A template with no
+  `{{topics}}` and no `topics:` line gets a `topics: [...]` line added to the
+  note being made (never to the template) when the literature note has topics.
 
 ## Template upgrades
 
@@ -221,7 +227,8 @@ declined), before an import (optional), and via
 **"Update literature-note template."** Only the `## Quotes worth keeping`
 section and the `pdf:` / Open PDF lines are patched, so other customizations
 survive; the old file is first
-saved as `… (before Second Reader update).md`. Templates without that heading
+saved as `… (before Second Reader update).md`. The upgrade also adds a
+`topics: []` line after `tags:` when the template has none. Templates without that heading
 are never touched (`src/templateUpgrade.ts`).
 
 ## How highlight sync works

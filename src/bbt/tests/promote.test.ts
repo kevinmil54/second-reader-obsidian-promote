@@ -1,7 +1,9 @@
 import {
   candidateTitle,
   carryOverTags,
+  carryOverTopics,
   collectDetailLines,
+  ensureTopicsLine,
   promotedLink,
   sanitizeFilename,
 } from '../../promote';
@@ -196,5 +198,48 @@ describe('Promoter end to end (fake vault)', () => {
     await promoter.handleModify(note);
     expect(files.get(note.path)).toBe(content);
     expect([...files.keys()]).toEqual([note.path]);
+  });
+});
+
+describe('carryOverTopics', () => {
+  test('keeps a list in order', () => {
+    expect(carryOverTopics(['ai-and-work', 'ai-limits'])).toEqual(['ai-and-work', 'ai-limits']);
+  });
+  test('accepts a single string, with or without commas', () => {
+    expect(carryOverTopics('memory')).toEqual(['memory']);
+    expect(carryOverTopics('memory, cognitive-load')).toEqual(['memory', 'cognitive-load']);
+  });
+  test('drops blanks, a leading #, and characters that break a flow list', () => {
+    expect(carryOverTopics(['#memory', '  ', null, 'a[b]{c}"d"'])).toEqual(['memory', 'abcd']);
+  });
+  test('de-duplicates ignoring case', () => {
+    expect(carryOverTopics(['Memory', 'memory'])).toEqual(['Memory']);
+  });
+  test('nothing in, nothing out', () => {
+    expect(carryOverTopics(null)).toEqual([]);
+    expect(carryOverTopics(undefined)).toEqual([]);
+    expect(carryOverTopics([])).toEqual([]);
+  });
+});
+
+describe('ensureTopicsLine', () => {
+  const OLD = '---\ntitle: "x"\nstatus: permanent\ntags: [permanent-note]\ncreated: 2026-11-06\n---\n\n# x\n';
+  test('adds topics after tags in a template that predates topics', () => {
+    expect(ensureTopicsLine(OLD, 'ai-limits, ai-and-work')).toBe(
+      '---\ntitle: "x"\nstatus: permanent\ntags: [permanent-note]\ntopics: [ai-limits, ai-and-work]\ncreated: 2026-11-06\n---\n\n# x\n'
+    );
+  });
+  test('adds at the end of the frontmatter when there is no tags line', () => {
+    expect(ensureTopicsLine('---\ntitle: "x"\n---\n# x', 'memory')).toBe(
+      '---\ntitle: "x"\ntopics: [memory]\n---\n# x'
+    );
+  });
+  test('leaves a template that already has topics alone', () => {
+    const has = OLD.replace('created', 'topics: []\ncreated');
+    expect(ensureTopicsLine(has, 'memory')).toBe(has);
+  });
+  test('does nothing without topics or without frontmatter', () => {
+    expect(ensureTopicsLine(OLD, '')).toBe(OLD);
+    expect(ensureTopicsLine('# no frontmatter', 'memory')).toBe('# no frontmatter');
   });
 });

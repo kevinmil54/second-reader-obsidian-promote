@@ -111,6 +111,53 @@ export function carryOverTags(sourceTags: unknown[]): string[] {
   return carried;
 }
 
+// The literature note's `topics:` property (a list, or a single string with
+// commas) names what the paper is about. Unlike status tags, topics belong to
+// the idea as well as the paper, so they carry over to the promoted note, where
+// they can be edited since one paper can feed several topics. Values are
+// trimmed, stripped of a leading "#" and of characters that would break a YAML
+// flow list, and de-duplicated ignoring case.
+export function carryOverTopics(sourceTopics: unknown): string[] {
+  const raw: unknown[] = Array.isArray(sourceTopics)
+    ? sourceTopics
+    : sourceTopics
+    ? String(sourceTopics).split(',')
+    : [];
+  const seen = new Set<string>();
+  const out: string[] = [];
+  for (const t of raw) {
+    if (t === null || t === undefined) continue;
+    const topic = String(t)
+      .replace(/^#/, '')
+      .replace(/[[\]{},"]/g, '')
+      .trim();
+    if (!topic) continue;
+    const key = topic.toLowerCase();
+    if (seen.has(key)) continue;
+    seen.add(key);
+    out.push(topic);
+  }
+  return out;
+}
+
+// A template written before topics existed has no {{topics}} placeholder and
+// no `topics:` line. Add one to the frontmatter of the note being made (never
+// to the template itself), after `tags:` when there is one, so topics reach
+// the promoted note without anyone editing their template first.
+export function ensureTopicsLine(text: string, topicsValue: string): string {
+  if (!topicsValue) return text;
+  const fm = /^---\r?\n([\s\S]*?)\r?\n---[ \t]*(\r?\n|$)/.exec(text);
+  if (!fm || /^topics:/m.test(fm[1])) return text;
+  const lines = fm[1].split(/\r?\n/);
+  const tagsAt = lines.findIndex((l) => /^tags:/.test(l));
+  lines.splice(tagsAt >= 0 ? tagsAt + 1 : lines.length, 0, `topics: [${topicsValue}]`);
+  return (
+    text.slice(0, fm.index) +
+    `---\n${lines.join('\n')}\n---${fm[2]}` +
+    text.slice(fm.index + fm[0].length)
+  );
+}
+
 // Lines more indented than the candidate's own checkbox — typed by pressing
 // Enter then Tab right after the candidate title — are elaboration that
 // carries over into the promoted note's {{details}}. Re-indented to zero
@@ -133,7 +180,7 @@ export function collectDetailLines(lines: string[], startIdx: number, parentInde
   return { details, nextIdx: j };
 }
 
-async function ensureFolder(vault: Vault, path: string) {
+export async function ensureFolder(vault: Vault, path: string) {
   if (!path) return;
   const parts = path.split('/').filter(Boolean);
   let cur = '';
@@ -183,6 +230,8 @@ export class Promoter {
     const cache = app.metadataCache.getFileCache(file);
     const fmTags = cache && cache.frontmatter ? cache.frontmatter.tags : null;
     const tagList: unknown[] = Array.isArray(fmTags) ? fmTags : fmTags ? [fmTags] : [];
+    const sourceTopics: unknown =
+      cache && cache.frontmatter ? cache.frontmatter.topics : null;
     const isLiteratureNote = tagList.some(
       (t) => String(t).toLowerCase() === LIT_NOTE_TAG
     );
@@ -220,7 +269,7 @@ export class Promoter {
         const { details, nextIdx } = collectDetailLines(lines, i + 1, itemIndent);
 
         try {
-          const newFile = await this.createPermanentNote(title, file, tagList, details);
+          const newFile = await this.createPermanentNote(title, file, tagList, details, sourceTopics);
           lines[i] = `${m[1]}${promotedLink(newFile.basename, title)}`;
           promoted++;
         } catch (e) {
@@ -243,7 +292,8 @@ export class Promoter {
     rawTitle: string,
     sourceFile: TFile,
     sourceTags: unknown[],
-    details: string
+    details: string,
+    sourceTopics: unknown = null
   ) {
     const vault = this.plugin.app.vault;
     const { newNoteFolder } = this.settings();
@@ -263,24 +313,32 @@ export class Promoter {
       n++;
     }
 
-    const body = await this.renderNoteBody(rawTitle, sourceFile, sourceTags || [], details || '');
+    const body = await this.renderNoteBody(
+      rawTitle,
+      sourceFile,
+      sourceTags || [],
+      details || '',
+      sourceTopics
+    );
     return await vault.create(path, body);
   }
 
-  // Fills {{title}}, {{date}}, {{source}}, {{tags}}, {{details}} in the
-  // configured template file. Falls back to a minimal built-in body if no
+  // Fills {{title}}, {{date}}, {{source}}, {{tags}}, {{topics}}, {{details}}
+  // in the configured template file. Falls back to a minimal built-in body if no
   // template is configured or it can't be found — promotion should never
   // fail just because the template went missing.
   async renderNoteBody(
     rawTitle: string,
     sourceFile: TFile,
     sourceTags: unknown[],
-    details: string
+    details: string,
+    sourceTopics: unknown = null
   ) {
     const app = this.plugin.app;
     const today = new Date().toISOString().slice(0, 10);
     const escapedTitle = rawTitle.replace(/"/g, '\\"');
     const tagsValue = [PERMANENT_NOTE_TAG, ...carryOverTags(sourceTags)].join(', ');
+    const topicsValue = carryOverTopics(sourceTopics).join(', ');
 
     const { templatePath: configured } = this.settings();
     const templatePath = configured ? normalizePath(configured) : '';
@@ -290,11 +348,15 @@ export class Promoter {
 
     if (templateFile instanceof TFile) {
       const raw = await app.vault.read(templateFile);
-      return raw
+      const withTopics = /\{\{\s*topics\s*\}\}/.test(raw)
+        ? raw
+        : ensureTopicsLine(raw, topicsValue);
+      return withTopics
         .replace(/\{\{\s*title\s*\}\}/g, escapedTitle)
         .replace(/\{\{\s*date\s*\}\}/g, today)
         .replace(/\{\{\s*source\s*\}\}/g, sourceFile.basename)
         .replace(/\{\{\s*tags\s*\}\}/g, tagsValue)
+        .replace(/\{\{\s*topics\s*\}\}/g, topicsValue)
         .replace(/\{\{\s*details\s*\}\}/g, details || '');
     }
 
@@ -308,6 +370,7 @@ export class Promoter {
       `title: "${escapedTitle}"`,
       'status: permanent',
       `tags: [${tagsValue}]`,
+      ...(topicsValue ? [`topics: [${topicsValue}]`] : []),
       `created: ${today}`,
       `source: "[[${sourceFile.basename}]]"`,
       '---',

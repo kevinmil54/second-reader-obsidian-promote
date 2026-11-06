@@ -4,6 +4,7 @@
 //   - the "Quotes worth keeping" section (highlight import)
 //   - the `pdf:` frontmatter line and the "Open PDF" link (opening the
 //     student's own copy of the paper from the syllabus)
+//   - the `topics:` frontmatter line (promoted notes inherit these topics)
 
 const QUOTES_HEADING = /^##\s+Quotes worth keeping[ \t]*$/im;
 const NEXT_SECTION = /^#{1,2}\s/m;
@@ -42,6 +43,26 @@ function patchQuotes(current: string, bundled: string): string {
   );
 }
 
+export function hasTopicsLine(template: string): boolean {
+  const fm = FRONTMATTER.exec(template);
+  return !!fm && /^topics:/m.test(fm[1]);
+}
+
+// Adds `topics: []` after `tags:` (else at the end of the frontmatter).
+function patchTopics(current: string): string {
+  if (hasTopicsLine(current)) return current;
+  const fm = FRONTMATTER.exec(current);
+  if (!fm) return current;
+  const lines = fm[1].split(/\r?\n/);
+  const tagsAt = lines.findIndex((l) => /^tags:/.test(l));
+  lines.splice(tagsAt >= 0 ? tagsAt + 1 : lines.length, 0, 'topics: []');
+  return (
+    current.slice(0, fm.index) +
+    `---\n${lines.join('\n')}\n---${fm[2]}` +
+    current.slice(fm.index + fm[0].length)
+  );
+}
+
 function patchPdfLink(current: string, bundled: string): string {
   if (hasPdfLink(current)) return current;
   const pdfLine = bundled.split(/\r?\n/).find((l) => /^pdf:/.test(l));
@@ -73,7 +94,7 @@ export function upgradeTemplateText(
   bundled: string
 ): string | null {
   if (!QUOTES_HEADING.test(current)) return null;
-  const upgraded = patchPdfLink(patchQuotes(current, bundled), bundled);
+  const upgraded = patchTopics(patchPdfLink(patchQuotes(current, bundled), bundled));
   return upgraded === current ? null : upgraded;
 }
 

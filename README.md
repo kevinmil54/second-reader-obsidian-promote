@@ -206,7 +206,50 @@ Images and other files are added only where nothing with that name exists, and t
   Formats). Sync uses the format whose template path contains "Literature
   Note" (else the first format).
 - **Permanent Note Template.md** — filled in when a candidate is promoted.
-  Supports `{{title}}`, `{{date}}`, `{{source}}`, `{{tags}}`, `{{details}}`.
+  Supports `{{title}}`, `{{date}}`, `{{source}}`, `{{tags}}`, `{{topics}}`,
+  `{{details}}`. `{{topics}}` is the literature note's `topics:` property
+  (list or comma-separated text), so a paper's topics become the starting
+  topics of each permanent note promoted from it; edit them on the permanent
+  note when one idea belongs to a different topic. A template with no
+  `{{topics}}` and no `topics:` line gets a `topics: [...]` line added to the
+  note being made (never to the template) when the literature note has topics.
+
+## Synthesis notes
+
+A synthesis note gathers what you think about one topic from the permanent
+notes that share it. Second Reader creates the note and keeps its list of
+permanent notes current. Everything else in the note is yours and is never
+changed.
+
+- A permanent note is one tagged `permanent-note`; its topics are its
+  `topics:` property (a list, or comma-separated text).
+- When a topic reaches the minimum number of permanent notes (default 4) and
+  no synthesis note has that topic, a note is created in the synthesis folder
+  (default `Synthesis notes`) and a notice says so. This happens when a
+  permanent note that lists the topic is added or edited. It does not run at
+  startup, and a note you delete is not made again automatically.
+- A synthesis note is any note in the synthesis folder, or with
+  `type: synthesis`, whose `topic:` property names the topic (case ignored).
+- New notes use the template at the synthesis template path (default
+  `Templates/Synthesis Note Template.md`). `{{title}}`, `{{date}}` and
+  `{{topic}}` are filled in, as are the Templater title, date and topic
+  prompt used in the instructor template, and the topic is written to the
+  `topic:` property. A template with any other Templater expression falls
+  back to a built-in note. A Dataview query under "Permanent notes on this
+  topic" is replaced by the plugin's list so the notes aren't shown twice.
+- The list lives between `%% begin synthesis-notes %%` and
+  `%% end synthesis-notes %%` under the "Permanent notes on this topic"
+  heading, and is refreshed when permanent notes are added, edited, renamed or
+  deleted. Only notes that already have the markers are refreshed on their
+  own; a synthesis note you wrote yourself is left alone.
+- Commands: **Create synthesis notes for topics with enough permanent notes**
+  (all topics, including ones made before the plugin was updated) and **Add or
+  refresh the permanent-notes list in this synthesis note**.
+- Settings: Synthesis notes (automatic creation on or off, minimum notes,
+  folder, template path).
+
+The logic is in `src/synthesisCore.ts` (no Obsidian imports, covered by
+`synthesis.test.ts`); `src/synthesis.ts` does the vault work.
 
 ## Template upgrades
 
@@ -221,7 +264,8 @@ declined), before an import (optional), and via
 **"Update literature-note template."** Only the `## Quotes worth keeping`
 section and the `pdf:` / Open PDF lines are patched, so other customizations
 survive; the old file is first
-saved as `… (before Second Reader update).md`. Templates without that heading
+saved as `… (before Second Reader update).md`. The upgrade also adds a
+`topics: []` line after `tags:` when the template has none. Templates without that heading
 are never touched (`src/templateUpgrade.ts`).
 
 ## How highlight sync works

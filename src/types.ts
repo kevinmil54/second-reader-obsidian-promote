@@ -1,4 +1,5 @@
 import { PromoteSettings } from './promote';
+import { SynthesisSettings } from './synthesis';
 
 
 export type Format =
@@ -73,7 +74,7 @@ export interface RenderCiteTemplateParams {
   format: CitationFormat;
 }
 
-export interface ZoteroConnectorSettings extends PromoteSettings {
+export interface ZoteroConnectorSettings extends PromoteSettings, SynthesisSettings {
   // Set once the old Zotero Integration plugin's settings have been copied in
   // (or there were none to copy), so the import never runs twice.
   _importedLegacyZoteroSettings?: boolean;

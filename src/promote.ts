@@ -180,7 +180,7 @@ export function collectDetailLines(lines: string[], startIdx: number, parentInde
   return { details, nextIdx: j };
 }
 
-async function ensureFolder(vault: Vault, path: string) {
+export async function ensureFolder(vault: Vault, path: string) {
   if (!path) return;
   const parts = path.split('/').filter(Boolean);
   let cur = '';

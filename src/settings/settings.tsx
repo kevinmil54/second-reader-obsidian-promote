@@ -483,6 +483,7 @@ export class ZoteroConnectorSettingsTab extends PluginSettingTab {
     containerEl.empty();
 
     this.displayPromoteSettings(containerEl.createDiv());
+    this.displaySynthesisSettings(containerEl.createDiv());
     this.displayPackageSettings(containerEl.createDiv());
 
     new Setting(containerEl).setName('Zotero import & highlight sync').setHeading();
@@ -549,9 +550,10 @@ export class ZoteroConnectorSettingsTab extends PluginSettingTab {
       .setName('Template path')
       .setDesc(
         'Vault path to the template used for promoted notes. Supports {{title}}, ' +
-          '{{date}}, {{source}}, {{tags}}, and {{details}} placeholders — {{tags}} is ' +
-          '"permanent-note" plus the literature note\'s own tags (its ' +
-          'literature-note/status tags are dropped, not carried over); {{details}} is ' +
+          '{{date}}, {{source}}, {{tags}}, {{topics}}, and {{details}} placeholders — ' +
+          '{{tags}} is "permanent-note" plus the literature note\'s own tags (its ' +
+          'literature-note/status tags are dropped, not carried over); {{topics}} is ' +
+          "the literature note's topics: list; {{details}} is " +
           "whatever's typed on indented lines under a candidate (Enter, then Tab, " +
           'right after its title). Leave blank to use a minimal built-in template.'
       )
@@ -561,6 +563,77 @@ export class ZoteroConnectorSettingsTab extends PluginSettingTab {
           .setValue(this.plugin.settings.templatePath)
           .onChange((value) => {
             this.plugin.settings.templatePath = value.trim();
+            this.debouncedSave();
+          })
+      );
+  }
+
+  displaySynthesisSettings(el: HTMLElement) {
+    new Setting(el).setName('Synthesis notes').setHeading();
+    el.createEl('p', {
+      text:
+        'When enough permanent notes share a topic (their topics: property), a synthesis ' +
+        'note is created for it, and its list of permanent notes is kept up to date. ' +
+        'Only that list is changed; the rest of the note is yours.',
+    });
+
+    new Setting(el)
+      .setName('Create synthesis notes automatically')
+      .setDesc(
+        'Make a synthesis note when a permanent note you add or edit brings its topic to the ' +
+          'minimum below. Turn this off to create them only with the command "Create synthesis ' +
+          'notes for topics with enough permanent notes".'
+      )
+      .addToggle((toggle) =>
+        toggle.setValue(this.plugin.settings.synthesisAutoCreate).onChange((value) => {
+          this.plugin.settings.synthesisAutoCreate = value;
+          this.debouncedSave();
+        })
+      );
+
+    new Setting(el)
+      .setName('Minimum permanent notes')
+      .setDesc('How many permanent notes a topic needs before it gets a synthesis note.')
+      .addText((text) =>
+        text
+          .setPlaceholder('4')
+          .setValue(String(this.plugin.settings.synthesisMinNotes))
+          .onChange((value) => {
+            const n = parseInt(value.trim(), 10);
+            if (n >= 1) {
+              this.plugin.settings.synthesisMinNotes = n;
+              this.debouncedSave();
+            }
+          })
+      );
+
+    new Setting(el)
+      .setName('Synthesis note folder')
+      .setDesc('Where new synthesis notes are created.')
+      .addText((text) =>
+        text
+          .setPlaceholder('Synthesis notes')
+          .setValue(this.plugin.settings.synthesisFolder)
+          .onChange((value) => {
+            this.plugin.settings.synthesisFolder = value.trim();
+            this.debouncedSave();
+          })
+      );
+
+    new Setting(el)
+      .setName('Synthesis template path')
+      .setDesc(
+        'Vault path to the template for new synthesis notes. {{title}}, {{date}} and {{topic}} ' +
+          'are filled in, and so are the Templater title, date and topic prompt in the ' +
+          'instructor template. A template with anything else in it falls back to a built-in ' +
+          'note. Leave blank to use the built-in note.'
+      )
+      .addText((text) =>
+        text
+          .setPlaceholder('Templates/Synthesis Note Template.md')
+          .setValue(this.plugin.settings.synthesisTemplatePath)
+          .onChange((value) => {
+            this.plugin.settings.synthesisTemplatePath = value.trim();
             this.debouncedSave();
           })
       );

@@ -49,6 +49,7 @@ import {
   hasNamingFix,
 } from './noteNamingUI';
 import { DEFAULT_PROMOTE_SETTINGS, Promoter } from './promote';
+import { DEFAULT_SYNTHESIS_SETTINGS, Synthesizer } from './synthesis';
 import {
   applyTemplateUpgrade,
   askToUpgradeTemplates,
@@ -90,6 +91,7 @@ const LEGACY_ZOTERO_PLUGIN_IDS = [
 
 const DEFAULT_SETTINGS: ZoteroConnectorSettings = {
   ...DEFAULT_PROMOTE_SETTINGS,
+  ...DEFAULT_SYNTHESIS_SETTINGS,
   database: 'Zotero',
   noteImportFolder: '',
   pdfExportImageDPI: 120,
@@ -138,6 +140,7 @@ export default class ZoteroConnector extends Plugin {
 
     const promoter = new Promoter(this, () => this.settings);
     promoter.register();
+    new Synthesizer(this, () => this.settings, () => this.saveSettings()).register();
     this.linkColors = new LiteratureLinkColors(this);
     this.linkColors.register();
     this.app.workspace.onLayoutReady(() => this.loadVaultTemplates());

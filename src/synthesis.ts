@@ -14,7 +14,7 @@
  * they run "Add or refresh the permanent-notes list in this note".
  */
 
-import { Notice, Plugin, TAbstractFile, TFile, debounce, normalizePath } from 'obsidian';
+import { App, Editor, FuzzySuggestModal, Notice, Plugin, TAbstractFile, TFile, debounce, normalizePath } from 'obsidian';
 
 import { ensureFolder, sanitizeFilename } from './promote';
 import {
@@ -22,12 +22,14 @@ import {
   TopicNote,
   blockForText,
   builtInSynthesisBody,
+  citationFor,
   dropNotesQuery,
   fillSynthesisTemplate,
   groupByTopic,
   hasNotesBlock,
   synthesisTitle,
   topicsToCreate,
+  unusedNotes,
   withNotesBlock,
 } from './synthesisCore';
 
@@ -52,6 +54,22 @@ export const DEFAULT_SYNTHESIS_SETTINGS: SynthesisSettings = {
 
 function asList(value: unknown): unknown[] {
   return Array.isArray(value) ? value : value ? [value] : [];
+}
+
+class NotePicker extends FuzzySuggestModal<TopicNote> {
+  constructor(app: App, private notes: TopicNote[], private choose: (n: TopicNote) => void) {
+    super(app);
+    this.setPlaceholder('Cite which permanent note?');
+  }
+  getItems() {
+    return this.notes;
+  }
+  getItemText(n: TopicNote) {
+    return n.title || n.name;
+  }
+  onChooseItem(n: TopicNote) {
+    this.choose(n);
+  }
 }
 
 export class Synthesizer {
@@ -97,6 +115,17 @@ export class Synthesizer {
     });
 
     this.plugin.addCommand({
+      id: 'cite-permanent-note',
+      name: 'Cite a permanent note here (from this synthesis note\'s unused list)',
+      editorCheckCallback: (checking, editor, view) => {
+        const file = view.file;
+        if (!file || !this.topicOf(file)) return false;
+        if (!checking) this.citeNote(editor, file);
+        return true;
+      },
+    });
+
+    this.plugin.addCommand({
       id: 'refresh-synthesis-list',
       name: 'Add or refresh the permanent-notes list in this synthesis note',
       checkCallback: (checking) => {
@@ -116,6 +145,32 @@ export class Synthesizer {
         return true;
       },
     });
+  }
+
+  // Offers the permanent notes on this note's topic that it does not link to
+  // yet and inserts a link at the cursor. Selected text becomes the link text;
+  // otherwise the title is inserted with the title selected, ready to retype.
+  private citeNote(editor: Editor, file: TFile) {
+    const unused = unusedNotes(this.notesFor(this.topicOf(file)), editor.getValue());
+    if (!unused.length) {
+      new Notice('Every permanent note on this topic is already linked in this note.');
+      return;
+    }
+    const from = editor.getCursor('from');
+    const to = editor.getCursor('to');
+    const selected = editor.getSelection();
+    new NotePicker(this.plugin.app, unused, (note) => {
+      const cite = citationFor(note, selected);
+      editor.replaceRange(cite.text, from, to);
+      if (!selected && cite.aliasFrom >= 0) {
+        editor.setSelection(
+          { line: from.line, ch: from.ch + cite.aliasFrom },
+          { line: from.line, ch: from.ch + cite.aliasTo }
+        );
+      } else {
+        editor.setCursor({ line: from.line, ch: from.ch + cite.text.length });
+      }
+    }).open();
   }
 
   // --- reading the vault ---------------------------------------------------

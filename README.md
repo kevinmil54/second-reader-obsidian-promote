@@ -252,6 +252,12 @@ else in the note is yours and is never changed or reordered.
 - Commands: **Create synthesis notes for topics with enough permanent notes**
   (all topics, including ones made before the plugin was updated) and **Add or
   refresh the permanent-notes list in this synthesis note**.
+- **Cite a permanent note here** (in a synthesis note): opens a search box of
+  the permanent notes on the note's topic that it does not link to yet, with
+  full titles, and inserts a link at the cursor. With text selected, the
+  selection becomes the link text; otherwise the title is inserted and
+  selected so you can type your own words over it. The note then leaves the
+  list. Assign a hotkey under Settings > Hotkeys.
 - Settings: Synthesis notes (automatic creation on or off, minimum notes,
   folder, template path).
 

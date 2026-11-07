@@ -91,9 +91,33 @@ export function linkedNames(text: string): Set<string> {
   return out;
 }
 
+function clean(text: string): string {
+  return text.replace(/[|[\]]/g, ' ').replace(/\s+/g, ' ').trim();
+}
+
 function linkFor(n: TopicNote): string {
-  const title = (n.title || '').replace(/[|[\]]/g, ' ').replace(/\s+/g, ' ').trim();
+  const title = clean(n.title || '');
   return title && title !== n.name ? `[[${n.name}|${title}]]` : `[[${n.name}]]`;
+}
+
+// The link inserted when a student cites a note. The alias is their own words
+// when they had text selected, otherwise the note's title. aliasFrom/aliasTo
+// mark the alias inside `text` so it can be selected for typing over; they are
+// -1 when the link has no alias.
+export function citationFor(
+  n: TopicNote,
+  alias?: string
+): { text: string; aliasFrom: number; aliasTo: number } {
+  const chosen = clean(alias || '') || clean(n.title || '');
+  if (!chosen || chosen === n.name) return { text: `[[${n.name}]]`, aliasFrom: -1, aliasTo: -1 };
+  const head = `[[${n.name}|`;
+  return { text: `${head}${chosen}]]`, aliasFrom: head.length, aliasTo: head.length + chosen.length };
+}
+
+// The notes a text (outside the block) does not link to yet.
+export function unusedNotes(notes: TopicNote[], text: string): TopicNote[] {
+  const cited = linkedNames(text.replace(BLOCK_RE, ''));
+  return notes.filter((n) => !cited.has(n.name.toLowerCase()));
 }
 
 // The list holds the permanent notes on the topic that the note does not link

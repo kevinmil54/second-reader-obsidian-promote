@@ -4,6 +4,8 @@ import {
   NOTES_HEADING,
   LEGACY_NOTES_HEADING,
   blockForText,
+  citationFor,
+  unusedNotes,
   linkedNames,
   TopicNote,
   builtInSynthesisBody,
@@ -304,5 +306,30 @@ describe('notes made by 2.11', () => {
   test('the old heading is still recognised when the Dataview query is dropped', () => {
     const t = ['# T', LEGACY_NOTES_HEADING, '```dataview', 'LIST', '```', '## Gaps'].join('\n');
     expect(dropNotesQuery(t)).not.toContain('dataview');
+  });
+});
+
+describe('citing a note', () => {
+  const n = { ...note('Clipped file name', []), title: 'The full claim, in a long sentence' };
+  test('with nothing selected the title is the alias and is marked for retyping', () => {
+    const c = citationFor(n);
+    expect(c.text).toBe('[[Clipped file name|The full claim, in a long sentence]]');
+    expect(c.text.slice(c.aliasFrom, c.aliasTo)).toBe('The full claim, in a long sentence');
+  });
+  test('selected text becomes the alias', () => {
+    const c = citationFor(n, 'offloading evaluation');
+    expect(c.text).toBe('[[Clipped file name|offloading evaluation]]');
+  });
+  test('a note whose title equals its name gets a plain link', () => {
+    expect(citationFor({ ...note('A idea', []), title: 'A idea' })).toEqual({
+      text: '[[A idea]]',
+      aliasFrom: -1,
+      aliasTo: -1,
+    });
+  });
+  test('unusedNotes ignores links inside the block and counts claims', () => {
+    const notes = [note('A idea', []), note('B idea', [])];
+    const text = withNotesBlock('# T\n\n1. claim ([[B idea|b]])\n', renderNotesBlock(notes));
+    expect(unusedNotes(notes, text).map((x) => x.name)).toEqual(['A idea']);
   });
 });

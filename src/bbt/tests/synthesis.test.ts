@@ -5,6 +5,7 @@ import {
   LEGACY_NOTES_HEADING,
   blockForText,
   citationFor,
+  orderForProject,
   unusedNotes,
   linkedNames,
   TopicNote,
@@ -331,5 +332,26 @@ describe('citing a note', () => {
     const notes = [note('A idea', []), note('B idea', [])];
     const text = withNotesBlock('# T\n\n1. claim ([[B idea|b]])\n', renderNotesBlock(notes));
     expect(unusedNotes(notes, text).map((x) => x.name)).toEqual(['A idea']);
+  });
+});
+
+describe('ordering for a project note', () => {
+  const notes = [
+    note('Z about work', ['ai-and-work']),
+    note('B about memory', ['memory']),
+    note('A about work', ['AI-and-Work']),
+    note('M no topic', []),
+  ];
+  test('notes that share a topic with the project come first, each group by name', () => {
+    const out = orderForProject(notes, new Set(['ai-and-work'])).map((n) => n.name);
+    expect(out).toEqual(['A about work', 'Z about work', 'B about memory', 'M no topic']);
+  });
+  test('with no topics everything is by name', () => {
+    expect(orderForProject(notes, new Set()).map((n) => n.name)).toEqual([
+      'A about work',
+      'B about memory',
+      'M no topic',
+      'Z about work',
+    ]);
   });
 });

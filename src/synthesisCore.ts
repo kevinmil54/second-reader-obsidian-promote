@@ -114,6 +114,16 @@ export function citationFor(
   return { text: `${head}${chosen}]]`, aliasFrom: head.length, aliasTo: head.length + chosen.length };
 }
 
+// For a project note: permanent notes that share a topic with the project's
+// synthesis notes come first, then the rest, each group by name.
+export function orderForProject(notes: TopicNote[], topics: Set<string>): TopicNote[] {
+  const wanted = new Set(Array.from(topics).map((t) => t.toLowerCase()));
+  const shares = (n: TopicNote) => carryOverTopics(n.topics).some((t) => wanted.has(t.toLowerCase()));
+  return notes
+    .slice()
+    .sort((a, b) => Number(shares(b)) - Number(shares(a)) || a.name.localeCompare(b.name));
+}
+
 // The notes a text (outside the block) does not link to yet.
 export function unusedNotes(notes: TopicNote[], text: string): TopicNote[] {
   const cited = linkedNames(text.replace(BLOCK_RE, ''));

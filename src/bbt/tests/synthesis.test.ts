@@ -1,6 +1,10 @@
 import {
   NOTES_BEGIN,
   NOTES_END,
+  NOTES_HEADING,
+  LEGACY_NOTES_HEADING,
+  blockForText,
+  linkedNames,
   TopicNote,
   builtInSynthesisBody,
   dropNotesQuery,
@@ -118,7 +122,7 @@ describe('notes block', () => {
       [
         '# T',
         '',
-        '## Permanent notes on this topic',
+        NOTES_HEADING,
         '*Fills itself from topic.*',
         '',
         block,
@@ -143,7 +147,7 @@ describe('notes block', () => {
   });
   test('a note with no heading gets the heading and block at the end', () => {
     const out = withNotesBlock('# T\n\ntext\n', block);
-    expect(out).toBe(`# T\n\ntext\n\n## Permanent notes on this topic\n\n${block}\n`);
+    expect(out).toBe(`# T\n\ntext\n\n${NOTES_HEADING}\n\n${block}\n`);
   });
   test('text around the block survives a refresh, even with $ patterns in it', () => {
     const typed = withNotesBlock(WITH_HEADING, block).replace('- mine', () => '- mine, $& and $1');
@@ -226,12 +230,12 @@ describe('built-in note', () => {
   test('has the topic, a heading for the list, and no leftover placeholders', () => {
     const body = builtInSynthesisBody('ai-limits', 'Synthesis - ai limits', '2026-11-06');
     expect(body).toContain('topic: ai-limits');
-    expect(body).toContain('## Permanent notes on this topic');
+    expect(body).toContain(NOTES_HEADING);
     expect(body).not.toMatch(/\{\{|<%/);
     const withList = withNotesBlock(body, renderNotesBlock([note('A', [])]));
     expect(withList).toContain('- [[A]]');
     expect(withList.indexOf(NOTES_BEGIN)).toBeGreaterThan(
-      withList.indexOf('## Permanent notes on this topic')
+      withList.indexOf(NOTES_HEADING)
     );
     expect(withList.indexOf(NOTES_END)).toBeLessThan(
       withList.indexOf('## Where the notes agree and disagree')
@@ -241,4 +245,64 @@ describe('built-in note', () => {
 
 test('topicLabel', () => {
   expect(topicLabel('ai-and-work')).toBe('ai and work');
+});
+
+describe('titles as link text', () => {
+  const full = 'Cognitive Load Theory (Sweller) - distinguishes among three kinds of cognitive load';
+  test('a clipped file name shows the full title', () => {
+    const n = { ...note('Cognitive Load Theory (Sweller) - distinguishes among three', []), title: full };
+    expect(renderNotesBlock([n])).toContain(`- [[${n.name}|${full}]]`);
+  });
+  test('a title equal to the file name gives a plain link', () => {
+    const n = { ...note('A idea', []), title: 'A idea' };
+    expect(renderNotesBlock([n])).toContain('- [[A idea]]');
+  });
+  test('characters that would break a link are removed from the title', () => {
+    const n = { ...note('A', []), title: 'Pipe | and [brackets] here' };
+    expect(renderNotesBlock([n])).toContain('- [[A|Pipe and brackets here]]');
+  });
+});
+
+describe('notes not yet used', () => {
+  const notes = [note('A idea', []), note('B idea', []), note('C idea', [])];
+  test('linkedNames reads plain, aliased, heading and folder links', () => {
+    const names = linkedNames('[[A idea]] [[B idea|b]] [[C idea#Core]] [[Permanent notes/D idea.md]] ![[E idea]]');
+    expect([...names].sort()).toEqual(['a idea', 'b idea', 'c idea', 'd idea', 'e idea']);
+  });
+  test('a note the text links to leaves the list', () => {
+    const block = renderNotesBlock(notes, new Set(['b idea']));
+    expect(block).toContain('[[A idea]]');
+    expect(block).toContain('[[C idea]]');
+    expect(block).not.toContain('[[B idea]]');
+  });
+  test('links inside the block itself do not count', () => {
+    const text = withNotesBlock('# T\n\n## Claims\n1. mine\n', renderNotesBlock(notes));
+    expect(blockForText(notes, text)).toBe(renderNotesBlock(notes));
+  });
+  test('linking a note in the claims removes it on the next refresh', () => {
+    const text = withNotesBlock('# T\n\n1. A claim ([[B idea]])\n', renderNotesBlock(notes));
+    const next = withNotesBlock(text, blockForText(notes, text));
+    expect(next).not.toContain('- [[B idea]]');
+    expect(next).toContain('- [[A idea]]');
+    expect(next).toContain('A claim ([[B idea]])');
+    expect(withNotesBlock(next, blockForText(notes, next))).toBe(next);
+  });
+  test('when every note is linked the list says so', () => {
+    const block = renderNotesBlock(notes, new Set(['a idea', 'b idea', 'c idea']));
+    expect(block).toContain('Every permanent note on this topic is linked in this note.');
+  });
+});
+
+describe('notes made by 2.11', () => {
+  const old = ['# T', '', LEGACY_NOTES_HEADING, '', `${NOTES_BEGIN}\n- [[A idea]]\n${NOTES_END}`, '', '## Gaps', ''].join('\n');
+  test('the old heading is renamed on refresh and the rest is kept', () => {
+    const out = withNotesBlock(old, renderNotesBlock([note('A idea', [])], new Set(['a idea'])));
+    expect(out).toContain(NOTES_HEADING);
+    expect(out).not.toContain(LEGACY_NOTES_HEADING);
+    expect(out).toContain('## Gaps');
+  });
+  test('the old heading is still recognised when the Dataview query is dropped', () => {
+    const t = ['# T', LEGACY_NOTES_HEADING, '```dataview', 'LIST', '```', '## Gaps'].join('\n');
+    expect(dropNotesQuery(t)).not.toContain('dataview');
+  });
 });

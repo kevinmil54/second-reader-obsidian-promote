@@ -217,9 +217,10 @@ Images and other files are added only where nothing with that name exists, and t
 ## Synthesis notes
 
 A synthesis note gathers what you think about one topic from the permanent
-notes that share it. Second Reader creates the note and keeps its list of
-permanent notes current. Everything else in the note is yours and is never
-changed.
+notes that share it. Second Reader creates the note and keeps one list in it:
+the permanent notes on the topic that the note does not link to yet. As you
+cite a permanent note in your own writing, it leaves the list. Everything
+else in the note is yours and is never changed or reordered.
 
 - A permanent note is one tagged `permanent-note`; its topics are its
   `topics:` property (a list, or comma-separated text).
@@ -235,13 +236,19 @@ changed.
   `{{topic}}` are filled in, as are the Templater title, date and topic
   prompt used in the instructor template, and the topic is written to the
   `topic:` property. A template with any other Templater expression falls
-  back to a built-in note. A Dataview query under "Permanent notes on this
-  topic" is replaced by the plugin's list so the notes aren't shown twice.
+  back to a built-in note. A Dataview query under "Permanent notes not yet
+  used" is replaced by the plugin's list so the notes aren't shown twice.
 - The list lives between `%% begin synthesis-notes %%` and
-  `%% end synthesis-notes %%` under the "Permanent notes on this topic"
-  heading, and is refreshed when permanent notes are added, edited, renamed or
-  deleted. Only notes that already have the markers are refreshed on their
-  own; a synthesis note you wrote yourself is left alone.
+  `%% end synthesis-notes %%` under the "Permanent notes not yet used"
+  heading (2.11 called it "Permanent notes on this topic"; the old heading is
+  renamed on the next refresh). It is refreshed when permanent notes are
+  added, edited, renamed or deleted, and a few seconds after you stop editing
+  the synthesis note, since a note you link there leaves the list. Any link
+  to the permanent note counts, whether plain, aliased or to a heading.
+  Only notes that already have the markers are refreshed on their own; a
+  synthesis note you wrote yourself is left alone.
+- Each entry is shown with the permanent note's full `title:` as the link
+  text, so a long claim whose file name was shortened is still readable.
 - Commands: **Create synthesis notes for topics with enough permanent notes**
   (all topics, including ones made before the plugin was updated) and **Add or
   refresh the permanent-notes list in this synthesis note**.

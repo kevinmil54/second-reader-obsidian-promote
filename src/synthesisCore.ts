@@ -12,11 +12,16 @@ import { carryOverTopics } from './promote';
 
 export const NOTES_BEGIN = '%% begin synthesis-notes %%';
 export const NOTES_END = '%% end synthesis-notes %%';
-export const NOTES_HEADING = '## Permanent notes on this topic';
+export const NOTES_HEADING = '## Permanent notes not yet used';
+// What 2.11 called the section. Notes made then are renamed on the next refresh.
+export const LEGACY_NOTES_HEADING = '## Permanent notes on this topic';
+const HEADINGS = [NOTES_HEADING, LEGACY_NOTES_HEADING].map((h) => h.toLowerCase());
+const isNotesHeading = (line: string) => HEADINGS.includes(line.trim().toLowerCase());
 
 export interface TopicNote {
   path: string;
   name: string; // file basename, used as the link target
+  title?: string; // the full title, shown as the link text when it differs
   topics: string[];
 }
 
@@ -76,11 +81,36 @@ export function topicsToCreate(input: CreationInput): TopicGroup[] {
   return out.sort((a, b) => b.notes.length - a.notes.length || a.topic.localeCompare(b.topic));
 }
 
-export function renderNotesBlock(notes: TopicNote[]): string {
-  const items = notes.length
-    ? notes.map((n) => `- [[${n.name}]]`)
-    : ['- No permanent notes list this topic yet.'];
+// Names of the notes a text links to, lower case, without folders or .md.
+export function linkedNames(text: string): Set<string> {
+  const out = new Set<string>();
+  for (const m of text.matchAll(/\[\[([^\]|#^]+)/g)) {
+    const name = m[1].trim().split('/').pop()!.replace(/\.md$/i, '');
+    out.add(name.toLowerCase());
+  }
+  return out;
+}
+
+function linkFor(n: TopicNote): string {
+  const title = (n.title || '').replace(/[|[\]]/g, ' ').replace(/\s+/g, ' ').trim();
+  return title && title !== n.name ? `[[${n.name}|${title}]]` : `[[${n.name}]]`;
+}
+
+// The list holds the permanent notes on the topic that the note does not link
+// to yet. `cited` is the set of names already linked in the student's own text.
+export function renderNotesBlock(notes: TopicNote[], cited: Set<string> = new Set()): string {
+  const unused = notes.filter((n) => !cited.has(n.name.toLowerCase()));
+  let items: string[];
+  if (unused.length) items = unused.map((n) => `- ${linkFor(n)}`);
+  else if (notes.length) items = ['- Every permanent note on this topic is linked in this note.'];
+  else items = ['- No permanent notes list this topic yet.'];
   return [NOTES_BEGIN, ...items, NOTES_END].join('\n');
+}
+
+// The block for a note's current text: notes the text (outside the block)
+// does not link to.
+export function blockForText(notes: TopicNote[], text: string): string {
+  return renderNotesBlock(notes, linkedNames(text.replace(BLOCK_RE, '')));
 }
 
 const BLOCK_RE = new RegExp(
@@ -100,10 +130,10 @@ export function hasNotesBlock(text: string): boolean {
 // the heading and block at the end. Returns the text unchanged if it is
 // already current.
 export function withNotesBlock(text: string, block: string): string {
-  if (hasNotesBlock(text)) return text.replace(BLOCK_RE, () => block);
+  if (hasNotesBlock(text)) return renameLegacyHeading(text.replace(BLOCK_RE, () => block));
 
   const lines = text.split('\n');
-  const headingAt = lines.findIndex((l) => l.trim().toLowerCase() === NOTES_HEADING.toLowerCase());
+  const headingAt = lines.findIndex(isNotesHeading);
   if (headingAt < 0) {
     return `${text.replace(/\s*$/, '')}\n\n${NOTES_HEADING}\n\n${block}\n`;
   }
@@ -111,7 +141,14 @@ export function withNotesBlock(text: string, block: string): string {
   while (at < lines.length && lines[at].trim() === '') at++;
   if (at < lines.length && /^\*[^*].*\*$/.test(lines[at].trim())) at++;
   lines.splice(at, 0, '', block);
-  return lines.join('\n');
+  return renameLegacyHeading(lines.join('\n'));
+}
+
+function renameLegacyHeading(text: string): string {
+  return text
+    .split('\n')
+    .map((l) => (l.trim().toLowerCase() === LEGACY_NOTES_HEADING.toLowerCase() ? NOTES_HEADING : l))
+    .join('\n');
 }
 
 // A new note made from a template that lists its permanent notes with a
@@ -119,7 +156,7 @@ export function withNotesBlock(text: string, block: string): string {
 // doesn't show the same notes twice.
 export function dropNotesQuery(text: string): string {
   const lines = text.split('\n');
-  const headingAt = lines.findIndex((l) => l.trim().toLowerCase() === NOTES_HEADING.toLowerCase());
+  const headingAt = lines.findIndex(isNotesHeading);
   if (headingAt < 0) return text;
   let end = lines.length;
   for (let i = headingAt + 1; i < lines.length; i++) {
@@ -169,6 +206,7 @@ export function builtInSynthesisBody(topic: string, title: string, today: string
     '1. ',
     '',
     NOTES_HEADING,
+    '*Permanent notes on this topic that this note does not link to yet. Link one in a claim above and it leaves this list.*',
     '',
     '## Where the notes agree and disagree',
     '',

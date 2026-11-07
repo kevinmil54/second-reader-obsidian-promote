@@ -27,6 +27,7 @@ import {
   fillSynthesisTemplate,
   groupByTopic,
   hasNotesBlock,
+  orderForProject,
   synthesisTitle,
   topicsToCreate,
   unusedNotes,
@@ -116,11 +117,13 @@ export class Synthesizer {
 
     this.plugin.addCommand({
       id: 'cite-permanent-note',
-      name: 'Cite a permanent note here (from this synthesis note\'s unused list)',
+      name: 'Cite a permanent note here (in a synthesis or project note)',
       editorCheckCallback: (checking, editor, view) => {
         const file = view.file;
-        if (!file || !this.topicOf(file)) return false;
-        if (!checking) this.citeNote(editor, file);
+        if (!file) return false;
+        const synthesis = !!this.topicOf(file);
+        if (!synthesis && !this.isProject(file)) return false;
+        if (!checking) this.citeNote(editor, file, synthesis);
         return true;
       },
     });
@@ -150,10 +153,18 @@ export class Synthesizer {
   // Offers the permanent notes on this note's topic that it does not link to
   // yet and inserts a link at the cursor. Selected text becomes the link text;
   // otherwise the title is inserted with the title selected, ready to retype.
-  private citeNote(editor: Editor, file: TFile) {
-    const unused = unusedNotes(this.notesFor(this.topicOf(file)), editor.getValue());
+  private citeNote(editor: Editor, file: TFile, synthesis: boolean) {
+    const text = editor.getValue();
+    const candidates = synthesis
+      ? this.notesFor(this.topicOf(file))
+      : orderForProject(this.allPermanentNotes(), this.synthesisTopicsOf(file));
+    const unused = unusedNotes(candidates, text);
     if (!unused.length) {
-      new Notice('Every permanent note on this topic is already linked in this note.');
+      new Notice(
+        synthesis
+          ? 'Every permanent note on this topic is already linked in this note.'
+          : 'Every permanent note is already linked in this note.'
+      );
       return;
     }
     const from = editor.getCursor('from');
@@ -173,6 +184,25 @@ export class Synthesizer {
     }).open();
   }
 
+  private isProject(file: TFile): boolean {
+    const fm = this.plugin.app.metadataCache.getFileCache(file)?.frontmatter;
+    return String(fm?.type ?? '').toLowerCase() === 'project';
+  }
+
+  // Topics of the synthesis notes listed in a project note's `synthesis:` property.
+  private synthesisTopicsOf(file: TFile): Set<string> {
+    const cache = this.plugin.app.metadataCache;
+    const out = new Set<string>();
+    for (const item of asList(cache.getFileCache(file)?.frontmatter?.synthesis)) {
+      const m = /\[\[([^\]|#]+)/.exec(String(item));
+      if (!m) continue;
+      const target = cache.getFirstLinkpathDest(m[1].trim(), file.path);
+      const topic = target ? this.topicOf(target) : '';
+      if (topic) out.add(topic.toLowerCase());
+    }
+    return out;
+  }
+
   // --- reading the vault ---------------------------------------------------
 
   private isPermanent(file: TFile): boolean {
@@ -188,17 +218,20 @@ export class Synthesizer {
   }
 
   private permanentNotes(): TopicNote[] {
+    return this.allPermanentNotes().filter((n) => n.topics.length > 0);
+  }
+
+  // Every permanent note, including those with no topics.
+  private allPermanentNotes(): TopicNote[] {
     const out: TopicNote[] = [];
     for (const file of this.plugin.app.vault.getMarkdownFiles()) {
       if (!this.isPermanent(file)) continue;
-      const topics = this.topicsOf(file);
-      if (!topics.length) continue;
       const title = this.plugin.app.metadataCache.getFileCache(file)?.frontmatter?.title;
       out.push({
         path: file.path,
         name: file.basename,
         title: typeof title === 'string' ? title : undefined,
-        topics,
+        topics: this.topicsOf(file),
       });
     }
     return out;

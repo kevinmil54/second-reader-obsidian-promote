@@ -4,8 +4,10 @@
  * Watches permanent notes (frontmatter tag "permanent-note") and their
  * `topics:` property. When a topic reaches the minimum number of permanent
  * notes and has no synthesis note, a note is created for it. Each synthesis
- * note's "Permanent notes on this topic" list is kept current inside a
- * marked block; nothing else in the note is ever changed.
+ * note's "Permanent notes not yet used" list is kept current inside a
+ * marked block; nothing else in the note is ever changed. The list holds the
+ * permanent notes the synthesis note doesn't link to yet, so it shrinks as the
+ * student cites notes in their own writing.
  *
  * Only synthesis notes that already have the marked block are refreshed
  * automatically. A note the student wrote without it is left alone until
@@ -18,12 +20,12 @@ import { ensureFolder, sanitizeFilename } from './promote';
 import {
   NOTES_HEADING,
   TopicNote,
+  blockForText,
   builtInSynthesisBody,
   dropNotesQuery,
   fillSynthesisTemplate,
   groupByTopic,
   hasNotesBlock,
-  renderNotesBlock,
   synthesisTitle,
   topicsToCreate,
   withNotesBlock,
@@ -56,6 +58,10 @@ export class Synthesizer {
   private running = false;
   private pendingTopics = new Set<string>();
   private run = debounce(() => this.runPass(), 1500, true);
+  // Synthesis notes the student has edited: their list is refreshed once they
+  // stop typing, since a newly linked note leaves the list.
+  private pendingSynthesis = new Set<string>();
+  private runSynthesis = debounce(() => this.refreshEdited(), 3000, true);
 
   constructor(
     private plugin: Plugin,
@@ -131,7 +137,14 @@ export class Synthesizer {
     for (const file of this.plugin.app.vault.getMarkdownFiles()) {
       if (!this.isPermanent(file)) continue;
       const topics = this.topicsOf(file);
-      if (topics.length) out.push({ path: file.path, name: file.basename, topics });
+      if (!topics.length) continue;
+      const title = this.plugin.app.metadataCache.getFileCache(file)?.frontmatter?.title;
+      out.push({
+        path: file.path,
+        name: file.basename,
+        title: typeof title === 'string' ? title : undefined,
+        topics,
+      });
     }
     return out;
   }
@@ -160,7 +173,13 @@ export class Synthesizer {
   // --- reacting to changes -------------------------------------------------
 
   private noteChanged(file: TFile) {
-    if (file.extension !== 'md' || !this.isPermanent(file)) return;
+    if (file.extension !== 'md') return;
+    if (this.topicOf(file)) {
+      this.pendingSynthesis.add(file.path);
+      this.runSynthesis();
+      return;
+    }
+    if (!this.isPermanent(file)) return;
     for (const t of this.topicsOf(file)) this.pendingTopics.add(t.toLowerCase());
     this.run();
   }
@@ -168,6 +187,15 @@ export class Synthesizer {
   private fileGone(file: TAbstractFile) {
     if (!(file instanceof TFile) || file.extension !== 'md') return;
     this.run();
+  }
+
+  private async refreshEdited() {
+    const paths = Array.from(this.pendingSynthesis);
+    this.pendingSynthesis.clear();
+    for (const path of paths) {
+      const file = this.plugin.app.vault.getAbstractFileByPath(path);
+      if (file instanceof TFile) await this.refreshOne(file, false).catch(console.error);
+    }
   }
 
   private async runPass() {
@@ -209,7 +237,7 @@ export class Synthesizer {
     const made: string[] = [];
     for (const group of ready) {
       try {
-        await this.createSynthesisNote(group.topic, renderNotesBlock(group.notes));
+        await this.createSynthesisNote(group.topic, group.notes);
         made.push(group.topic);
         const created = new Set((s._synthesisCreatedTopics || []).map((t) => t.toLowerCase()));
         created.add(group.topic.toLowerCase());
@@ -223,7 +251,7 @@ export class Synthesizer {
     return made;
   }
 
-  private async createSynthesisNote(topic: string, block: string) {
+  private async createSynthesisNote(topic: string, notes: TopicNote[]) {
     const app = this.plugin.app;
     const { synthesisFolder, synthesisTemplatePath } = this.settings();
     const folder = synthesisFolder ? normalizePath(synthesisFolder) : '';
@@ -251,15 +279,16 @@ export class Synthesizer {
     }
     if (body === null) body = builtInSynthesisBody(topic, noteTitle, today);
 
-    body = withNotesBlock(dropNotesQuery(body), block);
+    body = dropNotesQuery(body);
+    body = withNotesBlock(body, blockForText(notes, body));
     return await app.vault.create(path, body);
   }
 
   // --- refreshing ----------------------------------------------------------
 
-  private blockFor(topic: string): string {
+  private notesFor(topic: string): TopicNote[] {
     const group = groupByTopic(this.permanentNotes()).get(topic.toLowerCase());
-    return renderNotesBlock(group ? group.notes : []);
+    return group ? group.notes : [];
   }
 
   // Refreshes the list in every synthesis note that already has the block.
@@ -267,7 +296,7 @@ export class Synthesizer {
     const groups = groupByTopic(this.permanentNotes());
     for (const [key, file] of this.synthesisNotes()) {
       const group = groups.get(key);
-      await this.refreshFile(file, renderNotesBlock(group ? group.notes : []), false);
+      await this.refreshFile(file, group ? group.notes : [], false);
     }
   }
 
@@ -275,17 +304,18 @@ export class Synthesizer {
   private async refreshOne(file: TFile, force: boolean): Promise<boolean> {
     const topic = this.topicOf(file);
     if (!topic) return false;
-    return this.refreshFile(file, this.blockFor(topic), force);
+    return this.refreshFile(file, this.notesFor(topic), force);
   }
 
-  private async refreshFile(file: TFile, block: string, force: boolean): Promise<boolean> {
-    const app = this.plugin.app;
-    const text = await app.vault.read(file);
-    if (!force && !hasNotesBlock(text)) return false;
-    const next = withNotesBlock(text, block);
-    if (next === text) return false;
-    await app.vault.modify(file, next);
-    return true;
+  private async refreshFile(file: TFile, notes: TopicNote[], force: boolean): Promise<boolean> {
+    let changed = false;
+    await this.plugin.app.vault.process(file, (text) => {
+      if (!force && !hasNotesBlock(text)) return text;
+      const next = withNotesBlock(text, blockForText(notes, text));
+      changed = next !== text;
+      return next;
+    });
+    return changed;
   }
 }
 

@@ -1,3 +1,4 @@
+import decompress from 'decompress';
 import download from 'download';
 import { Notice, debounce } from 'obsidian';
 import os from 'os';
@@ -14,45 +15,37 @@ import {
   removeLegacyEXE2,
   scopeExe,
 } from 'src/helpers';
+import {
+  PDF_UTILITY_RELEASE,
+  checkPdfUtilityDownload,
+  pdfUtilityFileName,
+  pdfUtilityUrl,
+} from 'src/pdfUtilityIntegrity';
 import { ZoteroConnectorSettings } from 'src/types';
 
 import { Icon } from './Icon';
 import { SettingItem } from './SettingItem';
 
-export const currentVersion = '1.0.15';
+export const currentVersion = PDF_UTILITY_RELEASE;
 export const internalVersion = 1;
 
-const options: Record<string, Record<string, string>> = {
-  darwin: {
-    x64: `https://github.com/mgmeyers/pdfannots2json/releases/download/${currentVersion}/pdfannots2json.Mac.Intel.tar.gz`,
-    arm64: `https://github.com/mgmeyers/pdfannots2json/releases/download/${currentVersion}/pdfannots2json.Mac.M1.tar.gz`,
-  },
-  linux: {
-    x64: `https://github.com/mgmeyers/pdfannots2json/releases/download/${currentVersion}/pdfannots2json.Linux.x64.tar.gz`,
-  },
-  win32: {
-    x64: `https://github.com/mgmeyers/pdfannots2json/releases/download/${currentVersion}/pdfannots2json.Windows.x64.zip`,
-  },
-};
-
-function getDownloadUrl() {
-  const platform = options[os.platform()];
-
-  if (!platform) return null;
-
-  const url = platform[os.arch()];
-
-  if (!url) return null;
-
-  return url;
+function getDownloadFile() {
+  return pdfUtilityFileName(os.platform(), os.arch());
 }
 
+// Downloads the PDF utility, checks it against its recorded checksum, and
+// only then replaces any copy already installed. Returns false when nothing
+// was installed.
 export async function downloadAndExtract() {
-  const url = getDownloadUrl();
+  const fileName = getDownloadFile();
 
-  if (!url) return false;
+  if (!fileName) return false;
 
   try {
+    const data = await download(pdfUtilityUrl(fileName));
+
+    checkPdfUtilityDownload(currentVersion, fileName, data);
+
     if (doesLegacyEXEExist2()) {
       removeLegacyEXE2();
     }
@@ -65,17 +58,16 @@ export async function downloadAndExtract() {
       removeEXE();
     }
 
-    await download(url, getExeRoot(), {
-      extract: true,
-    });
+    await decompress(data, getExeRoot());
 
     scopeExe();
   } catch (e) {
     console.error(e);
     new Notice(
-      'Error downloading PDF utility. Check the console for more details.',
+      'Error downloading PDF utility, or it did not match its expected checksum, so it was not installed. Check the console for more details.',
       10000
     );
+    return false;
   }
 
   return true;

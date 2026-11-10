@@ -1,3 +1,4 @@
+import { errorMessage } from '../errors';
 import { copyFileSync, existsSync, mkdirSync } from 'fs';
 import {
   MarkdownView,
@@ -267,7 +268,7 @@ async function getRelations(
   if (item.relations && !Array.isArray(item.relations)) {
     const relations: string[] = [];
     for (const val of Object.values(item.relations as Record<string, unknown>)) {
-      if (Array.isArray(val)) relations.push(...val);
+      if (Array.isArray(val)) relations.push(...(val as string[]));
     }
     item.relations = relations;
   }
@@ -374,8 +375,8 @@ async function processItem(
   }
 }
 
-function generateHelpfulTemplateError(e: Error, template: string) {
-  const message = e.message;
+function generateHelpfulTemplateError(e: unknown, template: string) {
+  const message = errorMessage(e);
 
   try {
     if (message) {
@@ -397,7 +398,7 @@ function generateHelpfulTemplateError(e: Error, template: string) {
 }
 
 function errorToHelpfulNotification(
-  e: Error,
+  e: unknown,
   templatePath: string,
   template: string
 ) {
@@ -414,7 +415,7 @@ function errorToHelpfulNotification(
   );
 }
 
-function errorToHelpfulError(e: Error, templatePath: string, template: string) {
+function errorToHelpfulError(e: unknown, templatePath: string, template: string) {
   return new Error(
     `Error parsing template "${templatePath}": ${generateHelpfulTemplateError(
       e,
@@ -874,7 +875,7 @@ export async function exportToMarkdown(
             settings.exeOverridePath
           );
 
-          let extracted = JSON.parse(res);
+          let extracted = JSON.parse(res) as ZoteroAnnotationJSON[];
 
           for (const e of extracted) {
             processAnnotation(e, attachment, imageRelativePath);
@@ -1073,7 +1074,7 @@ export async function dataExplorerPrompt(settings: ZoteroConnectorSettings) {
             settings.exeOverridePath
           );
 
-          let extracted = JSON.parse(res);
+          let extracted = JSON.parse(res) as ZoteroAnnotationJSON[];
 
           for (const e of extracted) {
             processAnnotation(e, attachment, 'output_path');

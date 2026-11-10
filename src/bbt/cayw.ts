@@ -1,3 +1,4 @@
+import { errorMessage } from '../errors';
 import { Notice, request } from 'obsidian';
 
 import { getApp } from '../appRef';
@@ -121,7 +122,7 @@ export async function getCAYW(
     win.show();
     console.error(e);
     modal.close();
-    new Notice(`Error processing citation: ${e.message}`, 10000);
+    new Notice(`Error processing citation: ${errorMessage(e)}`, 10000);
     ZQueue.end(qid);
     return null;
   }
@@ -185,7 +186,7 @@ export async function getCAYWJSON(database: DatabaseWithPort) {
     modal.close();
     ZQueue.end(qid);
     if (res) {
-      return JSON.parse(res).items || [];
+      return (JSON.parse(res) as { items?: CiteKeySource[] }).items || [];
     } else {
       return null;
     }
@@ -193,7 +194,7 @@ export async function getCAYWJSON(database: DatabaseWithPort) {
     win.show();
     console.error(e);
     modal.close();
-    new Notice(`Error retrieving cite key: ${e.message}`, 10000);
+    new Notice(`Error retrieving cite key: ${errorMessage(e)}`, 10000);
     ZQueue.end(qid);
     return null;
   }

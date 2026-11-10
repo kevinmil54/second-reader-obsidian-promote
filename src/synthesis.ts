@@ -1,3 +1,4 @@
+import { errorMessage } from './errors';
 /*
  * Second Reader: synthesis notes.
  *
@@ -137,7 +138,7 @@ export class Synthesizer {
         const topic = this.topicOf(file);
         if (!topic) return false;
         if (!checking) {
-          this.refreshOne(file, true).then((changed) =>
+          void this.refreshOne(file, true).then((changed) =>
             new Notice(
               changed
                 ? 'Updated the list of permanent notes in this note.'
@@ -213,7 +214,7 @@ export class Synthesizer {
 
   private topicsOf(file: TFile): string[] {
     const cache = this.plugin.app.metadataCache.getFileCache(file);
-    const raw = cache?.frontmatter?.topics;
+    const raw: unknown = cache?.frontmatter?.topics;
     return asList(raw).flatMap((t) => String(t).split(',')).map((t) => t.trim());
   }
 
@@ -226,7 +227,8 @@ export class Synthesizer {
     const out: TopicNote[] = [];
     for (const file of this.plugin.app.vault.getMarkdownFiles()) {
       if (!this.isPermanent(file)) continue;
-      const title = this.plugin.app.metadataCache.getFileCache(file)?.frontmatter?.title;
+      const title: unknown =
+        this.plugin.app.metadataCache.getFileCache(file)?.frontmatter?.title;
       out.push({
         path: file.path,
         name: file.basename,
@@ -332,7 +334,7 @@ export class Synthesizer {
         s._synthesisCreatedTopics = Array.from(created);
       } catch (e) {
         console.error('Second Reader synthesis failed:', e);
-        new Notice(`Second Reader: couldn't create a synthesis note for “${group.topic}” — ${e.message}`);
+        new Notice(`Second Reader: couldn't create a synthesis note for “${group.topic}” — ${errorMessage(e)}`);
       }
     }
     if (made.length) await this.save();

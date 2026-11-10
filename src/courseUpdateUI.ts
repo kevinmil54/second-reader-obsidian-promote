@@ -1,3 +1,4 @@
+import { errorMessage } from './errors';
 // The vault side of bringing in a course update: choosing the update folder,
 // copying its files where they belong, and putting the folder in the trash.
 
@@ -57,10 +58,10 @@ export function chooseAndApplyUpdate(host: CourseUpdateHost) {
   const run = (f: TFolder) =>
     applyCourseUpdate(host, f).catch((e) => {
       console.error('Second Reader: course update failed', e);
-      new Notice(`Couldn't bring in the update: ${e?.message ?? e}`, 10000);
+      new Notice(`Couldn't bring in the update: ${errorMessage(e)}`, 10000);
     });
-  if (folders.length === 1) run(folders[0]);
-  else new UpdateChooser(host.app, folders, run).open();
+  if (folders.length === 1) void run(folders[0]);
+  else new UpdateChooser(host.app, folders, (f) => void run(f)).open();
 }
 
 async function ensureFolder(app: App, path: string) {
@@ -141,7 +142,7 @@ export async function applyCourseUpdate(host: CourseUpdateHost, folder: TFolder)
   }
 
   // The update's copies would make every note name appear twice.
-  await app.vault.trash(folder, true);
+  await app.fileManager.trashFile(folder);
   new Notice(summaryMessage(summary) + ' The update folder was moved to the trash.', 20000);
   return summary;
 }

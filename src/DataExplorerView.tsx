@@ -1,3 +1,4 @@
+import { errorMessage } from './errors';
 import { ItemView, Menu, TFile, WorkspaceLeaf, moment } from 'obsidian';
 import React from 'react';
 import ReactDOM from 'react-dom';
@@ -131,11 +132,11 @@ function TemplatePreview({
 
         setTemplate(output ? output : null);
       } catch (e) {
-        setTemplateError(e.message);
+        setTemplateError(errorMessage(e));
       }
     };
 
-    render();
+    void render();
   }, [formatIndex, forceRef, templateData]);
 
   if (!template && !templateError) return null;
@@ -157,7 +158,7 @@ function DataExporer({ plugin }: { plugin: ZoteroConnector }) {
   >(null);
 
   const promptForSelection = React.useCallback(() => {
-    dataExplorerPrompt(plugin.settings).then((res) => {
+    void dataExplorerPrompt(plugin.settings).then((res) => {
       if (!res || res.length === 0) {
         setError('No data retrieved');
       } else {
@@ -286,7 +287,7 @@ const labelRenderer: LabelRenderer = (keyPathWithRoot, nodeType) => {
         .setIcon('lucide-copy')
         .setTitle('Copy template path')
         .onClick(() => {
-          navigator.clipboard.writeText(`{{${path}}}`);
+          void navigator.clipboard.writeText(`{{${path}}}`);
         })
     );
 
@@ -296,7 +297,7 @@ const labelRenderer: LabelRenderer = (keyPathWithRoot, nodeType) => {
           .setIcon('lucide-copy')
           .setTitle('Copy template for loop')
           .onClick(() => {
-            navigator.clipboard.writeText(
+            void navigator.clipboard.writeText(
               `{% for item in ${path} %}\n{% item %}\n{% endfor %}`
             );
           })

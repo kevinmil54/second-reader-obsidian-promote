@@ -1,3 +1,4 @@
+import { errorMessage } from './errors';
 import fs from 'fs';
 import { FileSystemAdapter, Notice } from 'obsidian';
 import os from 'os';
@@ -120,7 +121,7 @@ export async function checkEXEVersion(override?: string) {
     return result.stdout.trim();
   } catch (e) {
     console.error(e);
-    new Notice(`Error checking PDF utility version: ${e.message}`, 10000);
+    new Notice(`Error checking PDF utility version: ${errorMessage(e)}`, 10000);
     throw e;
   }
 }

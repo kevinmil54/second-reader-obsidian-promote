@@ -35,7 +35,7 @@ function isLiteratureNote(app: App, file: TFile): boolean {
   const fm = app.metadataCache.getFileCache(file)?.frontmatter;
   if (!fm) return false;
   if (typeof fm.citekey === 'string' && fm.citekey.trim()) return true;
-  const tags = fm.tags;
+  const tags: unknown = fm.tags;
   const list = Array.isArray(tags) ? tags : typeof tags === 'string' ? tags.split(/[,\s]+/) : [];
   return list.some((t: unknown) => String(t).replace(/^#/, '') === 'literature-note');
 }
@@ -103,7 +103,7 @@ export function chooseWeekAndPackage(host: WeekPackageHost, syllabus: TFile, tex
     new Notice('This note has no "Week" headings with readings under them. Open your syllabus and try again.');
     return;
   }
-  new WeekChooser(host.app, weeks, (w) => packageWeek(host, w.week, syllabus)).open();
+  new WeekChooser(host.app, weeks, (w) => void packageWeek(host, w.week, syllabus)).open();
 }
 
 // Resolves the syllabus named in a link, falling back to the open note.

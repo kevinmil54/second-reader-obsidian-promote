@@ -189,7 +189,7 @@ export async function ensureFolder(vault: Vault, path: string) {
     if (!vault.getAbstractFileByPath(cur)) {
       try {
         await vault.createFolder(cur);
-      } catch (e) {
+      } catch {
         // Race with another process creating it first is fine; anything
         // else will surface when we try to create the note itself.
       }

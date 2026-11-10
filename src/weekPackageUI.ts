@@ -2,6 +2,7 @@
 // asking for the student's name once, writing the zip, and showing it.
 
 import { strToU8, zipSync, Zippable } from 'fflate';
+import { getElectron } from 'src/helpers';
 import {
   App,
   FileSystemAdapter,
@@ -119,7 +120,7 @@ function reveal(app: App, vaultPath: string) {
   const adapter = app.vault.adapter;
   if (!(adapter instanceof FileSystemAdapter)) return;
   try {
-    require('electron').shell.showItemInFolder(adapter.getFullPath(vaultPath));
+    getElectron().shell.showItemInFolder(adapter.getFullPath(vaultPath));
   } catch (e) {
     console.error('Second Reader: could not show the zip', e);
   }

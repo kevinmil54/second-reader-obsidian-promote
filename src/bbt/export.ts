@@ -52,10 +52,17 @@ import {
   removeStartingSlash,
   wrapAnnotationTemplate,
 } from './template.helpers';
+import type {
+  ZoteroAnnotationJSON,
+  ZoteroAttachmentJSON,
+  ZoteroItemJSON,
+  ZoteroNoteJSON,
+} from './zoteroTypes';
+import { getApp } from '../appRef';
 
 async function processNote(
   citeKey: CiteKey,
-  note: any,
+  note: ZoteroNoteJSON,
   importDate: moment.Moment,
   database: DatabaseWithPort,
   cslStyle?: string
@@ -81,7 +88,7 @@ async function processNote(
   );
 }
 
-function processAttachment(attachment: any) {
+function processAttachment(attachment: ZoteroAttachmentJSON) {
   if (attachment.dateAdded) {
     attachment.dateAdded = moment(attachment.dateAdded);
   }
@@ -102,9 +109,9 @@ function processAttachment(attachment: any) {
 }
 
 function processAnnotation(
-  annotation: any,
-  attachment: any,
-  imageRelativePath: any
+  annotation: ZoteroAnnotationJSON,
+  attachment: ZoteroAttachmentJSON,
+  imageRelativePath: string
 ) {
   annotation.date = moment(annotation.date);
   annotation.attachment = attachment;
@@ -126,14 +133,14 @@ function processAnnotation(
 }
 
 function convertNativeAnnotation(
-  annotation: any,
-  attachment: any,
+  annotation: ZoteroAnnotationJSON,
+  attachment: ZoteroAttachmentJSON,
   imageOutputPath: string,
   imageRelativePath: string,
   imageBaseName: string,
   copy: boolean = false
 ) {
-  const annot: Record<string, any> = {
+  const annot: ZoteroAnnotationJSON = {
     date: moment(annotation.dateModified),
     attachment,
     id: annotation.key,
@@ -213,17 +220,17 @@ function convertNativeAnnotation(
 
   if (annotation.tags?.length) {
     annot.tags = annotation.tags;
-    annot.allTags = annotation.tags.map((t: any) => t.tag).join(', ');
+    annot.allTags = annotation.tags.map((t) => t.tag).join(', ');
     annot.hashTags = annotation.tags
-      .map((t: any) => `#${t.tag.replace(/\s+/g, '-')}`)
+        .map((t) => `#${t.tag.replace(/\s+/g, '-')}`)
       .join(', ');
   }
 
   return annot;
 }
 
-function concatAnnotations(annots: Array<Record<string, any>>) {
-  const output: Array<Record<string, any>> = [];
+function concatAnnotations(annots: ZoteroAnnotationJSON[]) {
+  const output: ZoteroAnnotationJSON[] = [];
   const re = /^\+\s*/;
 
   annots.forEach((a) => {
@@ -251,24 +258,27 @@ function concatAnnotations(annots: Array<Record<string, any>>) {
 }
 
 async function getRelations(
-  item: any,
-  libraryID: any,
+  item: ZoteroItemJSON | ZoteroNoteJSON,
+  libraryID: number,
   importDate: moment.Moment,
   database: DatabaseWithPort,
   cslStyle?: string
 ) {
   if (item.relations && !Array.isArray(item.relations)) {
     const relations: string[] = [];
-    for (const val of Object.values(item.relations)) {
+    for (const val of Object.values(item.relations as Record<string, unknown>)) {
       if (Array.isArray(val)) relations.push(...val);
     }
     item.relations = relations;
   }
-  if (!item.relations?.length) return [];
+  const relationList = Array.isArray(item.relations)
+    ? (item.relations as string[])
+    : [];
+  if (!relationList.length) return [];
 
   const relatedItems = await getItemJSONFromRelations(
     libraryID,
-    item.relations,
+    relationList,
     database
   );
 
@@ -282,7 +292,7 @@ async function getRelations(
 }
 
 async function processItem(
-  item: any,
+  item: ZoteroItemJSON,
   importDate: moment.Moment,
   database: DatabaseWithPort,
   cslStyle?: string,
@@ -293,7 +303,13 @@ async function processItem(
   // legacy
   item.exportDate = importDate;
   item.desktopURI =
-    item.select || getLocalURI('select', item.uri, item.itemKey);
+    item.select ||
+    getLocalURI(
+      'select',
+      item.uri,
+      // URLSearchParams reads a lone key as `key=`
+      item.itemKey ? { [item.itemKey]: '' } : undefined
+    );
 
   if (item.accessDate) {
     item.accessDate = moment(item.accessDate);
@@ -409,7 +425,7 @@ function errorToHelpfulError(e: Error, templatePath: string, template: string) {
 
 export async function renderTemplates(
   params: ExportToMarkdownParams,
-  templateData: Record<any, any>,
+  templateData: object,
   existingAnnotations: string,
   shouldThrow?: boolean
 ) {
@@ -563,8 +579,11 @@ export function getATemplatePath({ exportFormat }: ExportToMarkdownParams) {
   );
 }
 
-async function getAttachmentData(item: any, database: DatabaseWithPort) {
-  let mappedAttachments: Record<string, any> = {};
+async function getAttachmentData(
+  item: ZoteroItemJSON,
+  database: DatabaseWithPort
+) {
+  let mappedAttachments: Record<string, ZoteroAttachmentJSON> = {};
 
   try {
     const citekey = getCiteKeyFromAny(item);
@@ -574,8 +593,8 @@ async function getAttachmentData(item: any, database: DatabaseWithPort) {
         database
       );
 
-      mappedAttachments = ((fullAttachmentData || []) as any[]).reduce<
-        Record<string, any>
+      mappedAttachments = ((fullAttachmentData || []) as ZoteroAttachmentJSON[]).reduce<
+        Record<string, ZoteroAttachmentJSON>
       >((col, a) => {
         if (a?.path) {
           col[a.path] = a;
@@ -592,12 +611,12 @@ async function getAttachmentData(item: any, database: DatabaseWithPort) {
 
 async function getTemplateData(
   markdownPath: string,
-  item: any,
+  item: ZoteroItemJSON,
   lastImportDate: moment.Moment,
   existingNote: string
 ) {
   const firstAnnots = item.attachments.find(
-    (a: any) => a.annotations?.length
+    (a) => a.annotations?.length
   );
 
   item.annotations = firstAnnots?.annotations ?? [];
@@ -613,7 +632,7 @@ async function getTemplateData(
 }
 
 function openEditorFor(file: TFile) {
-  for (const leaf of app.workspace.getLeavesOfType('markdown')) {
+  for (const leaf of getApp().workspace.getLeavesOfType('markdown')) {
     const view = leaf.view;
     if (view instanceof MarkdownView && view.file === file) return view.editor;
   }
@@ -624,7 +643,7 @@ function openEditorFor(file: TFile) {
 // typing; always prefer it.
 async function readLive(file: TFile): Promise<string> {
   const editor = openEditorFor(file);
-  return editor ? editor.getValue() : app.vault.read(file);
+  return editor ? editor.getValue() : getApp().vault.read(file);
 }
 
 export interface MergeResult {
@@ -642,7 +661,7 @@ export async function mergeIntoNote(
   rendered: string
 ): Promise<MergeResult> {
   const editor = openEditorFor(file);
-  const current = editor ? editor.getValue() : await app.vault.read(file);
+  const current = editor ? editor.getValue() : await getApp().vault.read(file);
   const plan = planSync(current, rebaseRendered(snapshot, current, rendered));
   const addedQuotes = countAddedQuotes(current, applySync(current, plan));
 
@@ -656,7 +675,7 @@ export async function mergeIntoNote(
         );
       }
     } else {
-      await app.vault.modify(file, applySync(current, plan));
+      await getApp().vault.modify(file, applySync(current, plan));
     }
   }
 
@@ -687,10 +706,10 @@ export async function exportToMarkdown(
   if (!citeKeys.length) return [];
 
   const libraryID = citeKeys[0].library;
-  let itemData: any;
+  let itemData: ZoteroItemJSON[];
   try {
     itemData = await getItemJSONFromCiteKeys(citeKeys, database, libraryID);
-  } catch (e) {
+  } catch {
     return [];
   }
 
@@ -708,7 +727,7 @@ export async function exportToMarkdown(
   const toRender: Map<
     string,
     {
-      item: any;
+      item: ZoteroItemJSON;
       file: TFile;
       fileContent: string;
       lastImportDate: moment.Moment;
@@ -716,14 +735,17 @@ export async function exportToMarkdown(
     }
   > = new Map();
 
-  const queueRender = async (markdownPath: string, item: any) => {
+  const queueRender = async (markdownPath: string, item: ZoteroItemJSON) => {
     // Syncing renders into the note the student has open, wherever it lives
     // and whatever it's been renamed to.
     if (target) markdownPath = target.file.path;
     if (!toRender.has(markdownPath)) {
+      const atPath = getApp().vault.getAbstractFileByPath(markdownPath);
       const existingMarkdownFile = target
         ? target.file
-        : (app.vault.getAbstractFileByPath(markdownPath) as TFile);
+        : atPath instanceof TFile
+        ? atPath
+        : null;
       const existingMarkdown = existingMarkdownFile
         ? await readLive(existingMarkdownFile)
         : '';
@@ -744,7 +766,7 @@ export async function exportToMarkdown(
     }
   };
 
-  const getMarkdownPath = async (pathTemplateData: any) => {
+  const getMarkdownPath = async (pathTemplateData: object) => {
     return normalizePath(
       sanitizeFilePath(
         removeStartingSlash(
@@ -760,7 +782,7 @@ export async function exportToMarkdown(
 
   for (let i = 0, len = itemData.length; i < len; i++) {
     const item = itemData[i];
-    const attachments = item.attachments as any[];
+    const attachments = item.attachments;
     const attachmentData = await getAttachmentData(item, database);
 
     if (!attachments.length) {
@@ -815,9 +837,9 @@ export async function exportToMarkdown(
 
       const markdownPath = await getMarkdownPath(pathTemplateData);
 
-      let annots: any[] = [];
+      let annots: ZoteroAnnotationJSON[] = [];
 
-      attachmentData[attachmentPath]?.annotations?.forEach((annot: any) => {
+      attachmentData[attachmentPath]?.annotations?.forEach((annot) => {
         annots.push(
           convertNativeAnnotation(
             annot,
@@ -863,7 +885,7 @@ export async function exportToMarkdown(
           }
 
           annots.push(...extracted);
-        } catch (e) {
+        } catch {
           //
         }
       }
@@ -915,7 +937,7 @@ export async function exportToMarkdown(
         }
       } else {
         await mkMDDir(markdownPath);
-        await app.vault.create(markdownPath, rendered);
+        await getApp().vault.create(markdownPath, rendered);
       }
 
       createdOrUpdatedMarkdownFiles.push(markdownPath);
@@ -939,10 +961,10 @@ export async function renderCiteTemplate(params: RenderCiteTemplateParams) {
   if (!citeKeys.length) return null;
 
   const libraryID = citeKeys[0].library;
-  let itemData: any[];
+  let itemData: ZoteroItemJSON[];
   try {
     itemData = await getItemJSONFromCiteKeys(citeKeys, database, libraryID);
-  } catch (e) {
+  } catch {
     return null;
   }
 
@@ -955,9 +977,9 @@ export async function renderCiteTemplate(params: RenderCiteTemplateParams) {
   for (const item of itemData) {
     await processItem(item, importDate, database, format.cslStyle || DEFAULT_CSL_STYLE);
 
-    const attachments = (item.attachments as any[]) || [];
+    const attachments = item.attachments || [];
     const firstAnnots = item.attachments.find(
-      (a: any) => a.annotations?.length
+      (a) => a.annotations?.length
     );
 
     const templateData = {
@@ -995,10 +1017,10 @@ export async function dataExplorerPrompt(settings: ZoteroConnectorSettings) {
   if (!citeKeys.length) return null;
 
   const libraryID = citeKeys[0].library;
-  let itemData: any;
+  let itemData: ZoteroItemJSON[];
   try {
     itemData = await getItemJSONFromCiteKeys(citeKeys, database, libraryID);
-  } catch (e) {
+  } catch {
     return null;
   }
 
@@ -1014,9 +1036,9 @@ export async function dataExplorerPrompt(settings: ZoteroConnectorSettings) {
 
     for (const attachment of attachments) {
       const attachmentPath = attachment.path;
-      let annots: any[] = [];
+      let annots: ZoteroAnnotationJSON[] = [];
 
-      attachmentData[attachmentPath]?.annotations?.forEach((annot: any) => {
+      attachmentData[attachmentPath]?.annotations?.forEach((annot) => {
         annots.push(
           convertNativeAnnotation(
             annot,
@@ -1062,7 +1084,7 @@ export async function dataExplorerPrompt(settings: ZoteroConnectorSettings) {
           }
 
           annots.push(...extracted);
-        } catch (e) {
+        } catch {
           return false;
         }
       }
@@ -1074,7 +1096,7 @@ export async function dataExplorerPrompt(settings: ZoteroConnectorSettings) {
   }
 
   await Promise.all(
-    itemData.map(async (data: any) => {
+    itemData.map(async (data) => {
       await getTemplateData('', data, moment(0), '');
     })
   );

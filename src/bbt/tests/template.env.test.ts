@@ -1,6 +1,8 @@
 import moment from 'moment';
 import nunjucks from 'nunjucks';
+import type { App } from 'obsidian';
 
+import { setApp } from '../../appRef';
 import {
   ObsidianMarkdownLoader,
   PersistExtension,
@@ -8,6 +10,8 @@ import {
   format,
   renderTemplate,
 } from '../template.env';
+
+let mockApp: App;
 
 jest.mock(
   'obsidian',
@@ -295,7 +299,7 @@ one
 
 describe('class ObsidianMarkdownLoader', () => {
   it('returns source of wikilinked file', (done) => {
-    global.app = {
+    mockApp = {
       metadataCache: {
         getFirstLinkpathDest: jest.fn(() => true),
       },
@@ -304,7 +308,8 @@ describe('class ObsidianMarkdownLoader', () => {
           return Promise.resolve('hello content');
         },
       },
-    } as any;
+    } as unknown as App;
+    setApp(mockApp);
 
     const loader = new ObsidianMarkdownLoader();
 
@@ -327,7 +332,7 @@ describe('class ObsidianMarkdownLoader', () => {
   });
 
   it('returns source of markdown linked file', (done) => {
-    global.app = {
+    mockApp = {
       metadataCache: {
         getFirstLinkpathDest: jest.fn(() => true),
       },
@@ -336,7 +341,8 @@ describe('class ObsidianMarkdownLoader', () => {
           return Promise.resolve('hello content');
         },
       },
-    } as any;
+    } as unknown as App;
+    setApp(mockApp);
 
     const loader = new ObsidianMarkdownLoader();
 
@@ -361,7 +367,7 @@ describe('class ObsidianMarkdownLoader', () => {
   it('supplies the set source file', (done) => {
     const getFirstFn = jest.fn(() => true);
 
-    global.app = {
+    mockApp = {
       metadataCache: {
         getFirstLinkpathDest: getFirstFn,
       },
@@ -370,7 +376,8 @@ describe('class ObsidianMarkdownLoader', () => {
           return Promise.resolve('hello content');
         },
       },
-    } as any;
+    } as unknown as App;
+    setApp(mockApp);
 
     const loader = new ObsidianMarkdownLoader();
 
@@ -396,7 +403,7 @@ describe('class ObsidianMarkdownLoader', () => {
   });
 
   it('returns error on invalid markdown link', (done) => {
-    global.app = {
+    mockApp = {
       metadataCache: {
         getFirstLinkpathDest: jest.fn(() => true),
       },
@@ -405,7 +412,8 @@ describe('class ObsidianMarkdownLoader', () => {
           return Promise.resolve('hello content');
         },
       },
-    } as any;
+    } as unknown as App;
+    setApp(mockApp);
 
     const loader = new ObsidianMarkdownLoader();
 
@@ -425,7 +433,7 @@ describe('class ObsidianMarkdownLoader', () => {
   });
 
   it('returns error on null file', (done) => {
-    global.app = {
+    mockApp = {
       metadataCache: {
         getFirstLinkpathDest: jest.fn(() => null),
       },
@@ -434,7 +442,8 @@ describe('class ObsidianMarkdownLoader', () => {
           return Promise.resolve('hello content');
         },
       },
-    } as any;
+    } as unknown as App;
+    setApp(mockApp);
 
     const loader = new ObsidianMarkdownLoader();
 
@@ -454,7 +463,7 @@ describe('class ObsidianMarkdownLoader', () => {
   });
 
   it("returns error from obsidian's cachedRead", (done) => {
-    global.app = {
+    mockApp = {
       metadataCache: {
         getFirstLinkpathDest: jest.fn(() => true),
       },
@@ -463,7 +472,8 @@ describe('class ObsidianMarkdownLoader', () => {
           return Promise.reject('hello content');
         },
       },
-    } as any;
+    } as unknown as App;
+    setApp(mockApp);
 
     const loader = new ObsidianMarkdownLoader();
 

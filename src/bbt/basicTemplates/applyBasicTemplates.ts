@@ -1,6 +1,7 @@
 import { moment } from 'obsidian';
 
 import { renderTemplate } from '../template.env';
+import type { ZoteroItemJSON } from '../zoteroTypes';
 
 const creatorTemplate = `
 {%- if creators and creators.length > 0 -%}
@@ -74,12 +75,15 @@ const annotationsTemplate = `
 
 export async function applyBasicTemplates(
   sourceFile: string,
-  itemData: Record<any, any>
+  itemData: ZoteroItemJSON
 ) {
   if (!itemData) return itemData;
 
   const creatorsByType = (itemData.creators || []).reduce(
-    (byType: any, current: any) => {
+    (
+      byType: Record<string, unknown[]>,
+      current: { creatorType: string }
+    ) => {
       if (!byType[current.creatorType]) byType[current.creatorType] = [];
       byType[current.creatorType].push(current);
       return byType;
@@ -119,7 +123,7 @@ export async function applyBasicTemplates(
 
   if (itemData.notes?.length) {
     const notes = itemData.notes
-      .reduce((combined: string, current: any) => {
+      .reduce((combined: string, current) => {
         if (current.note) {
           return `${combined}\n\n${current.note.trim()}`;
         }
@@ -134,9 +138,9 @@ export async function applyBasicTemplates(
   }
 
   if (itemData.tags?.length) {
-    itemData.allTags = itemData.tags.map((t: any) => t.tag).join(', ');
+    itemData.allTags = itemData.tags.map((t) => t.tag).join(', ');
     itemData.hashTags = itemData.tags
-      .map((t: any) => `#${t.tag.replace(/\s+/g, '-')}`)
+      .map((t) => `#${t.tag.replace(/\s+/g, '-')}`)
       .join(', ');
   }
 

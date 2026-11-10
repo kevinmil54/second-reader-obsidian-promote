@@ -20,7 +20,7 @@ import {
   noteExportPrompt,
 } from './bbt/exportNotes';
 import './bbt/template.helpers';
-import { setPluginDir } from './helpers';
+import { getElectron, setPluginDir } from './helpers';
 import { getAttachmentsFromCiteKey, searchByTitle } from './bbt/jsonRPC';
 import { pickCitekey, replaceCitekey } from './citekeyRepair';
 import {
@@ -67,13 +67,14 @@ import {
   ExportFormat,
   ZoteroConnectorSettings,
 } from './types';
+import { getApp, setApp } from './appRef';
 
 const SYNC_BUTTON_LABEL = 'Sync Zotero highlights into this note';
 
 // zotero:// links go to the Zotero app; the OS routes them on Mac and Windows.
 function openExternal(url: string) {
   try {
-    require('electron').shell.openExternal(url);
+    getElectron().shell.openExternal(url);
   } catch {
     window.open(url);
   }
@@ -132,6 +133,7 @@ export default class ZoteroConnector extends Plugin {
   fuse: Fuse<CiteKeyExport>;
 
   async onload() {
+    setApp(this.app);
     setPluginDir(this.manifest.dir);
     await this.loadSettings();
     await this.importLegacyZoteroSettings();
@@ -327,7 +329,7 @@ export default class ZoteroConnector extends Plugin {
       })
     );
 
-    app.workspace.trigger('parse-style-settings');
+    getApp().workspace.trigger('parse-style-settings');
 
     fixPath();
   }
@@ -374,8 +376,17 @@ export default class ZoteroConnector extends Plugin {
     });
   }
 
+  // Obsidian keeps the command registry and the list of enabled plugins on
+  // the app object but doesn't type them.
+  private appInternals() {
+    return this.app as unknown as {
+      commands: { removeCommand(id: string): void };
+      plugins?: { enabledPlugins?: Set<string> };
+    };
+  }
+
   removeFormatCommand(format: CitationFormat) {
-    (this.app as any).commands.removeCommand(
+    this.appInternals().commands.removeCommand(
       `${this.manifest.id}:${citationCommandIDPrefix}${format.name}`
     );
   }
@@ -404,7 +415,7 @@ export default class ZoteroConnector extends Plugin {
   }
 
   removeExportCommand(format: ExportFormat) {
-    (this.app as any).commands.removeCommand(
+    this.appInternals().commands.removeCommand(
       `${this.manifest.id}:${exportCommandIDPrefix}${format.name}`
     );
   }
@@ -491,7 +502,11 @@ export default class ZoteroConnector extends Plugin {
         const key = await this.repairCitekey(note);
         if (key) attachments = await getAttachmentsFromCiteKey({ key, library: 1 }, db);
       }
-      const list: any[] = Array.isArray(attachments) ? attachments : [];
+      const list: Array<{ open?: string; path?: string }> = Array.isArray(
+        attachments
+      )
+        ? attachments
+        : [];
       // A PDF first; failing that, any attachment Zotero can open (a linked
       // file, or one whose path Zotero doesn't report).
       const pdf =
@@ -909,7 +924,7 @@ export default class ZoteroConnector extends Plugin {
 
     // Force a 1s delay after importing the files to make sure that notes are created before attempting to open them.
     // A better solution could surely be found to refresh the vault, but I am not sure how to proceed!
-    await new Promise((resolve) => setTimeout(resolve, 1000));
+    await new Promise((resolve) => window.setTimeout(resolve, 1000));
 
     const leaves = this.app.workspace.getLeavesOfType('markdown');
     for (const path of pathOfNotesToOpen) {
@@ -918,7 +933,7 @@ export default class ZoteroConnector extends Plugin {
         (leaf) => (leaf.view as EditableFileView).file === note
       );
       if (open) {
-        app.workspace.revealLeaf(open);
+        getApp().workspace.revealLeaf(open);
       } else if (note instanceof TFile) {
         await this.app.workspace.getLeaf(true).openFile(note);
       }
@@ -979,13 +994,15 @@ export default class ZoteroConnector extends Plugin {
           // The PDF helper binary lives in the old plugin's folder, so leave
           // its version markers behind and let it download fresh here.
           // Promote settings are Second Reader's own and must not be replaced.
-          const {
-            exeVersion,
-            _exeInternalVersion,
-            newNoteFolder,
-            templatePath,
-            ...zoteroSettings
-          } = legacy;
+          const zoteroSettings: Record<string, unknown> = { ...legacy };
+          for (const key of [
+            'exeVersion',
+            '_exeInternalVersion',
+            'newNoteFolder',
+            'templatePath',
+          ]) {
+            delete zoteroSettings[key];
+          }
           this.settings = { ...this.settings, ...zoteroSettings };
           importedFrom = id;
           break;
@@ -1007,8 +1024,7 @@ export default class ZoteroConnector extends Plugin {
   }
 
   warnAboutLegacyPlugins() {
-    const enabled: Set<string> | undefined = (this.app as any).plugins
-      ?.enabledPlugins;
+    const enabled = this.appInternals().plugins?.enabledPlugins;
     if (!enabled) return;
     if (LEGACY_ZOTERO_PLUGIN_IDS.some((id) => enabled.has(id))) {
       new Notice(
@@ -1060,7 +1076,7 @@ export default class ZoteroConnector extends Plugin {
       _exeInternalVersion !== internalVersion
     ) {
       const modal = new LoadingModal(
-        app,
+        getApp(),
         'Updating Second Reader PDF utility...'
       );
       modal.open();

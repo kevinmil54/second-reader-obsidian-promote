@@ -89,7 +89,9 @@ does a few things beyond reading and writing notes in your vault.
   needs a newer version of the utility, the plugin downloads it again when
   Obsidian starts. To manage the utility yourself, enter the path to your own
   copy under "PDF Utility Path Override" in the settings, and Second Reader
-  will never download it.
+  will never download it. Before anything is installed, the download is checked
+  against a SHA-256 checksum built into the plugin, and a file that does not
+  match is discarded.
 
 The plugin makes no other network connections. It does not send your notes,
 highlights or reading activity anywhere, and it collects no usage data.

@@ -15,12 +15,19 @@ export function normTitle(s: string): string {
     .replace(/[^a-z0-9]+/g, '');
 }
 
-function yearOf(item: any): string {
+// The fields of a Better BibTeX search result this file reads.
+interface SearchResult {
+  citekey?: string;
+  title?: string;
+  issued?: { 'date-parts'?: unknown[][] };
+}
+
+function yearOf(item: SearchResult | undefined): string {
   const parts = item?.issued?.['date-parts']?.[0];
   return parts?.[0] ? String(parts[0]) : '';
 }
 
-function chooseOne(items: any[], year?: string): string | null {
+function chooseOne(items: SearchResult[], year?: string): string | null {
   const keys = new Set(items.map((r) => r.citekey));
   if (keys.size === 1) return [...keys][0];
   const sameYear = year ? items.filter((r) => yearOf(r) === String(year).trim()) : [];
@@ -33,7 +40,7 @@ function chooseOne(items: any[], year?: string): string | null {
 // that only adds to or drops the end of the other (a subtitle, say) counts,
 // as long as just one item matches that way. null when there is no single
 // match.
-export function pickCitekey(results: any[], title: string, year?: string): string | null {
+export function pickCitekey(results: SearchResult[], title: string, year?: string): string | null {
   const want = normTitle(title);
   if (!want) return null;
   const withKey = (results ?? []).filter((r) => typeof r?.citekey === 'string' && r.citekey);

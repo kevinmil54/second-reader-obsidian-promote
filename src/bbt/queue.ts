@@ -255,7 +255,7 @@ export class Queue<T = unknown> {
       if (Date.now() - this.lastRun < this.minCycle) {
         if (this.nextTimer === null) {
           this.nextTimer = new Promise((resolve) =>
-            activeWindow.setTimeout(() => {
+            window.setTimeout(() => {
               this.nextTimer = null;
               this.tryRun();
               resolve();

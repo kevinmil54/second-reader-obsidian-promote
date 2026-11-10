@@ -1,3 +1,5 @@
+import type { App } from 'obsidian';
+
 import { setApp } from '../../appRef';
 import {
   getPort,
@@ -5,6 +7,8 @@ import {
   replaceIllegalChars,
   sanitizeFilePath,
 } from '../helpers';
+
+let mockApp: App;
 
 describe('getPort()', () => {
   it('returns correct port for database', () => {
@@ -15,35 +19,35 @@ describe('getPort()', () => {
 
 describe('mkMDDir()', () => {
   it('does not call createFolder if path exists', async () => {
-    global.app = {
+    mockApp = {
       vault: {
         adapter: {
           exists: async () => true,
         },
         createFolder: jest.fn(async () => {}),
       },
-    } as any;
-    setApp(global.app);
+    } as unknown as App;
+    setApp(mockApp);
 
     await mkMDDir('mock');
 
-    expect(global.app.vault.createFolder as jest.Mock).not.toBeCalled();
+    expect(mockApp.vault.createFolder as jest.Mock).not.toBeCalled();
   });
 
   it('does call createFolder if path exists', async () => {
-    global.app = {
+    mockApp = {
       vault: {
         adapter: {
           exists: async () => false,
         },
         createFolder: jest.fn(async () => {}),
       },
-    } as any;
-    setApp(global.app);
+    } as unknown as App;
+    setApp(mockApp);
 
     await mkMDDir('mock');
 
-    expect(global.app.vault.createFolder as jest.Mock).toBeCalled();
+    expect(mockApp.vault.createFolder as jest.Mock).toBeCalled();
   });
 });
 

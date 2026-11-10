@@ -1,10 +1,13 @@
 import nunjucks, { Callback, Extension, Loader, LoaderSource } from 'nunjucks';
 import { moment } from 'obsidian';
 
-(nunjucks.runtime as any).memberLookup = function memberLookup(
-  obj: any,
-  val: any
-) {
+import { getApp } from '../appRef';
+
+(
+  nunjucks.runtime as unknown as {
+    memberLookup: (obj: unknown, val: unknown) => unknown;
+  }
+).memberLookup = function memberLookup(obj: unknown, val: unknown) {
   if (obj === undefined || obj === null) {
     return undefined;
   }
@@ -15,12 +18,14 @@ import { moment } from 'obsidian';
     };
   }
 
-  if (typeof obj[val] === 'function') {
+  const member = (obj as Record<string, unknown>)[val as string];
+
+  if (typeof member === 'function') {
     // eslint-disable-next-line prefer-spread -- forwards a template's arguments to the wrapped method with its own `this`
-    return (...args: any[]) => obj[val].apply(obj, args);
+    return (...args: unknown[]) => member.apply(obj, args);
   }
 
-  return obj[val];
+  return member;
 };
 
 function _prepareAttributeParts(attr: string) {
@@ -31,21 +36,21 @@ function _prepareAttributeParts(attr: string) {
   return attr.split('.');
 }
 
-function hasOwnProp(obj: any, k: string) {
+function hasOwnProp(obj: unknown, k: string) {
   return Object.prototype.hasOwnProperty.call(obj, k);
 }
 
 function getAttrGetter(attribute: string) {
   const parts = _prepareAttributeParts(attribute);
 
-  return function attrGetter(item: any) {
-    let _item = item;
+  return function attrGetter(item: unknown) {
+    let _item: unknown = item;
 
     for (let i = 0; i < parts.length; i++) {
       const part = parts[i];
 
       if (hasOwnProp(_item, part)) {
-        _item = _item[part];
+        _item = (_item as Record<string, unknown>)[part];
       } else {
         /* istanbul ignore next */
         return undefined;
@@ -66,7 +71,7 @@ type FilterByCmd =
   | 'dateonorbefore';
 
 export function filterBy(
-  arr: any[],
+  arr: unknown[],
   prop: string,
   cmd: FilterByCmd,
   ...val: string[] | moment.Moment[]
@@ -75,8 +80,8 @@ export function filterBy(
 
   if (val.length === 0) return arr;
 
-  return arr.filter((v: any) => {
-    let toTest: string = typeof v === 'string' ? v : getter(v);
+  return arr.filter((v: unknown) => {
+    let toTest = (typeof v === 'string' ? v : getter(v)) as string;
 
     if (!toTest) return false;
 
@@ -145,11 +150,29 @@ interface WithRetained {
   _retained?: Record<string, string>;
 }
 
+// The slice of nunjucks' parser and node classes a custom tag uses. Nunjucks
+// doesn't type them.
+interface NunjucksParser {
+  nextToken(): { value: string };
+  parseSignature(tolerant: unknown, noParens: boolean): unknown;
+  advanceAfterBlockEnd(name?: string): void;
+  parseUntilBlocks(...names: string[]): unknown;
+}
+
+interface NunjucksNodes {
+  CallExtension: new (
+    extension: Extension,
+    method: string,
+    args: unknown,
+    contentArgs: unknown[]
+  ) => unknown;
+}
+
 export class PersistExtension implements Extension {
   static id: string = 'PersistExtension';
   tags: string[] = ['persist'];
 
-  parse(parser: any, nodes: any) {
+  parse(parser: NunjucksParser, nodes: NunjucksNodes) {
     // get the tag token
     const tok = parser.nextToken();
 
@@ -167,14 +190,18 @@ export class PersistExtension implements Extension {
     return new nodes.CallExtension(this, 'run', args, [body]);
   }
 
-  run(context: any, id: string, body: any) {
+  run(
+    context: { ctx?: { _retained?: Record<string, string> } } | undefined,
+    id: string,
+    body: () => string
+  ) {
     let retained = '';
 
     if (context?.ctx?._retained && context.ctx._retained[id]) {
       retained = context.ctx._retained[id];
     }
 
-    let trimmed = body() as string;
+    let trimmed = body();
     if (retained) trimmed = trimmed.trimStart();
 
     return new nunjucks.runtime.SafeString(
@@ -237,7 +264,7 @@ export class ObsidianMarkdownLoader extends Loader {
       );
     }
 
-    const file = app.metadataCache.getFirstLinkpathDest(
+    const file = getApp().metadataCache.getFirstLinkpathDest(
       linkPath,
       this.sourceFile || ''
     );
@@ -249,8 +276,8 @@ export class ObsidianMarkdownLoader extends Loader {
       );
     }
 
-    app.vault
-      .cachedRead(file)
+    getApp()
+      .vault.cachedRead(file)
       .then((content) => {
         const src = {
           src: content,
@@ -269,15 +296,21 @@ export class ObsidianMarkdownLoader extends Loader {
 
 const loader = new ObsidianMarkdownLoader();
 
-export const template = new nunjucks.Environment(loader as any, {
-  autoescape: false,
-});
+export const template = new nunjucks.Environment(
+  loader as unknown as nunjucks.ILoaderAny,
+  {
+    autoescape: false,
+  }
+);
 
 // The following code has been borrowed from the discussion at https://github.com/mozilla/nunjucks/issues/313
-template.addFilter('setAttribute', function (dictionary, key: any, value: any) {
-  dictionary[key] = value;
-  return dictionary;
-});
+template.addFilter(
+  'setAttribute',
+  function (dictionary: Record<string, unknown>, key: string, value: unknown) {
+    dictionary[key] = value;
+    return dictionary;
+  }
+);
 template.addFilter('filterby', filterBy);
 template.addFilter('format', format);
 template.addExtension(PersistExtension.id, new PersistExtension());
@@ -285,7 +318,7 @@ template.addExtension(PersistExtension.id, new PersistExtension());
 export function renderTemplate(
   sourceFile: string,
   templateStr: string,
-  templateData: Record<any, any>
+  templateData: object
 ) {
   return new Promise<string>((res, rej) => {
     loader.setSourceFile(sourceFile);

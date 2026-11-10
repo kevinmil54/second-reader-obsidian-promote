@@ -1,13 +1,15 @@
 import { Notice, TFile, moment } from 'obsidian';
 import { ExportToMarkdownParams } from 'src/types';
 
+import { getApp } from '../appRef';
+
 export function loadTemplate(
   name: string,
   path: string
 ): Promise<string | null> {
   if (!path) return null;
 
-  const templateFile = app.vault.getAbstractFileByPath(
+  const templateFile = getApp().vault.getAbstractFileByPath(
     sanitizeObsidianPath(path)
   );
 
@@ -16,7 +18,12 @@ export function loadTemplate(
     return null;
   }
 
-  return app.vault.cachedRead(templateFile as TFile);
+  if (!(templateFile instanceof TFile)) {
+    new Notice(`Error: ${name} template is not a file ${path}`);
+    return null;
+  }
+
+  return getApp().vault.cachedRead(templateFile);
 }
 
 export async function getTemplates(params: ExportToMarkdownParams) {

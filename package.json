@@ -1,6 +1,6 @@
 {
   "name": "second-reader",
-  "version": "2.12.1",
+  "version": "2.12.2",
   "description": "Second Reader Obsidian plugin: Zotero import + highlight sync + promote candidates",
   "main": "main.js",
   "scripts": {
@@ -23,7 +23,6 @@
     "@babel/core": "7.22.5",
     "@babel/preset-env": "7.22.5",
     "@babel/preset-typescript": "7.22.5",
-    "@codemirror/language": "https://github.com/lishid/cm-language",
     "@trivago/prettier-plugin-sort-imports": "4.1.1",
     "@types/download": "8.0.2",
     "@types/jest": "29.5.2",
@@ -47,7 +46,9 @@
     "prettier": "2.8.8",
     "tslib": "2.6.0",
     "typescript": "5.1.6",
-    "xml-js": "1.6.11"
+    "xml-js": "1.6.11",
+    "@codemirror/state": "6.2.1",
+    "@codemirror/view": "6.14.0"
   },
   "dependencies": {
     "download": "8.0.0",

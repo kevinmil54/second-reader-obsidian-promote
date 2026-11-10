@@ -3,6 +3,7 @@ import path from 'path';
 import { ensureExecutableSync, getExeName, getExeRoot } from 'src/helpers';
 import { runFile } from 'src/runFile';
 
+import { getApp } from '../appRef';
 import { LoadingModal } from './LoadingModal';
 
 interface ExtractParams {
@@ -38,7 +39,7 @@ export async function extractAnnotations(
   params: ExtractParams,
   overridePath?: string
 ) {
-  const modal = new LoadingModal(app, 'Extracting annotations...');
+  const modal = new LoadingModal(getApp(), 'Extracting annotations...');
   modal.open();
 
   const args = [input];

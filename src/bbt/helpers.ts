@@ -1,6 +1,8 @@
 import path from 'path';
 import { Database } from 'src/types';
 
+import { getApp } from '../appRef';
+
 export const defaultHeaders = {
   'Content-Type': 'application/json',
   'User-Agent': 'obsidian/zotero',
@@ -18,9 +20,9 @@ export function getPort(database: Database, port?: string) {
 export async function mkMDDir(mdPath: string) {
   const dir = path.dirname(mdPath);
 
-  if (await app.vault.adapter.exists(dir)) return;
+  if (await getApp().vault.adapter.exists(dir)) return;
 
-  await app.vault.createFolder(dir);
+  await getApp().vault.createFolder(dir);
 }
 
 export function replaceIllegalChars(str: string) {

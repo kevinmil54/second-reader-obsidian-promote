@@ -6,6 +6,13 @@ import { LoadingModal } from './LoadingModal';
 import { CiteKey, getCiteKeyFromAny, isZoteroRunning } from './cayw';
 import { defaultHeaders, getPort } from './helpers';
 import { ZQueue } from './queue';
+import type {
+  ZoteroCollectionJSON,
+  ZoteroItemJSON,
+  ZoteroLibrary,
+  ZoteroSearchHit,
+} from './zoteroTypes';
+import { getApp } from '../appRef';
 
 export async function getNotesFromCiteKeys(
   citeKeys: CiteKey[],
@@ -13,7 +20,7 @@ export async function getNotesFromCiteKeys(
 ) {
   let res: string;
 
-  const modal = new LoadingModal(app, 'Fetching notes from Zotero...');
+  const modal = new LoadingModal(getApp(), 'Fetching notes from Zotero...');
   modal.open();
 
   const qid = Symbol();
@@ -58,7 +65,7 @@ export async function getCollectionFromCiteKey(
 ) {
   let res: string;
 
-  const modal = new LoadingModal(app, 'Fetching collections from Zotero...');
+  const modal = new LoadingModal(getApp(), 'Fetching collections from Zotero...');
   modal.open();
 
   const qid = Symbol();
@@ -92,7 +99,7 @@ export async function getCollectionFromCiteKey(
     const result = JSON.parse(res).result;
     const cols = result[citeKey.key];
 
-    return cols.map((c: any) => {
+    return cols.map((c: ZoteroCollectionJSON) => {
       let pointer = c;
       const fullPath = [c.name];
 
@@ -120,7 +127,7 @@ export async function getAttachmentsFromCiteKey(
 ) {
   let res: string;
 
-  const modal = new LoadingModal(app, 'Fetching collections from Zotero...');
+  const modal = new LoadingModal(getApp(), 'Fetching collections from Zotero...');
   modal.open();
 
   const qid = Symbol();
@@ -159,7 +166,7 @@ export async function getAttachmentsFromCiteKey(
   }
 }
 
-let cachedLibs: any[] = null;
+let cachedLibs: ZoteroLibrary[] = null;
 const cachedCiteKeys: Map<string, number> = new Map();
 
 export async function getLibForCiteKey(
@@ -174,11 +181,13 @@ export async function getLibForCiteKey(
       return null;
     }
 
-    const match = searchResults.find((res: any) => res.citekey === citeKey);
+    const match = searchResults.find(
+      (res: ZoteroSearchHit) => res.citekey === citeKey
+    );
     if (!match) return null;
 
     if (cachedLibs) {
-      const lib = cachedLibs.find((p: any) => p.name === match.library);
+      const lib = cachedLibs.find((p) => p.name === match.library);
       if (lib) {
         cachedCiteKeys.set(citeKey, lib.id);
         return lib.id;
@@ -205,7 +214,7 @@ export async function getLibForCiteKey(
     const parsed = JSON.parse(res);
     if (parsed.result?.length > 0) {
       cachedLibs = parsed.result;
-      const lib = cachedLibs.find((p: any) => p.name === match.library);
+      const lib = cachedLibs.find((p) => p.name === match.library);
 
       if (lib) {
         cachedCiteKeys.set(citeKey, lib.id);
@@ -245,13 +254,13 @@ export async function getBibFromCiteKeys(
   let res: string;
   let modal: LoadingModal;
   if (!silent) {
-    modal = new LoadingModal(app, 'Fetching data from Zotero...');
+    modal = new LoadingModal(getApp(), 'Fetching data from Zotero...');
     modal.open();
   }
 
   const qid = Symbol();
   try {
-    const params: Record<string, any> = {
+    const params: Record<string, unknown> = {
       quickCopy: true,
       contentType: 'html',
     };
@@ -314,7 +323,7 @@ export async function getItemJSONFromCiteKeys(
 ) {
   let res: string;
 
-  const modal = new LoadingModal(app, 'Fetching data from Zotero...');
+  const modal = new LoadingModal(getApp(), 'Fetching data from Zotero...');
   modal.open();
 
   const qid = Symbol();
@@ -371,7 +380,7 @@ export async function getItemJSONFromRelations(
 ) {
   let res: string;
 
-  const modal = new LoadingModal(app, 'Fetching data from Zotero...');
+  const modal = new LoadingModal(getApp(), 'Fetching data from Zotero...');
   modal.open();
 
   const uriMap: Record<string, string> = {};
@@ -411,7 +420,7 @@ export async function getItemJSONFromRelations(
   ZQueue.end(qid);
   modal.close();
 
-  const idMap: Record<string, any> = {};
+  const idMap: Record<string, ZoteroItemJSON> = {};
   const citekeys: CiteKey[] = [];
 
   try {
@@ -432,7 +441,7 @@ export async function getItemJSONFromRelations(
     return null;
   }
 
-  const items: any[] = citekeys.length
+  const items: ZoteroItemJSON[] = citekeys.length
     ? await getItemJSONFromCiteKeys(citekeys, database, libraryID)
     : [];
 
@@ -457,7 +466,7 @@ export async function getIssueDateFromCiteKey(
 ) {
   let res: string;
 
-  const modal = new LoadingModal(app, 'Fetching data from Zotero...');
+  const modal = new LoadingModal(getApp(), 'Fetching data from Zotero...');
   modal.open();
 
   const qid = Symbol();
@@ -501,11 +510,11 @@ export async function getIssueDateFromCiteKey(
       ? JSON.parse(parsed.result[2])
       : JSON.parse(parsed.result);
     const dates = items
-      .map((i: any) => {
+      .map((i: ZoteroSearchHit) => {
         const { issued } = i;
         if (!issued || !issued['date-parts']) return null;
 
-        const dateParts = issued['date-parts'][0];
+        const dateParts = issued['date-parts'][0] as number[];
 
         if (!dateParts.length) return null;
 
@@ -518,7 +527,7 @@ export async function getIssueDateFromCiteKey(
 
         return date;
       })
-      .filter((d: any) => d);
+      .filter((d: moment.Moment | null) => d);
 
     return dates[0] ? dates[0] : null;
   } catch (e) {
@@ -616,7 +625,7 @@ export async function getCiteKeyExport(
     return Array.isArray(entries)
       ? entries
           .map((e) => {
-            const out: Record<string, any> = {
+            const out: { libraryID: number; citekey?: string; title?: string } = {
               libraryID: Number(groupId),
             };
 
@@ -636,7 +645,7 @@ export async function getCiteKeyExport(
           })
           .filter((k) => !!k)
       : null;
-  } catch (e) {
+  } catch {
     ZQueue.end(qid);
     return null;
   }

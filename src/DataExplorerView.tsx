@@ -60,7 +60,7 @@ function TemplatePreview({
 }: {
   plugin: ZoteroConnector;
   formatIndex: number | null;
-  templateData: Record<any, any>;
+  templateData: Record<string, unknown>;
 }) {
   const [templateError, setTemplateError] = React.useState<null | string>(null);
   const [template, setTemplate] = React.useState<null | string>(null);
@@ -151,7 +151,7 @@ function TemplatePreview({
 
 function DataExporer({ plugin }: { plugin: ZoteroConnector }) {
   const [error, setError] = React.useState<string | null>(null);
-  const [data, setData] = React.useState<Record<any, any> | null>(null);
+  const [data, setData] = React.useState<Record<string, unknown> | null>(null);
   const [previewFormatIndex, setPreviewFormatIndex] = React.useState<
     number | null
   >(null);
@@ -236,7 +236,7 @@ function DataExporer({ plugin }: { plugin: ZoteroConnector }) {
 
 export class DataExplorerView extends ItemView {
   plugin: ZoteroConnector;
-  data?: Record<any, any>;
+  data?: Record<string, unknown>;
   exportFormat?: ExportFormat;
 
   constructor(plugin: ZoteroConnector, leaf: WorkspaceLeaf) {

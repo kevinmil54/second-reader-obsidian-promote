@@ -4,6 +4,7 @@ import ReactDOM from 'react-dom';
 import which from 'which';
 import { DEFAULT_CSL_STYLE } from '../defaultFormats';
 
+import { getElectron } from '../helpers';
 import ZoteroConnector from '../main';
 import {
   CitationFormat,
@@ -24,7 +25,8 @@ interface SettingsComponentProps {
   addExportFormat: (format: ExportFormat) => ExportFormat[];
   updateExportFormat: (index: number, format: ExportFormat) => ExportFormat[];
   removeExportFormat: (index: number) => ExportFormat[];
-  updateSetting: (key: keyof ZoteroConnectorSettings, value: any) => void;
+  updateSetting: (key: keyof ZoteroConnectorSettings, value: ZoteroConnectorSettings[keyof ZoteroConnectorSettings]
+  ) => void;
 }
 
 function SettingsComponent({
@@ -449,7 +451,7 @@ function SettingsComponent({
           className="clickable-icon setting-editor-extra-setting-button"
           aria-label="Select the tesseract data directory"
           onClick={() => {
-            const path = require('electron').remote.dialog.showOpenDialogSync({
+            const path = getElectron().remote.dialog.showOpenDialogSync({
               properties: ['openDirectory'],
             });
 
@@ -698,8 +700,8 @@ export class ZoteroConnectorSettingsTab extends PluginSettingTab {
   };
 
   debouncedSave() {
-    clearTimeout(this.dbTimer);
-    this.dbTimer = activeWindow.setTimeout(() => {
+    window.clearTimeout(this.dbTimer);
+    this.dbTimer = window.setTimeout(() => {
       this.plugin.saveSettings();
     }, 150);
   }

@@ -141,7 +141,16 @@ export function applySync(current: string, plan: SyncPlan): string {
 // Stable, Obsidian-block-id-safe identifier for an annotation. Zotero-native
 // annotations have an 8-character key; PDF-extracted ones may not, so fall
 // back to a hash of page + text so repeated syncs stay idempotent.
-export function annotationSyncId(annot: any): string {
+export interface SyncableAnnotation {
+  id?: string | number;
+  pageLabel?: string | number;
+  page?: string | number;
+  annotatedText?: string;
+  imageBaseName?: string;
+  comment?: string;
+}
+
+export function annotationSyncId(annot: SyncableAnnotation | null | undefined): string {
   const raw = annot?.id != null ? String(annot.id) : '';
   const cleaned = raw.replace(/[^A-Za-z0-9-]/g, '');
   if (cleaned) return cleaned;
@@ -167,14 +176,17 @@ export function countAddedQuotes(before: string, after: string): number {
   return added;
 }
 
-export function blockIdFor(annot: any): string {
+export function blockIdFor(annot: SyncableAnnotation): string {
   return `nb-${annotationSyncId(annot)}`;
 }
 
 // Annotations whose block id doesn't yet appear anywhere in the note. Checking
 // the whole note (not just the quotes block) means a quote a student moved
 // into another section still counts as synced.
-export function unsyncedAnnotations(annotations: any[], noteText: string) {
+export function unsyncedAnnotations<T extends SyncableAnnotation>(
+  annotations: T[],
+  noteText: string
+) {
   if (!noteText) return annotations;
   return annotations.filter(
     (a) => !noteText.includes(`^${blockIdFor(a)}`)

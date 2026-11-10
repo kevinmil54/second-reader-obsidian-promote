@@ -1,6 +1,7 @@
 import moment from 'moment';
 import nunjucks from 'nunjucks';
 
+import { setApp } from '../../appRef';
 import {
   ObsidianMarkdownLoader,
   PersistExtension,
@@ -305,6 +306,7 @@ describe('class ObsidianMarkdownLoader', () => {
         },
       },
     } as any;
+    setApp(global.app);
 
     const loader = new ObsidianMarkdownLoader();
 
@@ -337,6 +339,7 @@ describe('class ObsidianMarkdownLoader', () => {
         },
       },
     } as any;
+    setApp(global.app);
 
     const loader = new ObsidianMarkdownLoader();
 
@@ -371,6 +374,7 @@ describe('class ObsidianMarkdownLoader', () => {
         },
       },
     } as any;
+    setApp(global.app);
 
     const loader = new ObsidianMarkdownLoader();
 
@@ -406,6 +410,7 @@ describe('class ObsidianMarkdownLoader', () => {
         },
       },
     } as any;
+    setApp(global.app);
 
     const loader = new ObsidianMarkdownLoader();
 
@@ -435,6 +440,7 @@ describe('class ObsidianMarkdownLoader', () => {
         },
       },
     } as any;
+    setApp(global.app);
 
     const loader = new ObsidianMarkdownLoader();
 
@@ -464,6 +470,7 @@ describe('class ObsidianMarkdownLoader', () => {
         },
       },
     } as any;
+    setApp(global.app);
 
     const loader = new ObsidianMarkdownLoader();
 

@@ -12,15 +12,17 @@ import path from 'path';
 import { getVaultRoot } from 'src/helpers';
 import { DatabaseWithPort } from 'src/types';
 
+import { getApp } from '../appRef';
 import { getCiteKeys } from './cayw';
 import { getLocalURI, mkMDDir, sanitizeFilePath } from './helpers';
 import { getAttachmentsFromCiteKey, getNotesFromCiteKeys } from './jsonRPC';
 import { removeStartingSlash } from './template.helpers';
+import type { ZoteroAttachmentJSON } from './zoteroTypes';
 
 export async function processZoteroAnnotationNotes(
   key: string,
   noteStr: string,
-  attachments: Record<string, any>,
+  attachments: Record<string, string>,
   destination?: string
 ) {
   const parsed = new DOMParser().parseFromString(noteStr, 'text/html');
@@ -36,7 +38,7 @@ export async function processZoteroAnnotationNotes(
 
       const annotationKey = json.annotationKey;
 
-      const isImage = annot instanceof HTMLImageElement;
+      const isImage = annot.instanceOf(HTMLImageElement);
 
       if (isImage) {
         const imagePath = attachments[annotationKey];
@@ -153,7 +155,7 @@ export async function noteExportPrompt(
     return;
   }
 
-  const attachments: Record<string, any> = {};
+  const attachments: Record<string, Record<string, string>> = {};
 
   for (const key of citeKeys) {
     const attachment = await getAttachmentsFromCiteKey(key, database);
@@ -161,8 +163,8 @@ export async function noteExportPrompt(
     if (attachment) {
       const images: Record<string, string> = {};
 
-      attachment.forEach((a: any) => {
-        a.annotations?.forEach((annot: any) => {
+      attachment.forEach((a: ZoteroAttachmentJSON) => {
+        a.annotations?.forEach((annot) => {
           if (annot.annotationType === 'image') {
             images[annot.key] = annot.annotationImagePath;
           }
@@ -197,12 +199,20 @@ export async function noteExportPrompt(
   return notesMarkdown;
 }
 
+// Vault methods Obsidian uses internally but doesn't put in its typings.
+interface VaultInternals {
+  getConfig(key: string): string;
+  getAbstractFileByPathInsensitive(path: string): TAbstractFile;
+  createFolder(path: string): Promise<TFolder>;
+}
+
 async function getAvailablePathForAttachments(
   base: string,
   extension: string,
   destination: string
 ): Promise<string> {
-  let folderPath = (app.vault as any).getConfig('attachmentFolderPath');
+  const vault = getApp().vault as unknown as VaultInternals;
+  let folderPath = vault.getConfig('attachmentFolderPath');
   const sameFolder = folderPath === '.' || folderPath === './';
   let subfolder = null;
   if (folderPath.startsWith('./')) {
@@ -217,20 +227,21 @@ async function getAvailablePathForAttachments(
 
   folderPath = normalizePath(folderPath);
 
-  let folder: TAbstractFile = (
-    app.vault as any
-  ).getAbstractFileByPathInsensitive(folderPath);
+  let folder: TAbstractFile =
+    vault.getAbstractFileByPathInsensitive(folderPath);
 
   if (!folder && subfolder) {
-    await (app.vault as any).createFolder(folderPath);
-    folder = (app.vault as any).getAbstractFileByPathInsensitive(folderPath);
+    await vault.createFolder(folderPath);
+    folder = vault.getAbstractFileByPathInsensitive(folderPath);
   }
 
   if (!(folder instanceof TFolder)) {
     return `${base}.${extension}`;
   }
 
-  return `${(folder as any).getParentPrefix() + base}.${extension}`;
+  return `${
+    (folder as TFolder & { getParentPrefix(): string }).getParentPrefix() + base
+  }.${extension}`;
 }
 
 export function insertNotesIntoCurrentDoc(
@@ -267,14 +278,15 @@ export async function newFile(
     sanitizeFilePath(removeStartingSlash(`${folder}/${citeKey}.md`))
   );
 
-  let file = app.vault.getAbstractFileByPath(path) as TFile;
+  const atPath = getApp().vault.getAbstractFileByPath(path);
+  let file = atPath instanceof TFile ? atPath : null;
 
   try {
     if (file) {
-      await app.vault.modify(file, content);
+      await getApp().vault.modify(file, content);
     } else {
       await mkMDDir(path);
-      file = await app.vault.create(path, content);
+      file = await getApp().vault.create(path, content);
     }
   } catch (e) {
     console.error(e);

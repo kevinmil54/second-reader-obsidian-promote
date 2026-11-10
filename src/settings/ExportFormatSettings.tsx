@@ -2,6 +2,7 @@ import React from 'react';
 import { SingleValue } from 'react-select';
 import AsyncSelect from 'react-select/async';
 
+import { getApp } from '../appRef';
 import { ExportFormat } from '../types';
 import { Icon } from './Icon';
 import { cslListRaw } from './cslList';
@@ -35,8 +36,8 @@ export function ExportFormatSettings({
   const defaultTemplate = React.useMemo(() => {
     if (!format.templatePath) return undefined;
 
-    const file = app.vault
-      .getMarkdownFiles()
+    const file = getApp()
+      .vault.getMarkdownFiles()
       .find((item) => item.path === format.templatePath);
     return file ? { value: file.path, label: file.path } : undefined;
   }, [format.templatePath]);

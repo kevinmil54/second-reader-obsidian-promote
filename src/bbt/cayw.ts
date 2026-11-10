@@ -1,13 +1,15 @@
 import { Notice, request } from 'obsidian';
 
+import { getApp } from '../appRef';
 import { getCurrentWindow } from '../helpers';
 import { CitationFormat, DatabaseWithPort } from '../types';
 import { LoadingModal } from './LoadingModal';
 import { defaultHeaders, getPort } from './helpers';
 import { getBibFromCiteKeys } from './jsonRPC';
 import { ZQueue } from './queue';
+import type { CiteKeySource } from './zoteroTypes';
 
-export function getCiteKeyFromAny(item: any): CiteKey | null {
+export function getCiteKeyFromAny(item: CiteKeySource): CiteKey | null {
   if (!item.citekey && !item.citationKey) return null;
 
   return {
@@ -29,7 +31,7 @@ export async function isZoteroRunning(
 
   let modal: LoadingModal;
   if (!silent) {
-    modal = new LoadingModal(app, 'Fetching data from Zotero...');
+    modal = new LoadingModal(getApp(), 'Fetching data from Zotero...');
     modal.open();
   }
   const qid = Symbol();
@@ -49,7 +51,7 @@ export async function isZoteroRunning(
     lastCheck = Date.now();
     ZQueue.end(qid);
     return cachedIsRunning;
-  } catch (e) {
+  } catch {
     modal?.close();
     !silent &&
       new Notice(
@@ -87,7 +89,10 @@ export async function getCAYW(
     return null;
   }
 
-  const modal = new LoadingModal(app, 'Awaiting item selection from Zotero...');
+  const modal = new LoadingModal(
+    getApp(),
+    'Awaiting item selection from Zotero...'
+  );
   modal.open();
 
   const qid = Symbol();
@@ -136,17 +141,17 @@ export async function getCiteKeys(
     if (!json) return [];
 
     const citeKeys = json
-      .map((e: any) => {
+      .map((e: CiteKeySource) => {
         return getCiteKeyFromAny(e);
       })
-      .filter((e: any) => !!e);
+      .filter((e: CiteKey | null) => !!e);
 
     if (!citeKeys.length) {
       return [];
     }
 
     return citeKeys;
-  } catch (e) {
+  } catch {
     return [];
   }
 }
@@ -157,7 +162,10 @@ export async function getCAYWJSON(database: DatabaseWithPort) {
     return null;
   }
 
-  const modal = new LoadingModal(app, 'Awaiting item selection from Zotero...');
+  const modal = new LoadingModal(
+    getApp(),
+    'Awaiting item selection from Zotero...'
+  );
   modal.open();
 
   const qid = Symbol();

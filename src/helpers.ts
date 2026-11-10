@@ -3,10 +3,34 @@ import { FileSystemAdapter, Notice } from 'obsidian';
 import os from 'os';
 import path from 'path';
 
+import { getApp } from './appRef';
 import { runFile } from './runFile';
 
+// The slice of Electron this plugin uses. Electron is provided by Obsidian's
+// desktop app, so it is loaded through the window rather than bundled.
+interface ElectronApi {
+  remote: {
+    BrowserWindow: { getFocusedWindow(): { show(): void } };
+    dialog: {
+      showOpenDialogSync(options: {
+        properties: string[];
+      }): string[] | undefined;
+    };
+  };
+  shell: {
+    openExternal(url: string): Promise<void>;
+    showItemInFolder(fullPath: string): void;
+  };
+}
+
+export function getElectron(): ElectronApi {
+  return (window as unknown as { require(id: string): ElectronApi }).require(
+    'electron'
+  );
+}
+
 export function getCurrentWindow() {
-  return require('electron').remote.BrowserWindow.getFocusedWindow();
+  return getElectron().remote.BrowserWindow.getFocusedWindow();
 }
 
 export function padNumber(n: number): string {
@@ -14,7 +38,7 @@ export function padNumber(n: number): string {
 }
 
 export function getVaultRoot() {
-  return (app.vault.adapter as FileSystemAdapter).getBasePath();
+  return (getApp().vault.adapter as FileSystemAdapter).getBasePath();
 }
 
 // Vault-relative folder this plugin is installed in (manifest.dir), set on
@@ -107,10 +131,10 @@ export function getExecutableMode(mode = 0) {
   );
 }
 
-function handleError(err: any) {
+function handleError(err: unknown) {
   console.error('Error: pdfannots2json not executable', err);
 
-  if (err.code === 'ENOENT') {
+  if ((err as NodeJS.ErrnoException)?.code === 'ENOENT') {
     return false;
   } else {
     return undefined;

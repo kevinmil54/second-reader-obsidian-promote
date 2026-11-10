@@ -7,6 +7,7 @@ import {
   doesEXEExist,
   doesLegacyEXEExist,
   doesLegacyEXEExist2,
+  getElectron,
   getExeRoot,
   removeEXE,
   removeLegacyEXE,
@@ -49,8 +50,6 @@ function getDownloadUrl() {
 export async function downloadAndExtract() {
   const url = getDownloadUrl();
 
-  console.log('Obsidian Zotero Integration: Downloading ' + url);
-
   if (!url) return false;
 
   try {
@@ -84,7 +83,10 @@ export async function downloadAndExtract() {
 
 export function AssetDownloader(props: {
   settings: ZoteroConnectorSettings;
-  updateSetting: (key: keyof ZoteroConnectorSettings, value: any) => void;
+  updateSetting: (
+    key: keyof ZoteroConnectorSettings,
+    value: ZoteroConnectorSettings[keyof ZoteroConnectorSettings]
+  ) => void;
 }) {
   const [isUpToDate, setIsUpToDate] = React.useState<boolean | null>(null);
   const [isLoading, setIsLoading] = React.useState(false);
@@ -165,7 +167,7 @@ export function AssetDownloader(props: {
         className="clickable-icon setting-editor-extra-setting-button"
         aria-label="Select the pdfannots2json executable"
         onClick={() => {
-          const path = require('electron').remote.dialog.showOpenDialogSync({
+          const path = getElectron().remote.dialog.showOpenDialogSync({
             properties: ['openFile'],
           });
 

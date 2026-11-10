@@ -163,13 +163,15 @@ export class LiteratureLinkColors {
       view.containerEl
         .querySelectorAll('.markdown-reading-view a.internal-link, .markdown-preview-view a.internal-link')
         .forEach((a) => this.colorAnchor(a, sourcePath));
-      const cm = (view.editor as any)?.cm as EditorView | undefined;
+      const cm = (view.editor as unknown as { cm?: EditorView })?.cm;
       cm?.dispatch({ effects: this.refreshEffect.of(null) });
     }
   }
 
   private editorExtension() {
-    const colors = this;
+    const { refreshEffect } = this;
+    const classFor = (target: string, sourcePath: string) =>
+      this.classFor(target, sourcePath);
     return ViewPlugin.fromClass(
       class {
         decorations: DecorationSet;
@@ -178,7 +180,7 @@ export class LiteratureLinkColors {
         }
         update(u: ViewUpdate) {
           const refreshed = u.transactions.some((t) =>
-            t.effects.some((e) => e.is(colors.refreshEffect))
+            t.effects.some((e) => e.is(refreshEffect))
           );
           if (u.docChanged || u.viewportChanged || refreshed) {
             this.decorations = this.build(u.view);
@@ -191,7 +193,7 @@ export class LiteratureLinkColors {
           for (const { from, to } of view.visibleRanges) {
             const text = view.state.doc.sliceString(from, to);
             for (const m of text.matchAll(WIKILINK)) {
-              const cls = colors.classFor(m[1], sourcePath);
+              const cls = classFor(m[1], sourcePath);
               if (!cls) continue;
               const start = from + m.index;
               builder.add(start, start + m[0].length, Decoration.mark({ class: cls }));

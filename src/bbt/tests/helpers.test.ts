@@ -1,3 +1,4 @@
+import { setApp } from '../../appRef';
 import {
   getPort,
   mkMDDir,
@@ -22,6 +23,7 @@ describe('mkMDDir()', () => {
         createFolder: jest.fn(async () => {}),
       },
     } as any;
+    setApp(global.app);
 
     await mkMDDir('mock');
 
@@ -37,6 +39,7 @@ describe('mkMDDir()', () => {
         createFolder: jest.fn(async () => {}),
       },
     } as any;
+    setApp(global.app);
 
     await mkMDDir('mock');
 

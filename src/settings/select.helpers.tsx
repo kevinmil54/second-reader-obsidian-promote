@@ -3,6 +3,7 @@ import { TFile } from 'obsidian';
 import React from 'react';
 import { StylesConfig } from 'react-select';
 
+import { getApp } from '../appRef';
 import { cslList } from './cslList';
 
 export const customSelectStyles: StylesConfig = {
@@ -69,8 +70,8 @@ export function loadCSLOptions(
   if (inputValue === '') {
     callback([]);
   } else {
-    clearTimeout(loadCSLOptionsDB);
-    loadCSLOptionsDB = activeWindow.setTimeout(() => {
+    window.clearTimeout(loadCSLOptionsDB);
+    loadCSLOptionsDB = window.setTimeout(() => {
       callback([
         { value: inputValue, label: inputValue },
         ...searchCSL(inputValue),
@@ -88,7 +89,7 @@ export function NoFileOptionMessage() {
 }
 
 export function buildFileSearch() {
-  const files = app.vault.getMarkdownFiles();
+  const files = getApp().vault.getMarkdownFiles();
   return new Fuse(files, {
     keys: ['basename'],
     minMatchCharLength: 2,
@@ -106,8 +107,8 @@ export const buildLoadFileOptions =
     if (inputValue === '') {
       callback([]);
     } else {
-      clearTimeout(fileSearchDB);
-      fileSearchDB = activeWindow.setTimeout(() => {
+      window.clearTimeout(fileSearchDB);
+      fileSearchDB = window.setTimeout(() => {
         callback(
           search.search(inputValue).map((res) => {
             return {

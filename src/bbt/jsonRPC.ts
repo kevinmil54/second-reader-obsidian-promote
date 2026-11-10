@@ -447,7 +447,7 @@ export async function getItemJSONFromRelations(
     const result = parseRpc(res).result as Record<string, string>;
 
     Object.keys(result).forEach((k) => {
-      const id = k.split(':').pop();
+      const id = k.split(':').pop() ?? k;
       if (result[k]) {
         citekeys.push({ key: result[k], library: libraryID });
         idMap[id] = { citekey: result[k], uri: uriMap[id] };

@@ -594,7 +594,7 @@ async function getAttachmentData(
         database
       );
 
-      mappedAttachments = ((fullAttachmentData || []) as ZoteroAttachmentJSON[]).reduce<
+      mappedAttachments = (fullAttachmentData || []).reduce<
         Record<string, ZoteroAttachmentJSON>
       >((col, a) => {
         if (a?.path) {
@@ -840,7 +840,7 @@ export async function exportToMarkdown(
 
       let annots: ZoteroAnnotationJSON[] = [];
 
-      attachmentData[attachmentPath]?.annotations?.forEach((annot) => {
+      attachmentData[attachmentPath ?? '']?.annotations?.forEach((annot) => {
         annots.push(
           convertNativeAnnotation(
             annot,
@@ -1039,7 +1039,7 @@ export async function dataExplorerPrompt(settings: ZoteroConnectorSettings) {
       const attachmentPath = attachment.path;
       let annots: ZoteroAnnotationJSON[] = [];
 
-      attachmentData[attachmentPath]?.annotations?.forEach((annot) => {
+      attachmentData[attachmentPath ?? '']?.annotations?.forEach((annot) => {
         annots.push(
           convertNativeAnnotation(
             annot,

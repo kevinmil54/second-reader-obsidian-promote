@@ -207,7 +207,7 @@ export async function packageWeek(host: WeekPackageHost, week: number, syllabus:
   const zipPath = normalizePath(`${UPLOADS_FOLDER}/${name}.zip`);
   const zipped = zipSync(files, { level: 6 });
   const data = zipped.buffer.slice(zipped.byteOffset, zipped.byteOffset + zipped.byteLength);
-  await app.vault.adapter.writeBinary(zipPath, data as ArrayBuffer);
+  await app.vault.adapter.writeBinary(zipPath, data);
 
   const parts = [
     `Packaged ${notes.length} literature note${notes.length === 1 ? '' : 's'} into "${name}.zip" in your ${UPLOADS_FOLDER} folder. Upload that file.`,

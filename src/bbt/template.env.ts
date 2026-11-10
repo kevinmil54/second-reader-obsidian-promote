@@ -43,7 +43,7 @@ function _prepareAttributeParts(attr: string) {
 }
 
 function hasOwnProp(obj: unknown, k: string) {
-  return Object.prototype.hasOwnProperty.call(obj, k) as boolean;
+  return Object.prototype.hasOwnProperty.call(obj, k);
 }
 
 function getAttrGetter(attribute: string) {

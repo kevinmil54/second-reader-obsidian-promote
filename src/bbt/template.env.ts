@@ -1,5 +1,5 @@
 import nunjucks, { Callback, Extension, Loader, LoaderSource } from 'nunjucks';
-import { moment } from 'obsidian';
+import { moment, type Moment } from '../moment';
 
 import { getApp } from '../appRef';
 
@@ -22,8 +22,13 @@ import { getApp } from '../appRef';
 
   if (typeof member === 'function') {
     // eslint-disable-next-line prefer-spread -- forwards a template's arguments to the wrapped method with its own `this`
-    return (...args: unknown[]) =>
-      (member as (...a: unknown[]) => unknown).apply(obj, args) as unknown;
+    return (...args: unknown[]) => {
+      const result: unknown = (member as (...a: unknown[]) => unknown).apply(
+        obj,
+        args
+      );
+      return result;
+    };
   }
 
   return member;
@@ -75,7 +80,7 @@ export function filterBy(
   arr: unknown[],
   prop: string,
   cmd: FilterByCmd,
-  ...val: string[] | moment.Moment[]
+  ...val: string[] | Moment[]
 ) {
   const getter = getAttrGetter(prop);
 
@@ -116,7 +121,7 @@ export function filterBy(
         cmd
       )
     ) {
-      return (val as moment.Moment[]).some((value) => {
+      return (val as Moment[]).some((value) => {
         if (!moment.isMoment(toTest) || !moment.isMoment(value)) return false;
 
         switch (cmd) {
@@ -136,8 +141,8 @@ export function filterBy(
   });
 }
 
-export function format(date: moment.Moment, format: string) {
-  if (date instanceof moment) {
+export function format(date: Moment, format: string) {
+  if (moment.isMoment(date)) {
     return date.format(format);
   }
 

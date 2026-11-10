@@ -1,4 +1,5 @@
-import { Notice, TFile, moment } from 'obsidian';
+import { Notice, TFile } from 'obsidian';
+import { moment, type Moment } from '../moment';
 import { ExportToMarkdownParams } from 'src/types';
 
 import { getApp } from '../appRef';
@@ -55,7 +56,7 @@ export async function getTemplates(params: ExportToMarkdownParams) {
   };
 }
 
-export function getLastExport(md: string): moment.Moment {
+export function getLastExport(md: string): Moment {
   let match = md.match(/%% Import Date: (\S+) %%\n$/);
 
   if (match && match[1]) {

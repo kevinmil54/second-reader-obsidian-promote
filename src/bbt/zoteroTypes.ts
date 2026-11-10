@@ -1,4 +1,4 @@
-import type { Moment } from 'moment';
+import type { Moment } from '../moment';
 
 // The parts of Zotero's and Better BibTeX's JSON this plugin reads. Both send
 // loosely shaped objects, so each interface names the fields the code relies

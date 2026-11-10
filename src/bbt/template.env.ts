@@ -210,6 +210,9 @@ export class PersistExtension implements Extension {
     let trimmed = body();
     // The newline after the tag belongs to the tag, not to the block's text.
     if (retained) trimmed = trimmed.replace(/^\r?\n/, '');
+    // A render that adds nothing leaves the block as it was, so repeated
+    // imports don't pile up blank lines.
+    if (retained && !trimmed.trim()) trimmed = '';
 
     return new nunjucks.runtime.SafeString(
       `%% begin ${id} %%${retained}${trimmed}%% end ${id} %%`

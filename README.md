@@ -269,6 +269,21 @@ else in the note is yours and is never changed or reordered.
 The logic is in `src/synthesisCore.ts` (no Obsidian imports, covered by
 `synthesis.test.ts`); `src/synthesis.ts` does the vault work.
 
+### Template settings
+
+The literature-note template starts with a few settings, written as template comments so they never appear in notes:
+
+```
+{#- Second Reader settings. These lines never appear in your notes. -#}
+{#- reference-style: apa -#}
+{#- author-info: photos -#}
+```
+
+- **reference-style** is the Zotero style used for `{{bibliography}}`, the "Reference" line. Use the style's ID as Zotero knows it, for example `apa`, `chicago-author-date` or `modern-language-association`; the style must be installed in Zotero. It takes priority over the import format's Bibliography Style. If you change it, also change the "(APA)" in the template's **Reference (APA):** label.
+- **author-info** is read by the separate author-information program (`add_author_info.py`), not by Second Reader itself: `none` adds nothing, `basic` adds the lead author's name, affiliation and links, and `photos` also adds a photo, dates and a Wikipedia link from Wikidata.
+
+Keep the dashes inside `{#-` and `-#}`; they stop the comments from leaving blank lines above the note's properties.
+
 ## Template upgrades
 
 The current literature-note template ships inside the plugin (esbuild text

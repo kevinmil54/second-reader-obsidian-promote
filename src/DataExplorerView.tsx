@@ -1,5 +1,6 @@
 import { errorMessage } from './errors';
-import { ItemView, Menu, TFile, WorkspaceLeaf, moment } from 'obsidian';
+import { ItemView, Menu, TFile, WorkspaceLeaf } from 'obsidian';
+import { moment, type Moment } from './moment';
 import React from 'react';
 import ReactDOM from 'react-dom';
 import { JSONTree, LabelRenderer, ValueRenderer } from 'react-json-tree';
@@ -216,7 +217,7 @@ function DataExporer({ plugin }: { plugin: ZoteroConnector }) {
                 <JSONTree
                   data={data}
                   sortObjectKeys={(a: string, b: string) => a.localeCompare(b)}
-                  isCustomNode={(v) => v instanceof moment}
+                  isCustomNode={(v) => moment.isMoment(v)}
                   valueRenderer={valueRenderer}
                   labelRenderer={labelRenderer}
                   theme={
@@ -333,8 +334,8 @@ const toPropName = (
 const hex = /^#(?:[\dA-F]{3}){1,2}$|^#(?:[\dA-F]{4}){1,2}$/i;
 
 export const valueRenderer: ValueRenderer = (valueAsString, value) => {
-  if (value instanceof moment) {
-    return <>📅 {(value as moment.Moment).format('l LTS')}</>;
+  if (moment.isMoment(value)) {
+    return <>📅 {(value as Moment).format('l LTS')}</>;
   }
 
   if (typeof value === 'string' && hex.test(value)) {

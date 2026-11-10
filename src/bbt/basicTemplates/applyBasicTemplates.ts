@@ -1,4 +1,4 @@
-import { moment } from 'obsidian';
+import { moment } from '../../moment';
 
 import { renderTemplate } from '../template.env';
 import type { ZoteroItemJSON } from '../zoteroTypes';

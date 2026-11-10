@@ -5,10 +5,10 @@ import {
   Notice,
   TFile,
   htmlToMarkdown,
-  moment,
   normalizePath,
 } from 'obsidian';
 import path from 'path';
+import { moment, type Moment } from '../moment';
 import { DEFAULT_CSL_STYLE } from '../defaultFormats';
 
 import { doesEXEExist, getVaultRoot } from '../helpers';
@@ -64,7 +64,7 @@ import { getApp } from '../appRef';
 async function processNote(
   citeKey: CiteKey,
   note: ZoteroNoteJSON,
-  importDate: moment.Moment,
+  importDate: Moment,
   database: DatabaseWithPort,
   cslStyle?: string
 ) {
@@ -261,7 +261,7 @@ function concatAnnotations(annots: ZoteroAnnotationJSON[]) {
 async function getRelations(
   item: ZoteroItemJSON | ZoteroNoteJSON,
   libraryID: number,
-  importDate: moment.Moment,
+  importDate: Moment,
   database: DatabaseWithPort,
   cslStyle?: string
 ) {
@@ -294,7 +294,7 @@ async function getRelations(
 
 async function processItem(
   item: ZoteroItemJSON,
-  importDate: moment.Moment,
+  importDate: Moment,
   database: DatabaseWithPort,
   cslStyle?: string,
   skipRelations?: boolean
@@ -613,7 +613,7 @@ async function getAttachmentData(
 async function getTemplateData(
   markdownPath: string,
   item: ZoteroItemJSON,
-  lastImportDate: moment.Moment,
+  lastImportDate: Moment,
   existingNote: string
 ) {
   const firstAnnots = item.attachments.find(
@@ -731,7 +731,7 @@ export async function exportToMarkdown(
       item: ZoteroItemJSON;
       file: TFile;
       fileContent: string;
-      lastImportDate: moment.Moment;
+      lastImportDate: Moment;
       existingAnnotations: string;
     }
   > = new Map();

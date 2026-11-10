@@ -1,4 +1,5 @@
-import { Notice, htmlToMarkdown, moment, request } from 'obsidian';
+import { Notice, htmlToMarkdown, request } from 'obsidian';
+import { moment, type Moment } from '../moment';
 
 import { padNumber } from '../helpers';
 import { CiteKeyExport, DatabaseWithPort } from '../types';
@@ -547,7 +548,7 @@ export async function getIssueDateFromCiteKey(
 
         return date;
       })
-      .filter((d: moment.Moment | null) => d);
+      .filter((d: Moment | null) => d);
 
     return dates[0] ? dates[0] : null;
   } catch (e) {

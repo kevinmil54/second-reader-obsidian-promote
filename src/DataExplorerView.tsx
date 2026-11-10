@@ -1,6 +1,6 @@
 import { errorMessage } from './errors';
 import { ItemView, Menu, TFile, WorkspaceLeaf } from 'obsidian';
-import { moment, type Moment } from './moment';
+import { moment } from './moment';
 import React from 'react';
 import ReactDOM from 'react-dom';
 import { JSONTree, LabelRenderer, ValueRenderer } from 'react-json-tree';
@@ -69,6 +69,7 @@ function TemplatePreview({
   const [forceRef, setForceRef] = React.useState<number>(0);
 
   React.useEffect(() => {
+    if (formatIndex === null) return;
     const fmt = plugin.settings.exportFormats[formatIndex];
     const mainFile = fmt.templatePath
       ? plugin.app.vault.getAbstractFileByPath(
@@ -335,7 +336,7 @@ const hex = /^#(?:[\dA-F]{3}){1,2}$|^#(?:[\dA-F]{4}){1,2}$/i;
 
 export const valueRenderer: ValueRenderer = (valueAsString, value) => {
   if (moment.isMoment(value)) {
-    return <>📅 {(value as Moment).format('l LTS')}</>;
+    return <>📅 {value.format('l LTS')}</>;
   }
 
   if (typeof value === 'string' && hex.test(value)) {

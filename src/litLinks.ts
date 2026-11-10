@@ -73,7 +73,7 @@ export class LiteratureLinkColors {
     this.plugin.registerEvent(
       app.vault.on('rename', (file, oldPath) => {
         this.forget(oldPath);
-        this.recompute(file);
+        void this.recompute(file);
       })
     );
     // A link turns from unresolved to resolved when its note is created.
@@ -105,7 +105,7 @@ export class LiteratureLinkColors {
   // once it is).
   stateOf(file: TFile): LitNoteState | null | undefined {
     if (this.states.has(file.path)) return this.states.get(file.path);
-    this.recompute(file);
+    void this.recompute(file);
     return undefined;
   }
 

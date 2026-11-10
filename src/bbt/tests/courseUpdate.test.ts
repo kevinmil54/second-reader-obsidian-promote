@@ -82,7 +82,11 @@ function makeVault(files: Record<string, string>) {
     },
     createBinary: async (p: string, t: any): Promise<void> => void data.set(p, t),
     createFolder: async () => {},
-    trash: async (f: MockTFolder) => {
+  };
+  // The update folder is trashed through the file manager, which honours the
+  // user's choice of where deleted files go.
+  const fileManager = {
+    trashFile: async (f: MockTFolder) => {
       for (const p of [...data.keys()]) {
         if (p.startsWith(f.path + '/')) {
           data.delete(p);
@@ -91,7 +95,7 @@ function makeVault(files: Record<string, string>) {
       }
     },
   };
-  return { data, trashed, app: { vault } as any };
+  return { data, trashed, app: { vault, fileManager } as any };
 }
 
 const U = 'ED 336 update';

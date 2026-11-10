@@ -7,12 +7,25 @@ import { CiteKey, getCiteKeyFromAny, isZoteroRunning } from './cayw';
 import { defaultHeaders, getPort } from './helpers';
 import { ZQueue } from './queue';
 import type {
+  ZoteroAttachmentJSON,
   ZoteroCollectionJSON,
   ZoteroItemJSON,
   ZoteroLibrary,
   ZoteroSearchHit,
 } from './zoteroTypes';
 import { getApp } from '../appRef';
+import { errorMessage } from '../errors';
+
+// A Better BibTeX JSON-RPC response. What `result` holds depends on the method
+// that was called, so each caller says what it expects.
+interface RpcResponse {
+  result?: unknown;
+  error?: { message?: string };
+}
+
+function parseRpc(res: string): RpcResponse {
+  return JSON.parse(res) as RpcResponse;
+}
 
 export async function getNotesFromCiteKeys(
   citeKeys: CiteKey[],
@@ -42,7 +55,7 @@ export async function getNotesFromCiteKeys(
   } catch (e) {
     console.error(e);
     modal.close();
-    new Notice(`Error retrieving notes: ${e.message}`, 10000);
+    new Notice(`Error retrieving notes: ${errorMessage(e)}`, 10000);
     ZQueue.end(qid);
     return null;
   }
@@ -51,10 +64,10 @@ export async function getNotesFromCiteKeys(
   modal.close();
 
   try {
-    return JSON.parse(res).result;
+    return parseRpc(res).result as Record<string, string[]>;
   } catch (e) {
     console.error(e);
-    new Notice(`Error retrieving notes: ${e.message}`, 10000);
+    new Notice(`Error retrieving notes: ${errorMessage(e)}`, 10000);
     return null;
   }
 }
@@ -87,7 +100,7 @@ export async function getCollectionFromCiteKey(
   } catch (e) {
     console.error(e);
     modal.close();
-    new Notice(`Error retrieving notes: ${e.message}`, 10000);
+    new Notice(`Error retrieving notes: ${errorMessage(e)}`, 10000);
     ZQueue.end(qid);
     return null;
   }
@@ -96,7 +109,10 @@ export async function getCollectionFromCiteKey(
   modal.close();
 
   try {
-    const result = JSON.parse(res).result;
+    const result = parseRpc(res).result as Record<
+      string,
+      ZoteroCollectionJSON[]
+    >;
     const cols = result[citeKey.key];
 
     return cols.map((c: ZoteroCollectionJSON) => {
@@ -116,7 +132,7 @@ export async function getCollectionFromCiteKey(
     });
   } catch (e) {
     console.error(e);
-    new Notice(`Error retrieving notes: ${e.message}`, 10000);
+    new Notice(`Error retrieving notes: ${errorMessage(e)}`, 10000);
     return null;
   }
 }
@@ -149,7 +165,7 @@ export async function getAttachmentsFromCiteKey(
   } catch (e) {
     console.error(e);
     modal.close();
-    new Notice(`Error retrieving notes: ${e.message}`, 10000);
+    new Notice(`Error retrieving notes: ${errorMessage(e)}`, 10000);
     ZQueue.end(qid);
     return null;
   }
@@ -158,10 +174,10 @@ export async function getAttachmentsFromCiteKey(
   modal.close();
 
   try {
-    return JSON.parse(res).result;
+    return parseRpc(res).result as ZoteroAttachmentJSON[];
   } catch (e) {
     console.error(e);
-    new Notice(`Error retrieving notes: ${e.message}`, 10000);
+    new Notice(`Error retrieving notes: ${errorMessage(e)}`, 10000);
     return null;
   }
 }
@@ -211,9 +227,9 @@ export async function getLibForCiteKey(
     });
     ZQueue.end(qid);
 
-    const parsed = JSON.parse(res);
-    if (parsed.result?.length > 0) {
-      cachedLibs = parsed.result;
+    const groups = parseRpc(res).result as ZoteroLibrary[] | undefined;
+    if (groups && groups.length > 0) {
+      cachedLibs = groups;
       const lib = cachedLibs.find((p) => p.name === match.library);
 
       if (lib) {
@@ -225,7 +241,7 @@ export async function getLibForCiteKey(
     }
   } catch (e) {
     console.error(e);
-    new Notice(`Error retrieving library id: ${e.message}`, 10000);
+    new Notice(`Error retrieving library id: ${errorMessage(e)}`, 10000);
     ZQueue.end(qid);
   }
 
@@ -287,7 +303,7 @@ export async function getBibFromCiteKeys(
   } catch (e) {
     console.error(e);
     !silent && modal.close();
-    new Notice(`Error retrieving formatted bibliography: ${e.message}`, 10000);
+    new Notice(`Error retrieving formatted bibliography: ${errorMessage(e)}`, 10000);
     ZQueue.end(qid);
     return null;
   }
@@ -296,18 +312,19 @@ export async function getBibFromCiteKeys(
   !silent && modal.close();
 
   try {
-    const parsed = JSON.parse(res);
+    const parsed = parseRpc(res);
     if (parsed.error?.message) {
       throw new Error(parsed.error.message);
     }
-    return format === 'html' ? parsed.result : htmlToMarkdown(parsed.result);
+    const html = parsed.result as string;
+    return format === 'html' ? html : htmlToMarkdown(html);
   } catch (e) {
     console.error(e);
     console.error(`Response from BBT: ${res}`);
 
-    let message = `Error converting formatted bibliography to markdown: ${e.message}`;
+    let message = `Error converting formatted bibliography to markdown: ${errorMessage(e)}`;
 
-    if ((e.message as string).includes('element/document/fragment')) {
+    if (errorMessage(e).includes('element/document/fragment')) {
       message = `Error: Received empty bibliography from Zotero. Ensure Zotero's quick copy settings are set and the selected citation style is installed.`;
     }
 
@@ -349,7 +366,7 @@ export async function getItemJSONFromCiteKeys(
   } catch (e) {
     console.error(e);
     modal.close();
-    new Notice(`Error retrieving item data: ${e.message}`, 10000);
+    new Notice(`Error retrieving item data: ${errorMessage(e)}`, 10000);
     ZQueue.end(qid);
     return null;
   }
@@ -358,17 +375,19 @@ export async function getItemJSONFromCiteKeys(
   modal.close();
 
   try {
-    const parsed = JSON.parse(res);
+    const parsed = parseRpc(res);
     if (parsed.error?.message) {
       throw new Error(parsed.error.message);
     }
 
-    return Array.isArray(parsed.result)
-      ? JSON.parse(parsed.result[2]).items
-      : JSON.parse(parsed.result).items;
+    const payload = Array.isArray(parsed.result)
+      ? (parsed.result as string[])[2]
+      : (parsed.result as string);
+
+    return (JSON.parse(payload) as { items: ZoteroItemJSON[] }).items;
   } catch (e) {
     console.error(e);
-    new Notice(`Error retrieving item data: ${e.message}`, 10000);
+    new Notice(`Error retrieving item data: ${errorMessage(e)}`, 10000);
     return null;
   }
 }
@@ -412,7 +431,7 @@ export async function getItemJSONFromRelations(
   } catch (e) {
     console.error(e);
     modal.close();
-    new Notice(`Error retrieving item data: ${e.message}`, 10000);
+    new Notice(`Error retrieving item data: ${errorMessage(e)}`, 10000);
     ZQueue.end(qid);
     return null;
   }
@@ -424,20 +443,20 @@ export async function getItemJSONFromRelations(
   const citekeys: CiteKey[] = [];
 
   try {
-    const json = JSON.parse(res);
+    const result = parseRpc(res).result as Record<string, string>;
 
-    Object.keys(json.result).forEach((k) => {
+    Object.keys(result).forEach((k) => {
       const id = k.split(':').pop();
-      if (json.result[k]) {
-        citekeys.push({ key: json.result[k], library: libraryID });
-        idMap[id] = { citekey: json.result[k], uri: uriMap[id] };
+      if (result[k]) {
+        citekeys.push({ key: result[k], library: libraryID });
+        idMap[id] = { citekey: result[k], uri: uriMap[id] };
       } else {
         idMap[id] = { uri: uriMap[id] };
       }
     });
   } catch (e) {
     console.error(e);
-    new Notice(`Error retrieving item data: ${e.message}`, 10000);
+    new Notice(`Error retrieving item data: ${errorMessage(e)}`, 10000);
     return null;
   }
 
@@ -492,7 +511,7 @@ export async function getIssueDateFromCiteKey(
   } catch (e) {
     console.error(e);
     modal.close();
-    new Notice(`Error retrieving item data: ${e.message}`, 10000);
+    new Notice(`Error retrieving item data: ${errorMessage(e)}`, 10000);
     ZQueue.end(qid);
     return null;
   }
@@ -501,14 +520,15 @@ export async function getIssueDateFromCiteKey(
   modal.close();
 
   try {
-    const parsed = JSON.parse(res);
+    const parsed = parseRpc(res);
     if (parsed.error?.message) {
       throw new Error(parsed.error.message);
     }
 
-    const items = Array.isArray(parsed.result)
-      ? JSON.parse(parsed.result[2])
-      : JSON.parse(parsed.result);
+    const payload = Array.isArray(parsed.result)
+      ? (parsed.result as string[])[2]
+      : (parsed.result as string);
+    const items = JSON.parse(payload) as ZoteroSearchHit[];
     const dates = items
       .map((i: ZoteroSearchHit) => {
         const { issued } = i;
@@ -532,7 +552,7 @@ export async function getIssueDateFromCiteKey(
     return dates[0] ? dates[0] : null;
   } catch (e) {
     console.error(e);
-    new Notice(`Error retrieving item data: ${e.message}`, 10000);
+    new Notice(`Error retrieving item data: ${errorMessage(e)}`, 10000);
     return null;
   }
 }
@@ -557,17 +577,17 @@ export async function execSearch(term: string, database: DatabaseWithPort) {
     });
   } catch (e) {
     console.error(e);
-    new Notice(`Error searching: ${e.message}`, 10000);
+    new Notice(`Error searching: ${errorMessage(e)}`, 10000);
     ZQueue.end(qid);
     return null;
   }
 
   ZQueue.end(qid);
   try {
-    return JSON.parse(res).result;
+    return parseRpc(res).result as ZoteroSearchHit[];
   } catch (e) {
     console.error(e);
-    new Notice(`Error searching: ${e.message}`, 10000);
+    new Notice(`Error searching: ${errorMessage(e)}`, 10000);
     return null;
   }
 }
@@ -592,7 +612,7 @@ export async function searchByTitle(text: string, database: DatabaseWithPort) {
       }),
       headers: defaultHeaders,
     });
-    return JSON.parse(res).result ?? null;
+    return (parseRpc(res).result as ZoteroSearchHit[] | undefined) ?? null;
   } catch (e) {
     console.error(e);
     return null;
@@ -604,7 +624,7 @@ export async function searchByTitle(text: string, database: DatabaseWithPort) {
 const translatorId = 'f4b52ab0-f878-4556-85a0-c7aeedd09dfc';
 export async function getCiteKeyExport(
   database: DatabaseWithPort,
-  groupId: string,
+  groupId: string | number,
   groupName: string
 ) {
   const qid = Symbol();
@@ -620,7 +640,7 @@ export async function getCiteKeyExport(
     });
     ZQueue.end(qid);
 
-    const entries = JSON.parse(res);
+    const entries = JSON.parse(res) as Array<Record<string, string>>;
 
     return Array.isArray(entries)
       ? entries
@@ -677,7 +697,7 @@ export async function getUserGroups(database: DatabaseWithPort) {
   ZQueue.end(qid);
 
   try {
-    return JSON.parse(res).result;
+    return parseRpc(res).result as ZoteroLibrary[];
   } catch (e) {
     console.error(e);
     return null;

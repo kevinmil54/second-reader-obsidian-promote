@@ -116,7 +116,7 @@ export function AssetDownloader(props: {
   const handleDownload = React.useCallback(() => {
     setIsLoading(true);
 
-    downloadAndExtract().then((success) => {
+    void downloadAndExtract().then((success) => {
       setIsLoading(false);
 
       if (success) {

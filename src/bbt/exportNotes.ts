@@ -1,3 +1,4 @@
+import { errorMessage } from '../errors';
 import { copyFileSync, existsSync, mkdirSync } from 'fs';
 import {
   Editor,
@@ -19,6 +20,18 @@ import { getAttachmentsFromCiteKey, getNotesFromCiteKeys } from './jsonRPC';
 import { removeStartingSlash } from './template.helpers';
 import type { ZoteroAttachmentJSON } from './zoteroTypes';
 
+// What Zotero writes into the data-annotation and data-citation attributes of
+// the notes it exports.
+interface AnnotationLink {
+  annotationKey: string;
+  attachmentURI: string;
+  pageLabel: string;
+}
+
+interface CitationLink {
+  citationItems: Array<{ uris?: string[] }>;
+}
+
 export async function processZoteroAnnotationNotes(
   key: string,
   noteStr: string,
@@ -32,7 +45,9 @@ export async function processZoteroAnnotationNotes(
   for (const annot of Array.from(annots)) {
     try {
       const params = (annot as HTMLElement).dataset.annotation;
-      const json = params ? JSON.parse(decodeURIComponent(params)) : null;
+      const json = params
+        ? (JSON.parse(decodeURIComponent(params)) as AnnotationLink)
+        : null;
 
       if (!json) return;
 
@@ -105,7 +120,9 @@ export async function processZoteroAnnotationNotes(
   cites.forEach((cite) => {
     try {
       const params = (cite as HTMLElement).dataset.citation;
-      const json = params ? JSON.parse(decodeURIComponent(params)) : null;
+      const json = params
+        ? (JSON.parse(decodeURIComponent(params)) as CitationLink)
+        : null;
 
       if (
         !json ||
@@ -290,7 +307,7 @@ export async function newFile(
     }
   } catch (e) {
     console.error(e);
-    new Notice(`Error creating file "${path}": ${e.message}`, 10000);
+    new Notice(`Error creating file "${path}": ${errorMessage(e)}`, 10000);
     return null;
   }
 

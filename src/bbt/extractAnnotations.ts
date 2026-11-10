@@ -1,3 +1,4 @@
+import { errorMessage } from '../errors';
 import { Notice } from 'obsidian';
 import path from 'path';
 import { ensureExecutableSync, getExeName, getExeRoot } from 'src/helpers';
@@ -97,19 +98,19 @@ export async function extractAnnotations(
   } catch (e) {
     modal.close();
 
-    if (e.message.toLowerCase().includes('password')) {
+    if (errorMessage(e).toLowerCase().includes('password')) {
       new Notice(
         `Error opening ${path.basename(input)}: PDF is password protected`,
         10000
       );
       return '[]';
-    } else if (e.message.toLowerCase().includes('type3')) {
-      new Notice(`Error processing annotations: ${e.message}`, 10000);
+    } else if (errorMessage(e).toLowerCase().includes('type3')) {
+      new Notice(`Error processing annotations: ${errorMessage(e)}`, 10000);
       return '[]';
     }
 
     console.error(e);
-    new Notice(`Error processing PDF: ${e.message}`, 10000);
+    new Notice(`Error processing PDF: ${errorMessage(e)}`, 10000);
     throw e;
   }
 }

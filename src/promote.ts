@@ -1,3 +1,4 @@
+import { errorMessage } from './errors';
 /*
  * Second Reader: Promote Candidates
  *
@@ -228,7 +229,8 @@ export class Promoter {
 
     const app = this.plugin.app;
     const cache = app.metadataCache.getFileCache(file);
-    const fmTags = cache && cache.frontmatter ? cache.frontmatter.tags : null;
+    const fmTags: unknown =
+      cache && cache.frontmatter ? cache.frontmatter.tags : null;
     const tagList: unknown[] = Array.isArray(fmTags) ? fmTags : fmTags ? [fmTags] : [];
     const sourceTopics: unknown =
       cache && cache.frontmatter ? cache.frontmatter.topics : null;
@@ -274,7 +276,7 @@ export class Promoter {
           promoted++;
         } catch (e) {
           console.error('Second Reader promote failed:', e);
-          new Notice(`Second Reader: couldn't create note "${title}" — ${e.message}`);
+          new Notice(`Second Reader: couldn't create note "${title}" — ${errorMessage(e)}`);
         }
         i = nextIdx - 1; // skip the detail lines we already consumed (kept as-is in this note)
       }

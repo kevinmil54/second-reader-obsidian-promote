@@ -22,7 +22,8 @@ import { getApp } from '../appRef';
 
   if (typeof member === 'function') {
     // eslint-disable-next-line prefer-spread -- forwards a template's arguments to the wrapped method with its own `this`
-    return (...args: unknown[]) => member.apply(obj, args);
+    return (...args: unknown[]) =>
+      (member as (...a: unknown[]) => unknown).apply(obj, args) as unknown;
   }
 
   return member;
@@ -37,7 +38,7 @@ function _prepareAttributeParts(attr: string) {
 }
 
 function hasOwnProp(obj: unknown, k: string) {
-  return Object.prototype.hasOwnProperty.call(obj, k);
+  return Object.prototype.hasOwnProperty.call(obj, k) as boolean;
 }
 
 function getAttrGetter(attribute: string) {
@@ -290,7 +291,7 @@ export class ObsidianMarkdownLoader extends Loader {
         this.emit('load', name, src);
       })
       .catch((e) => {
-        callback(e, null);
+        callback(e as Error, null);
       });
   }
 }

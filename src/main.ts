@@ -1,3 +1,4 @@
+import { errorMessage } from './errors';
 import Fuse from 'fuse.js';
 import {
   EditableFileView,
@@ -74,7 +75,9 @@ const SYNC_BUTTON_LABEL = 'Sync Zotero highlights into this note';
 // zotero:// links go to the Zotero app; the OS routes them on Mac and Windows.
 function openExternal(url: string) {
   try {
-    getElectron().shell.openExternal(url);
+    getElectron()
+      .shell.openExternal(url)
+      .catch(() => window.open(url));
   } catch {
     window.open(url);
   }
@@ -154,7 +157,7 @@ export default class ZoteroConnector extends Plugin {
         const file = this.app.workspace.getActiveFile();
         if (!file || file.extension !== 'md') return false;
         if (!checking) {
-          promoter.handleModify(file).then((n) =>
+          void promoter.handleModify(file).then((n) =>
             new Notice(
               n
                 ? `Promoted ${n} candidate${n === 1 ? '' : 's'} to permanent notes.`
@@ -170,7 +173,7 @@ export default class ZoteroConnector extends Plugin {
     // Syllabus "package" links: obsidian://second-reader?package-week=N&syllabus=<note>
     this.registerObsidianProtocolHandler(PROTOCOL_ACTION, (params) => {
       const note = params[OPEN_PDF_PARAM];
-      if (note) this.openPdfForNote(note);
+      if (note) void this.openPdfForNote(note);
       const week = Number(params[PACKAGE_WEEK_PARAM]);
       if (params[PACKAGE_WEEK_PARAM] !== undefined) {
         const syllabus = findSyllabus(this.app, params[SYLLABUS_PARAM]);
@@ -179,7 +182,7 @@ export default class ZoteroConnector extends Plugin {
         } else {
           packageWeek(this.weekPackageHost(), week, syllabus).catch((e) => {
             console.error('Second Reader: packaging failed', e);
-            new Notice(`Couldn't package the notes: ${e?.message ?? e}`, 10000);
+            new Notice(`Couldn't package the notes: ${errorMessage(e)}`, 10000);
           });
         }
       }
@@ -203,7 +206,7 @@ export default class ZoteroConnector extends Plugin {
         const file = this.app.workspace.getActiveFile();
         if (!file || file.extension !== 'md') return false;
         if (!checking) {
-          this.app.vault
+          void this.app.vault
             .read(file)
             .then((text) => chooseWeekAndPackage(this.weekPackageHost(), file, text));
         }
@@ -219,7 +222,7 @@ export default class ZoteroConnector extends Plugin {
         if (!file || file.extension !== 'md' || isClassCopyPath(file.path)) {
           return false;
         }
-        if (!checking) this.makeClassCopyOf(file);
+        if (!checking) void this.makeClassCopyOf(file);
         return true;
       },
     });
@@ -253,7 +256,7 @@ export default class ZoteroConnector extends Plugin {
       callback: () => this.offerTemplateUpgrade('command'),
     });
 
-    this.updatePDFUtility();
+    void this.updatePDFUtility();
     this.addSettingTab(new ZoteroConnectorSettingsTab(this.app, this));
     this.registerView(viewType, (leaf) => new DataExplorerView(this, leaf));
 
@@ -273,7 +276,7 @@ export default class ZoteroConnector extends Plugin {
           database: this.settings.database,
           port: this.settings.port,
         };
-        noteExportPrompt(
+        void noteExportPrompt(
           database,
           this.app.workspace.getActiveFile()?.parent.path
         ).then((notes) => {
@@ -290,7 +293,7 @@ export default class ZoteroConnector extends Plugin {
       checkCallback: (checking) => {
         const file = this.app.workspace.getActiveFile();
         if (!file || file.extension !== 'md') return false;
-        if (!checking) this.syncHighlights(file);
+        if (!checking) void this.syncHighlights(file);
         return true;
       },
     });
@@ -298,7 +301,7 @@ export default class ZoteroConnector extends Plugin {
     this.addRibbonIcon('highlighter', SYNC_BUTTON_LABEL, () => {
       const file = this.app.workspace.getActiveFile();
       if (file?.extension === 'md') {
-        this.syncHighlights(file);
+        void this.syncHighlights(file);
       } else {
         new Notice('Open a literature note first, then sync.');
       }
@@ -317,7 +320,7 @@ export default class ZoteroConnector extends Plugin {
       id: 'show-zotero-debug-view',
       name: 'Data explorer',
       callback: () => {
-        this.activateDataExplorer();
+        void this.activateDataExplorer();
       },
     });
 
@@ -331,7 +334,7 @@ export default class ZoteroConnector extends Plugin {
 
     getApp().workspace.trigger('parse-style-settings');
 
-    fixPath();
+    void fixPath();
   }
 
   onunload() {
@@ -357,7 +360,7 @@ export default class ZoteroConnector extends Plugin {
           port: this.settings.port,
         };
         if (format.format === 'template' && format.template.trim()) {
-          renderCiteTemplate({
+          void renderCiteTemplate({
             database,
             format,
           }).then((res) => {
@@ -366,7 +369,7 @@ export default class ZoteroConnector extends Plugin {
             }
           });
         } else {
-          getCAYW(format, database).then((res) => {
+          void getCAYW(format, database).then((res) => {
             if (typeof res === 'string') {
               editor.replaceSelection(res);
             }
@@ -403,7 +406,7 @@ export default class ZoteroConnector extends Plugin {
           database: this.settings.database,
           port: this.settings.port,
         };
-        this.openNotes(
+        void this.openNotes(
           await exportToMarkdown({
             settings: this.settings,
             database,
@@ -524,7 +527,7 @@ export default class ZoteroConnector extends Plugin {
       }
       if (pdf) {
         url = pdf.open;
-        await this.app.fileManager.processFrontMatter(note, (front) => {
+        await this.app.fileManager.processFrontMatter(note, (front: Record<string, unknown>) => {
           front.pdf = url;
         });
       }
@@ -630,7 +633,7 @@ export default class ZoteroConnector extends Plugin {
       new Notice(parts.join(' '), 10000);
     } catch (e) {
       console.error(e);
-      new Notice(`Renaming stopped partway: ${e.message}. Run the command again to finish.`, 10000);
+      new Notice(`Renaming stopped partway: ${errorMessage(e)}. Run the command again to finish.`, 10000);
     }
   }
 
@@ -687,7 +690,7 @@ export default class ZoteroConnector extends Plugin {
         );
       } catch (e) {
         console.error(e);
-        new Notice(`Couldn't update ${upgrade.file.path}: ${e.message}`, 10000);
+        new Notice(`Couldn't update ${upgrade.file.path}: ${errorMessage(e)}`, 10000);
         return false;
       }
     }
@@ -699,7 +702,8 @@ export default class ZoteroConnector extends Plugin {
   // A note can be synced only if it has a citekey to match against Zotero.
   isSyncableNote(file: TFile | null): boolean {
     if (!file || file.extension !== 'md') return false;
-    const citekey = this.app.metadataCache.getFileCache(file)?.frontmatter?.citekey;
+    const citekey: unknown =
+      this.app.metadataCache.getFileCache(file)?.frontmatter?.citekey;
     return typeof citekey === 'string' && citekey.trim() !== '';
   }
 
@@ -723,7 +727,7 @@ export default class ZoteroConnector extends Plugin {
       // Reads view.file at click time: a view is reused as the student moves
       // between notes, and the button is removed when it's no longer valid.
       const el = view.addAction('highlighter', SYNC_BUTTON_LABEL, () => {
-        if (view.file) this.syncHighlights(view.file);
+        if (view.file) void this.syncHighlights(view.file);
       });
       el.addClass('second-reader-sync-button');
       this.noteHeaderButtons.set(view, el);
@@ -841,14 +845,15 @@ export default class ZoteroConnector extends Plugin {
   }
 
   async syncHighlights(file: TFile) {
-    let citekey =
+    const frontmatterCitekey: unknown =
       this.app.metadataCache.getFileCache(file)?.frontmatter?.citekey;
-    if (!citekey || typeof citekey !== 'string') {
+    if (!frontmatterCitekey || typeof frontmatterCitekey !== 'string') {
       new Notice(
         `${file.basename} has no citekey in its frontmatter, so it can't be matched to a Zotero item.`
       );
       return;
     }
+    let citekey: string = frontmatterCitekey;
 
     const format = this.syncFormat();
     if (!format) {
@@ -933,7 +938,7 @@ export default class ZoteroConnector extends Plugin {
         (leaf) => (leaf.view as EditableFileView).file === note
       );
       if (open) {
-        getApp().workspace.revealLeaf(open);
+        void getApp().workspace.revealLeaf(open);
       } else if (note instanceof TFile) {
         await this.app.workspace.getLeaf(true).openFile(note);
       }
@@ -990,7 +995,9 @@ export default class ZoteroConnector extends Plugin {
         );
         try {
           if (!(await this.app.vault.adapter.exists(dataPath))) continue;
-          const legacy = JSON.parse(await this.app.vault.adapter.read(dataPath));
+          const legacy = JSON.parse(
+            await this.app.vault.adapter.read(dataPath)
+          ) as Record<string, unknown>;
           // The PDF helper binary lives in the old plugin's folder, so leave
           // its version markers behind and let it download fresh here.
           // Promote settings are Second Reader's own and must not be replaced.
@@ -1037,7 +1044,7 @@ export default class ZoteroConnector extends Plugin {
   }
 
   async loadSettings() {
-    const loadedSettings = await this.loadData();
+    const loadedSettings = (await this.loadData()) as Partial<ZoteroConnectorSettings> | null;
 
     this.settings = {
       ...DEFAULT_SETTINGS,
@@ -1056,10 +1063,10 @@ export default class ZoteroConnector extends Plugin {
 
   async activateDataExplorer() {
     this.deactivateDataExplorer();
-    const leaf = this.app.workspace.createLeafBySplit(
-      this.app.workspace.activeLeaf,
-      'vertical'
-    );
+    const recent = this.app.workspace.getMostRecentLeaf();
+    const leaf = recent
+      ? this.app.workspace.createLeafBySplit(recent, 'vertical')
+      : this.app.workspace.getLeaf('split', 'vertical');
 
     await leaf.setViewState({
       type: viewType,
@@ -1087,7 +1094,7 @@ export default class ZoteroConnector extends Plugin {
         if (success) {
           this.settings.exeVersion = currentVersion;
           this.settings._exeInternalVersion = internalVersion;
-          this.saveSettings();
+          void this.saveSettings();
         }
       } catch {
         //

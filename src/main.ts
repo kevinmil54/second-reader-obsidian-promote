@@ -1,5 +1,5 @@
 import { errorMessage } from './errors';
-import { currentWeek, findWeekHeadings } from './syllabusWeek';
+import { findWeekHeadings, nextClassWeek } from './syllabusWeek';
 import Fuse from 'fuse.js';
 import {
   EditableFileView,
@@ -172,7 +172,7 @@ export default class ZoteroConnector extends Plugin {
 
     this.addCommand({
       id: 'go-to-current-week',
-      name: 'Go to the current week in this syllabus',
+      name: 'Go to the next class session in this syllabus',
       checkCallback: (checking) => {
         const view = this.app.workspace.getActiveViewOfType(MarkdownView);
         if (!view?.file) return false;
@@ -459,13 +459,13 @@ export default class ZoteroConnector extends Plugin {
     );
   }
 
-  // Scrolls a syllabus to the week the class is in now. Reads the note;
+  // Scrolls a syllabus to the next class session (today's, on a class day). Reads the note;
   // never changes it.
   async goToCurrentWeek(view: MarkdownView) {
     if (!view.file) return;
     const today = new Date();
     const weeks = findWeekHeadings(await this.app.vault.cachedRead(view.file), today);
-    const week = currentWeek(weeks, today);
+    const week = nextClassWeek(weeks, today);
     if (!week) {
       new Notice('No "Week N (Month day)" headings found in this note.');
       return;

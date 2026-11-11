@@ -187,9 +187,9 @@ means any body line that isn't template text (`src/litNoteState.ts`; the
 import formats' own template files count as template text too);
 frontmatter and synced quotes don't count.
 
-## Going to the current week
+## Going to the next class session
 
-In a long syllabus, run **Second Reader: Go to the current week in this syllabus** (assign a hotkey under Settings > Hotkeys) to scroll to the week the class is in. It reads the `Week N (Month day)` headings, picks the latest week whose date is today or earlier (the first week before the course starts, the last after it ends), and scrolls there in editing or reading view. It never changes the note.
+In a long syllabus, run **Second Reader: Go to the next class session in this syllabus** (assign a hotkey under Settings > Hotkeys) to scroll to the week the class meets next. It reads the `Week N (Month day)` headings and picks the earliest week whose date is today or later, so on a class day it goes to today's class and in between classes to the next one. Before the course starts it goes to the first week, after the last class to the last. It scrolls in editing or reading view and never changes the note.
 
 ## Zotero links in handed-out notes
 

@@ -1,5 +1,5 @@
-// Finds the current week in a syllabus, so a long syllabus can be opened at
-// the week the class is in. Weeks are headings like
+// Finds the next class session in a syllabus, so a long syllabus can be
+// opened at the week the class meets next. Weeks are headings like
 // "#### Week 5 (Oct 1): Title". This only reads the text; it never edits it.
 
 export interface WeekHeading {
@@ -32,14 +32,11 @@ export function findWeekHeadings(text: string, today: Date): WeekHeading[] {
   return out;
 }
 
-// The latest week whose class date is today or earlier; before the first
-// class, the first week; after the last, the last.
-export function currentWeek(weeks: WeekHeading[], today: Date): WeekHeading | null {
+// The next class session: the earliest week whose date is today or later. On
+// a class day that is today's class. After the last class, the last week.
+export function nextClassWeek(weeks: WeekHeading[], today: Date): WeekHeading | null {
   if (!weeks.length) return null;
   const day = new Date(today.getFullYear(), today.getMonth(), today.getDate()).getTime();
-  let current = weeks[0];
-  for (const w of weeks) {
-    if (w.date.getTime() <= day) current = w;
-  }
-  return current;
+  const upcoming = weeks.find((w) => w.date.getTime() >= day);
+  return upcoming ?? weeks[weeks.length - 1];
 }

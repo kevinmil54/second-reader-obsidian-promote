@@ -187,6 +187,10 @@ means any body line that isn't template text (`src/litNoteState.ts`; the
 import formats' own template files count as template text too);
 frontmatter and synced quotes don't count.
 
+## Going to the current week
+
+In a long syllabus, run **Second Reader: Go to the current week in this syllabus** (assign a hotkey under Settings > Hotkeys) to scroll to the week the class is in. It reads the `Week N (Month day)` headings, picks the latest week whose date is today or earlier (the first week before the course starts, the last after it ends), and scrolls there in editing or reading view. It never changes the note.
+
 ## Zotero links in handed-out notes
 
 Literature notes from early course packages have an empty `zotero:` property and no "Open PDF · Open in Zotero" line under the title. Second Reader fills these in when Obsidian starts, when the student clicks "open pdf" for that reading, and when they sync highlights into the note; **Second Reader: Fill in Zotero links in literature notes** does it for every note at once. Only those lines change (and a `pdf:` property is added if missing), so nothing a student has written is touched (`src/zoteroLinks.ts`).
@@ -268,6 +272,21 @@ else in the note is yours and is never changed or reordered.
 
 The logic is in `src/synthesisCore.ts` (no Obsidian imports, covered by
 `synthesis.test.ts`); `src/synthesis.ts` does the vault work.
+
+### Template settings
+
+The literature-note template starts with a few settings, written as template comments so they never appear in notes:
+
+```
+{#- Second Reader settings. These lines never appear in your notes. -#}
+{#- reference-style: apa -#}
+{#- author-info: photos -#}
+```
+
+- **reference-style** is the Zotero style used for `{{bibliography}}`, the "Reference" line. Use the style's ID as Zotero knows it, for example `apa`, `chicago-author-date` or `modern-language-association`; the style must be installed in Zotero. It takes priority over the import format's Bibliography Style. If you change it, also change the "(APA)" in the template's **Reference (APA):** label.
+- **author-info** is read by the separate author-information program (`add_author_info.py`), not by Second Reader itself: `none` adds nothing, `basic` adds the lead author's name, affiliation and links, and `photos` also adds a photo, dates and a Wikipedia link from Wikidata.
+
+Keep the dashes inside `{#-` and `-#}`; they stop the comments from leaving blank lines above the note's properties.
 
 ## Template upgrades
 

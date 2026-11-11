@@ -1,4 +1,4 @@
-import { currentWeek, findWeekHeadings } from '../../syllabusWeek';
+import { nextClassWeek, findWeekHeadings } from '../../syllabusWeek';
 
 const SYLLABUS = [
   '---',
@@ -35,19 +35,19 @@ describe('findWeekHeadings', () => {
   });
 });
 
-describe('currentWeek', () => {
+describe('nextClassWeek', () => {
   const weeks = findWeekHeadings(SYLLABUS, at(2026, 10, 1));
-  it('is the week of the latest class date that has started', () => {
-    expect(currentWeek(weeks, at(2026, 9, 3))?.week).toBe(1);
-    expect(currentWeek(weeks, at(2026, 9, 9))?.week).toBe(1);
-    expect(currentWeek(weeks, at(2026, 9, 10))?.week).toBe(2);
-    expect(currentWeek(weeks, at(2026, 10, 20))?.week).toBe(3);
+  it('is the earliest class that is today or later', () => {
+    expect(nextClassWeek(weeks, at(2026, 9, 3))?.week).toBe(1);
+    expect(nextClassWeek(weeks, at(2026, 9, 4))?.week).toBe(2);
+    expect(nextClassWeek(weeks, at(2026, 9, 10))?.week).toBe(2);
+    expect(nextClassWeek(weeks, at(2026, 10, 2))?.week).toBe(13);
   });
   it('is the first week before the course starts and the last after it ends', () => {
-    expect(currentWeek(weeks, at(2026, 8, 20))?.week).toBe(1);
-    expect(currentWeek(weeks, at(2026, 12, 20))?.week).toBe(13);
+    expect(nextClassWeek(weeks, at(2026, 8, 20))?.week).toBe(1);
+    expect(nextClassWeek(weeks, at(2026, 12, 20))?.week).toBe(13);
   });
   it('is null with no weeks', () => {
-    expect(currentWeek([], at(2026, 10, 1))).toBeNull();
+    expect(nextClassWeek([], at(2026, 10, 1))).toBeNull();
   });
 });

@@ -228,7 +228,9 @@ describe('Substack post project note', () => {
     expect(fm).toContain('output-type: substack-post');
     expect(fm).toContain('status: draft');
     expect(fm).toContain('title: "Less is more"');
+    expect(fm).toContain('image_license: public domain');
     expect(fm).toContain('published_url: ""');
+    expect(out).toContain('Public domain. Source:');
     expect(fm).toContain('tags: [project, substack, timely-snow]');
     expect(fm.some((l) => l.startsWith('topics:'))).toBe(true);
     expect(out).toContain('[[Engelbart cul-de-sac - letter]]');

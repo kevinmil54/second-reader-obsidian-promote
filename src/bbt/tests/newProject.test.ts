@@ -4,11 +4,15 @@ import studentTemplate from './fixtures/student-project-template.md';
 import letterTemplate from '../../../Templates/Project Letter Template.md';
 import {
   LETTER_FALLBACK,
+  DEFAULT_PROJECT_SETTINGS,
+  OUTPUT_TYPES,
   PROJECT_NOTE_FALLBACK,
+  SUBSTACK_NOTE_FALLBACK,
   addLetterLink,
   fillProjectTemplate,
   localDate,
   projectName,
+  projectNoteSource,
   yamlValue,
 } from '../../newProjectCore';
 import { isPromotableNote } from '../../promote';
@@ -198,5 +202,36 @@ describe('isPromotableNote', () => {
   test('nothing else', () => {
     expect(isPromotableNote(['project'], 'project')).toBe(false);
     expect(isPromotableNote([], undefined)).toBe(false);
+  });
+});
+
+describe('Substack post project note', () => {
+  const substackFill = { ...fill, name: 'Less is more', outputType: 'substack-post' };
+
+  test('substack-post is an output type', () => {
+    expect(OUTPUT_TYPES).toContain('substack-post');
+  });
+
+  test('routes to its own template and built-in note', () => {
+    const s = projectNoteSource('substack-post', DEFAULT_PROJECT_SETTINGS);
+    expect(s.templatePath).toBe('Templates/Substack Project Template.md');
+    expect(s.fallback).toBe(SUBSTACK_NOTE_FALLBACK);
+    const other = projectNoteSource('article', DEFAULT_PROJECT_SETTINGS);
+    expect(other.templatePath).toBe('Templates/Project Template.md');
+    expect(other.fallback).toBe(PROJECT_NOTE_FALLBACK);
+  });
+
+  test('built-in note keeps the post properties and fills the project ones', () => {
+    const out = fillProjectTemplate(SUBSTACK_NOTE_FALLBACK, substackFill)!;
+    const fm = frontmatter(out);
+    expect(fm).toContain('project: Less is more');
+    expect(fm).toContain('output-type: substack-post');
+    expect(fm).toContain('status: draft');
+    expect(fm).toContain('title: "Less is more"');
+    expect(fm).toContain('published_url: ""');
+    expect(fm).toContain('tags: [project, substack, timely-snow]');
+    expect(fm.some((l) => l.startsWith('topics:'))).toBe(true);
+    expect(out).toContain('[[Engelbart cul-de-sac - letter]]');
+    expect(out).not.toMatch(/\{\{|<%/);
   });
 });

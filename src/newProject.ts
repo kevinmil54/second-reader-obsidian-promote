@@ -18,12 +18,12 @@ import {
   DEFAULT_PROJECT_SETTINGS,
   LETTER_FALLBACK,
   OUTPUT_TYPES,
-  PROJECT_NOTE_FALLBACK,
   ProjectFill,
   ProjectSettings,
   fillProjectTemplate,
   localDate,
   projectName,
+  projectNoteSource,
 } from './newProjectCore';
 import { ensureFolder } from './promote';
 
@@ -84,10 +84,11 @@ export async function createProject(
   }
 
   const fill = { name, outputType, date: localDate() };
+  const source = projectNoteSource(outputType, settings);
   const noteText = await renderFromTemplate(
     app,
-    settings.projectTemplatePath,
-    PROJECT_NOTE_FALLBACK,
+    source.templatePath,
+    source.fallback,
     { ...fill, letter: letterName },
     'project note'
   );

@@ -319,6 +319,18 @@ export class ZoteroConnectorSettingsTab extends PluginSettingTab {
             },
           },
           {
+            name: 'Substack project note template path',
+            desc:
+              'Vault path to the project note template used when the output type is ' +
+              'substack-post. It is filled in the same way as the project note template. ' +
+              'Leave blank to use the built-in Substack project note.',
+            control: {
+              type: 'text',
+              key: 'substackProjectTemplatePath',
+              placeholder: 'Templates/Substack Project Template.md',
+            },
+          },
+          {
             name: 'Project letter template path',
             desc:
               'Vault path to the template for the project letter, the dated log written to ' +
@@ -626,6 +638,7 @@ export class ZoteroConnectorSettingsTab extends PluginSettingTab {
       'synthesisTemplatePath',
       'projectsFolder',
       'projectTemplatePath',
+      'substackProjectTemplatePath',
       'projectLetterTemplatePath',
       'studentName',
     ].includes(key);

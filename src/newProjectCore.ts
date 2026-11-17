@@ -17,18 +17,21 @@ import { carryOverTopics, ensureTopicsLine, sanitizeFilename } from './promote';
 export interface ProjectSettings {
   projectsFolder: string;
   projectTemplatePath: string; // "" = built-in project note
+  substackProjectTemplatePath: string; // "" = built-in Substack project note
   projectLetterTemplatePath: string; // "" = built-in letter
 }
 
 export const DEFAULT_PROJECT_SETTINGS: ProjectSettings = {
   projectsFolder: 'Projects',
   projectTemplatePath: 'Templates/Project Template.md',
+  substackProjectTemplatePath: 'Templates/Substack Project Template.md',
   projectLetterTemplatePath: 'Templates/Project Letter Template.md',
 };
 
 export const OUTPUT_TYPES = [
   'talk',
   'article',
+  'substack-post',
   'book-chapter',
   'grant',
   'course',
@@ -37,6 +40,19 @@ export const OUTPUT_TYPES = [
   'other',
 ];
 export const DEFAULT_OUTPUT_TYPE = 'other';
+export const SUBSTACK_OUTPUT_TYPE = 'substack-post';
+
+// Which project note template and built-in note go with an output type. A
+// Substack post has its own layout (title, subtitle, hero image, references,
+// the paste checklist); every other type uses the general project note.
+export function projectNoteSource(
+  outputType: string,
+  settings: ProjectSettings
+): { templatePath: string; fallback: string } {
+  return outputType === SUBSTACK_OUTPUT_TYPE
+    ? { templatePath: settings.substackProjectTemplatePath, fallback: SUBSTACK_NOTE_FALLBACK }
+    : { templatePath: settings.projectTemplatePath, fallback: PROJECT_NOTE_FALLBACK };
+}
 
 // The folder and note name for a project title. Empty when the title has
 // nothing a file name can keep.
@@ -184,6 +200,109 @@ export const PROJECT_NOTE_FALLBACK = [
   '## Draft',
   '',
   'Other notes in this project:',
+  '',
+  '```dataview',
+  'TABLE type AS "Type", status AS "Status"',
+  'FROM "Projects"',
+  'WHERE project = this.project AND file.name != this.file.name',
+  'SORT type ASC, file.name ASC',
+  '```',
+  '',
+  '## Source material',
+  '',
+  'Permanent notes that link to this note but are not linked here yet:',
+  '',
+  '```dataview',
+  'LIST WITHOUT ID link(file.path, default(title, file.name))',
+  'FROM "Permanent notes"',
+  'WHERE contains(file.outlinks, this.file.link) AND !contains(this.file.outlinks, file.link)',
+  'SORT file.name ASC',
+  '```',
+  '',
+  'Synthesis notes (from the `synthesis` property):',
+  '',
+  '```dataview',
+  'LIST',
+  'FROM "Synthesis notes"',
+  'WHERE contains(this.synthesis, file.link)',
+  '```',
+  '',
+].join('\n');
+
+// Built-in project note for a Substack post. The properties are the ones the
+// Timely Snow post template uses, so the finished note can be pasted into
+// Substack the same way; the planning sections come before the post itself.
+export const SUBSTACK_NOTE_FALLBACK = [
+  '---',
+  'type: project',
+  'project: {{project}}',
+  'output-type: substack-post',
+  'status: draft',
+  'title: "{{title}}"',
+  'subtitle: ""',
+  'date: ',
+  'image_file: ""',
+  'image_credit: ""',
+  'image_credit_url: ""',
+  'published_url: ""',
+  'synthesis: []',
+  'created: {{date}}',
+  'tags: [project, substack, timely-snow]',
+  'topics: [{{topics}}]',
+  '---',
+  '',
+  'Letter to the second reader: [[{{letter}}]]',
+  '',
+  '## The puzzle or idea',
+  '',
+  '- ',
+  '',
+  '## Central claim',
+  '',
+  '',
+  '',
+  '## Outline',
+  '',
+  '1. ',
+  '',
+  "## Notes I'm drawing on",
+  '',
+  '- ',
+  '',
+  '## To check',
+  '',
+  '- ',
+  '',
+  '## Post',
+  '',
+  '*Subtitle*',
+  '',
+  '---',
+  '',
+  '![hero image]()',
+  '*Image credit: *',
+  '',
+  '---',
+  '',
+  'Opening paragraph. Set up the core idea or the puzzle that motivates the post.',
+  '',
+  '---',
+  '',
+  '## References',
+  '',
+  '<!-- APA format. One entry per line. Include DOI or URL. -->',
+  '',
+  '---',
+  '',
+  '<!-- SUBSTACK PASTE CHECKLIST (delete before publishing)',
+  '     [ ] Copy from the image line through the references',
+  '     [ ] In Substack: add title and subtitle in the post header',
+  "     [ ] Upload the hero image in Substack's image block (it does not read Obsidian image syntax)",
+  '     [ ] Replace the image credit line with the Substack caption field',
+  '     [ ] Delete Obsidian callouts and wiki-links',
+  '     [ ] Remove this checklist -->',
+  '',
+  '## Other notes in this project',
   '',
   '```dataview',
   'TABLE type AS "Type", status AS "Status"',

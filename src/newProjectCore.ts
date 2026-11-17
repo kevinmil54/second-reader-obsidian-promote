@@ -282,7 +282,7 @@ export const SUBSTACK_NOTE_FALLBACK = [
   '---',
   '',
   '![hero image]()',
-  '*Image: Artist, Title (year). Public domain. Source: *',
+  '*Image: Artist, Title (year). Public domain. [Source](url)*',
   '',
   '---',
   '',

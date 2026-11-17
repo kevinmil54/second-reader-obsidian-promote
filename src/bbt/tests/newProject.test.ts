@@ -230,7 +230,7 @@ describe('Substack post project note', () => {
     expect(fm).toContain('title: "Less is more"');
     expect(fm).toContain('image_license: public domain');
     expect(fm).toContain('published_url: ""');
-    expect(out).toContain('Public domain. Source:');
+    expect(out).toContain('Public domain. [Source](url)');
     expect(fm).toContain('tags: [project, substack, timely-snow]');
     expect(fm.some((l) => l.startsWith('topics:'))).toBe(true);
     expect(out).toContain('[[Engelbart cul-de-sac - letter]]');

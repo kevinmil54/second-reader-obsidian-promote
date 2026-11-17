@@ -2,8 +2,9 @@ import { errorMessage } from './errors';
 /*
  * Second Reader: Promote Candidates
  *
- * Watches literature notes (frontmatter tag "literature-note") for checked
- * boxes under "## Permanent note candidates". Checking a box creates a new
+ * Watches literature notes (frontmatter tag "literature-note") and project
+ * letters (tag or type "project-log") for checked boxes under
+ * "## Permanent note candidates". Checking a box creates a new
  * permanent note and rewrites that line as a link to it.
  *
  * Cross-platform note: this module only ever touches files through the
@@ -21,7 +22,24 @@ const LIT_NOTE_TAG = 'literature-note';
 const PERMANENT_NOTE_TAG = 'permanent-note';
 // Status/provenance markers that describe the note's role in the workflow,
 // not its topic — these never carry over to a promoted note.
-const NON_CARRYING_TAGS = new Set([LIT_NOTE_TAG, PERMANENT_NOTE_TAG, 'sr-candidate']);
+const PROJECT_LOG_TYPE = 'project-log';
+const NON_CARRYING_TAGS = new Set([
+  LIT_NOTE_TAG,
+  PROJECT_LOG_TYPE,
+  PERMANENT_NOTE_TAG,
+  'sr-candidate',
+]);
+
+// Notes whose "## Permanent note candidates" are promoted: literature notes
+// (tagged literature-note) and project letters (tagged or typed project-log).
+export function isPromotableNote(tags: unknown[], type: unknown): boolean {
+  const lower = tags.map((t) => String(t).toLowerCase());
+  return (
+    lower.includes(LIT_NOTE_TAG) ||
+    lower.includes(PROJECT_LOG_TYPE) ||
+    String(type ?? '').toLowerCase() === PROJECT_LOG_TYPE
+  );
+}
 const CHECKED_ITEM_RE = /^(\s*-\s*\[[xX]\]\s*)(.*)$/;
 const SR_TAG_RE = /#sr-candidate\b/gi;
 // Metadata other plugins add when a box is checked — the Tasks plugin's done
@@ -234,10 +252,7 @@ export class Promoter {
     const tagList: unknown[] = Array.isArray(fmTags) ? fmTags : fmTags ? [fmTags] : [];
     const sourceTopics: unknown =
       cache && cache.frontmatter ? cache.frontmatter.topics : null;
-    const isLiteratureNote = tagList.some(
-      (t) => String(t).toLowerCase() === LIT_NOTE_TAG
-    );
-    if (!isLiteratureNote) return 0;
+    if (!isPromotableNote(tagList, cache?.frontmatter?.type)) return 0;
 
     const content = await app.vault.read(file);
     if (!content.toLowerCase().includes(CANDIDATE_HEADING)) return 0;

@@ -220,6 +220,31 @@ Images and other files are added only where nothing with that name exists, and t
   `{{topics}}` and no `topics:` line gets a `topics: [...]` line added to the
   note being made (never to the template) when the literature note has topics.
 
+## New projects
+
+The command **New project (folder, project note and letter)** asks for a
+title and an output type, then makes `Projects/<title>/` with two notes in it:
+
+- the project note, filled in from `Templates/Project Template.md`, with a link
+  to the letter under its title and `topics: [<title>]` in its properties;
+- the project letter, `<title> - letter`, filled in from
+  `Templates/Project Letter Template.md`. The letter is a dated log written to
+  your second reader. Checking a box under its `## Permanent note candidates`
+  makes a permanent note and turns the line into a link, exactly as in a
+  literature note, and the letter's `topics:` carry over to that note.
+
+A project note and a letter both carry `project: <title>`, so the project
+note's Dataview list shows the letter. If a project with that name already
+exists, nothing is made.
+
+The folder and both template paths are under **New projects** in the settings.
+The project note template can use `{{title}}`, `{{project}}`, `{{date}}`,
+`{{outputType}}`, `{{topics}}` and `{{letter}}`, and the Templater title, date
+and prompts of an instructor project template are filled in too. A template
+with any other Templater code, or a missing template, gives a built-in note.
+The letter template uses the same placeholders. `Templates/Project Letter
+Template.md` in this repository is the built-in letter.
+
 ## Synthesis notes
 
 A synthesis note gathers what you think about one topic from the permanent

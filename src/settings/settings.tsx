@@ -292,6 +292,48 @@ export class ZoteroConnectorSettingsTab extends PluginSettingTab {
       },
       {
         type: 'group',
+        heading: 'New projects',
+        items: [
+          {
+            name: 'Projects folder',
+            desc:
+              'Where the command "New project (folder, project note and letter)" makes ' +
+              'each project\'s folder. The folder holds the project note and its letter.',
+            control: {
+              type: 'text',
+              key: 'projectsFolder',
+              placeholder: 'Projects',
+            },
+          },
+          {
+            name: 'Project note template path',
+            desc:
+              'Vault path to the template for the project note. {{title}}, {{project}}, ' +
+              '{{date}}, {{outputType}}, {{topics}} and {{letter}} are filled in, and so are ' +
+              'the Templater title, date and prompts in an instructor project template. ' +
+              'A template with other Templater code, or no template, gives a built-in note.',
+            control: {
+              type: 'text',
+              key: 'projectTemplatePath',
+              placeholder: 'Templates/Project Template.md',
+            },
+          },
+          {
+            name: 'Project letter template path',
+            desc:
+              'Vault path to the template for the project letter, the dated log written to ' +
+              'your second reader. Its "## Permanent note candidates" are promoted like ' +
+              'those in a literature note. Leave blank to use the built-in letter.',
+            control: {
+              type: 'text',
+              key: 'projectLetterTemplatePath',
+              placeholder: 'Templates/Project Letter Template.md',
+            },
+          },
+        ],
+      },
+      {
+        type: 'group',
         heading: 'Packaging notes for upload',
         items: [
           {
@@ -582,6 +624,9 @@ export class ZoteroConnectorSettingsTab extends PluginSettingTab {
       'templatePath',
       'synthesisFolder',
       'synthesisTemplatePath',
+      'projectsFolder',
+      'projectTemplatePath',
+      'projectLetterTemplatePath',
       'studentName',
     ].includes(key);
     (this.plugin.settings as unknown as Record<string, unknown>)[key] =

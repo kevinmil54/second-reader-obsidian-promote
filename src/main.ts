@@ -50,6 +50,8 @@ import {
   findNamingFix,
   hasNamingFix,
 } from './noteNamingUI';
+import { registerNewProject } from './newProject';
+import { DEFAULT_PROJECT_SETTINGS } from './newProjectCore';
 import { DEFAULT_PROMOTE_SETTINGS, Promoter } from './promote';
 import { DEFAULT_SYNTHESIS_SETTINGS, Synthesizer } from './synthesis';
 import {
@@ -97,6 +99,7 @@ const LEGACY_ZOTERO_PLUGIN_IDS = [
 const DEFAULT_SETTINGS: ZoteroConnectorSettings = {
   ...DEFAULT_PROMOTE_SETTINGS,
   ...DEFAULT_SYNTHESIS_SETTINGS,
+  ...DEFAULT_PROJECT_SETTINGS,
   database: 'Zotero',
   noteImportFolder: '',
   pdfExportImageDPI: 120,
@@ -169,6 +172,8 @@ export default class ZoteroConnector extends Plugin {
         return true;
       },
     });
+
+    registerNewProject(this, () => this.settings);
 
     this.addCommand({
       id: 'go-to-current-week',

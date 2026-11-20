@@ -1,4 +1,7 @@
 import {
+  appendToCoreIdea,
+  classifyCandidate,
+  dropTitleHeading,
   candidateTitle,
   carryOverTags,
   carryOverTopics,
@@ -133,6 +136,8 @@ describe('Promoter end to end (fake vault)', () => {
         return { path: p, basename: p.split('/').pop()!.replace(/\.md$/, '') };
       },
       createFolder: async (): Promise<void> => undefined,
+      process: async (f: any, fn: (t: string) => string): Promise<void> =>
+        void files.set(f.path, fn(files.get(f.path) ?? '')),
       getAbstractFileByPath: (p: string) =>
         files.has(p)
           ? Object.assign(new TFile(), { path: p, extension: 'md' })
@@ -142,6 +147,14 @@ describe('Promoter end to end (fake vault)', () => {
       vault,
       metadataCache: {
         getFileCache: () => ({ frontmatter: { tags: ['literature-note', 'psych101'] } }),
+        getFirstLinkpathDest: (link: string) =>
+          files.has(`Permanent notes/${link}.md`)
+            ? Object.assign(new TFile(), {
+                path: `Permanent notes/${link}.md`,
+                basename: link,
+                extension: 'md',
+              })
+            : null,
       },
     };
     const promoter = new Promoter({ app, registerEvent: (): void => undefined }, () => ({
@@ -159,9 +172,32 @@ describe('Promoter end to end (fake vault)', () => {
     await promoter.handleModify(note);
 
     expect(files.get('Permanent notes/Reading is thinking.md')).toBe(
-      '---\ntags: [permanent-note, psych101]\n---\n# Reading is thinking\n- elaboration\nfrom [[smith2023]]\n'
+      '---\ntags: [permanent-note, psych101]\n---\n- elaboration\nfrom [[smith2023]]\n'
     );
     expect(files.get(note.path)).toContain('- [x] [[Reading is thinking]]\n\t- elaboration\n- [ ] Not yet');
+  });
+
+  test('text typed after a promoted link goes into that note, not a new one', async () => {
+    const { files, note, promoter } = setup(
+      '## Permanent note candidates\n- [x] [[Divides]]Second divide - skills\n- [ ] \n'
+    );
+    files.set('Permanent notes/Divides.md', '---\ntitle: "Divides"\n---\n\n## Core idea\n\n- First divide\n\n## Why it matters\n');
+    expect(await promoter.handleModify(note)).toBe(0);
+    expect([...files.keys()].filter((k) => k.startsWith('Permanent notes/'))).toEqual(['Permanent notes/Divides.md']);
+    expect(files.get('Permanent notes/Divides.md')).toBe(
+      '---\ntitle: "Divides"\n---\n\n## Core idea\n\n- First divide\n- Second divide - skills\n\n## Why it matters\n'
+    );
+    expect(files.get(note.path)).toContain('- [x] [[Divides]]\n- [ ] ');
+  });
+
+  test('a promoted link that gets a Tasks done date is left alone', async () => {
+    const { files, note, promoter } = setup(
+      '## Permanent note candidates\n- [x] [[Divides|Divides in full]] ✅ 2026-11-11\n'
+    );
+    const before = files.get(note.path);
+    expect(await promoter.handleModify(note)).toBe(0);
+    expect(files.get(note.path)).toBe(before);
+    expect(files.size).toBe(1);
   });
 
   test('a Tasks done date stays out of the new note and the link', async () => {
@@ -170,7 +206,7 @@ describe('Promoter end to end (fake vault)', () => {
     );
     expect(await promoter.handleModify(note)).toBe(1);
     expect(files.has('Permanent notes/Anchors bias judges.md')).toBe(true);
-    expect(files.get('Permanent notes/Anchors bias judges.md')).toContain('# Anchors bias judges\n\n- [ ] example of anchoring');
+    expect(files.get('Permanent notes/Anchors bias judges.md')).toContain('---\n\n- [ ] example of anchoring');
     expect(files.get(note.path)).toContain('- [x] [[Anchors bias judges]]\n\t- [ ] example of anchoring');
   });
 
@@ -241,5 +277,23 @@ describe('ensureTopicsLine', () => {
   test('does nothing without topics or without frontmatter', () => {
     expect(ensureTopicsLine(OLD, '')).toBe(OLD);
     expect(ensureTopicsLine('# no frontmatter', 'memory')).toBe('# no frontmatter');
+  });
+});
+
+describe('re-promotion and title headings', () => {
+  test('classifyCandidate', () => {
+    expect(classifyCandidate('An idea')).toEqual({ kind: 'new', title: 'An idea' });
+    expect(classifyCandidate('[[A|a b]]')).toEqual({ kind: 'promoted', link: '[[A|a b]]', target: 'A', extra: '' });
+    expect(classifyCandidate('[[A]]more text')).toEqual({ kind: 'promoted', link: '[[A]]', target: 'A', extra: 'more text' });
+    expect(classifyCandidate('[[A]] ✅ 2026-11-11')).toEqual({ kind: 'promoted', link: '[[A]]', target: 'A', extra: '' });
+    expect(classifyCandidate('see [[A]] for more')).toEqual({ kind: 'skip' });
+  });
+  test('dropTitleHeading', () => {
+    expect(dropTitleHeading('---\nx: 1\n---\n\n# {{title}}\n\n## Core idea\n')).toBe('---\nx: 1\n---\n\n## Core idea\n');
+    expect(dropTitleHeading('# <% tp.file.title %>\nbody')).toBe('body');
+    expect(dropTitleHeading('# Something else\n')).toBe('# Something else\n');
+  });
+  test('appendToCoreIdea without the heading', () => {
+    expect(appendToCoreIdea('body\n', 'more')).toBe('body\n\n- more\n');
   });
 });

@@ -211,12 +211,12 @@ describe('fillSynthesisTemplate', () => {
 
   test('student template: title, date and topic filled in', () => {
     expect(fillSynthesisTemplate(STUDENT, 'memory', 'Synthesis - memory', '2026-11-06')).toBe(
-      '---\ntype: synthesis\ntopic: memory\nstatus: draft\ncreated: 2026-11-06\n---\n\n# Synthesis - memory\n'
+      '---\ntype: synthesis\ntopic: memory\nstatus: draft\ncreated: 2026-11-06\ntitle: "Synthesis - memory"\n---\n\n'
     );
   });
   test('instructor template: the Templater prompt, date and title are filled in', () => {
     expect(fillSynthesisTemplate(INSTRUCTOR, 'ai-limits', 'Synthesis - ai limits', '2026-11-06')).toBe(
-      '---\ntype: synthesis\ntopic: ai-limits\nstatus: draft\ncreated: 2026-11-06\n---\n\n# Synthesis - ai limits\n'
+      '---\ntype: synthesis\ntopic: ai-limits\nstatus: draft\ncreated: 2026-11-06\ntitle: "Synthesis - ai limits"\n---\n\n'
     );
   });
   test('a template with another Templater expression falls back (null)', () => {

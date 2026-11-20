@@ -24,6 +24,10 @@ literature-note workflow. One plugin covers the whole loop:
 - **Promote candidates.** Checking a box under `## Permanent note candidates`
   in a note tagged `literature-note` creates a permanent note from a
   template and turns the line into a link to it.
+- **Projects.** A **New project** command asks for a category and a name and
+  makes the project's folder, its project note and a project letter. **▶️
+  Start** and **🛑 Stop** links in the letter time each writing session and
+  keep a log you can open in a spreadsheet.
 
 Students' setup instructions: [STUDENT-SETUP-GUIDE.md](STUDENT-SETUP-GUIDE.md).
 Students upgrading from 1.x: [UPDATING.md](UPDATING.md).
@@ -211,6 +215,10 @@ Images and other files are added only where nothing with that name exists, and t
   an Import Format (plugin settings → Zotero import & highlight sync → Import
   Formats). Sync uses the format whose template path contains "Literature
   Note" (else the first format).
+- The title of a new permanent, synthesis or project note goes in its
+  `title:` property. Obsidian shows the note's name above the text, so a
+  `# {{title}}` heading in a template (or `# <% tp.file.title %>`) is left
+  out of the notes made from it.
 - **Permanent Note Template.md** — filled in when a candidate is promoted.
   Supports `{{title}}`, `{{date}}`, `{{source}}`, `{{tags}}`, `{{topics}}`,
   `{{details}}`. `{{topics}}` is the literature note's `topics:` property
@@ -219,6 +227,48 @@ Images and other files are added only where nothing with that name exists, and t
   note when one idea belongs to a different topic. A template with no
   `{{topics}}` and no `topics:` line gets a `topics: [...]` line added to the
   note being made (never to the template) when the literature note has topics.
+
+## Promoting candidates
+
+- Checking a box under `## Permanent note candidates` in a literature note
+  creates a permanent note in the permanent-note folder (default
+  `Permanent notes`) and turns the line into a link to it. Lines indented
+  under the candidate carry over as `{{details}}`.
+- A line that is already a link to a promoted note is never promoted again.
+  Text typed after that link is added to the linked note under
+  `## Core idea`, and the line goes back to being just the link. A done date
+  added by the Tasks plugin is ignored. A candidate with a link in the middle
+  of it is skipped.
+
+## Projects
+
+- **New project** (command, or a link `obsidian://second-reader?new-project=1`
+  anywhere in the vault) asks for a category, then a name. It makes a folder
+  for the project, a project note from the category's template, and
+  `<name> - letter.md` from the project letter template, then opens the
+  project note. The category is saved in the project note's `category:`
+  property, so it can change later without moving anything. A template that
+  uses Templater is run through Templater, with the name, category and output
+  type in `window.srNewProject` so it can skip its own prompts.
+- **The project letter** is a dated log written to your second reader. Its
+  **▶️ Start** link (`obsidian://second-reader?project-timer=start`) starts a
+  session and adds a timed entry for today. **🛑 Stop**
+  (`…?project-timer=stop`) ends it and shows the session's length and the
+  project's total; pressing Stop again shows the last session. A session left
+  open more than four hours asks whether to count it. The commands **Start a
+  session in this project letter** and **Stop the session in this project
+  letter** do the same, and **Add or update Start/Stop links in this project
+  letter** adds the links to an older letter.
+- Each session is a row in a CSV file (default
+  `Projects/project-time-log.csv`): project, category, letter, start, end and
+  minutes, in local time.
+- Settings: Projects (categories, one per line as `Name` or
+  `Name | folder | template`; projects folder; project note and letter
+  templates; time log path). The default categories are Talks, Academic
+  writing, Substack posts, Programming, Other academic and Personal.
+
+The logic is in `src/projectsCore.ts` (covered by `projects.test.ts`);
+`src/projects.ts` does the vault work.
 
 ## Synthesis notes
 

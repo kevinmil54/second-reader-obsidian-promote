@@ -7,8 +7,6 @@ created: {{date}}
 source: "[[{{source}}]]"
 ---
 
-# {{title}}
-
 ## Core idea
 *State it in one sentence, in your own words — not a copy of the source's wording.*
 

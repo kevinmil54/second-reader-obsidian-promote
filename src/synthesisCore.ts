@@ -225,9 +225,8 @@ export function builtInSynthesisBody(topic: string, title: string, today: string
     `created: ${today}`,
     `updated: ${today}`,
     'tags: [synthesis]',
+    `title: "${title.replace(/"/g, '\\"')}"`,
     '---',
-    '',
-    `# ${title}`,
     '',
     '## The question',
     '*What are you trying to understand? One or two sentences.*',
@@ -274,7 +273,12 @@ export function fillSynthesisTemplate(
   title: string,
   today: string
 ): string | null {
+  // The title goes in a title: property, not an H1 that repeats the name.
   let out = template
+    .replace(
+      /^#[ \t]+(?:\{\{\s*title\s*\}\}|<%\s*tp\.file\.title\s*%>)[ \t]*\r?\n(?:[ \t]*\r?\n)?/m,
+      ''
+    )
     .replace(/\{\{\s*title\s*\}\}/g, title)
     .replace(/\{\{\s*date\s*\}\}/g, today)
     .replace(/\{\{\s*topic\s*\}\}/g, topic)
@@ -288,6 +292,7 @@ export function fillSynthesisTemplate(
   // The topic line may hold a Templater prompt; the plugin knows the topic.
   if (at >= 0) lines[at] = `topic: ${topic}`;
   else lines.push(`topic: ${topic}`);
+  if (!lines.some((l) => /^title:/.test(l))) lines.push(`title: "${title.replace(/"/g, '\\"')}"`);
   out = out.slice(0, fm.index) + `---\n${lines.join('\n')}\n---` + out.slice(fm.index + fm[0].length);
 
   if (/<%/.test(out)) return null;

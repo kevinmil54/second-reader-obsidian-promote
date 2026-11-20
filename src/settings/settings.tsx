@@ -292,6 +292,64 @@ export class ZoteroConnectorSettingsTab extends PluginSettingTab {
       },
       {
         type: 'group',
+        heading: 'Projects',
+        items: [
+          {
+            name: 'Project categories',
+            desc:
+              'Offered by "New project". One per line. Add " | folder | template path" to a ' +
+              'line to put that category somewhere other than the projects folder or to use ' +
+              'its own template. The category is saved in the project note’s category: ' +
+              'property, so it can change later without moving anything.',
+            control: {
+              type: 'textarea',
+              key: 'projectCategories',
+              rows: 7,
+              placeholder: 'Talks | Talks | Templates/Talk Project Template.md',
+            },
+          },
+          {
+            name: 'Projects folder',
+            desc: 'Where new projects go, each in its own folder, unless its category says otherwise.',
+            control: { type: 'text', key: 'projectFolder', placeholder: 'Projects' },
+          },
+          {
+            name: 'Project note template',
+            desc:
+              'Template for the project note. {{title}}, {{date}}, {{project}} and {{category}} are ' +
+              'filled in. A Templater template is run through Templater. Leave blank for a plain note.',
+            control: {
+              type: 'text',
+              key: 'projectTemplatePath',
+              placeholder: 'Templates/Project Template.md',
+            },
+          },
+          {
+            name: 'Project letter template',
+            desc:
+              'Template for the letter that goes with each project. {{date}} and {{project}} are ' +
+              'filled in, and the Start and Stop links are added if the template doesn’t have them.',
+            control: {
+              type: 'text',
+              key: 'projectLetterTemplatePath',
+              placeholder: 'Templates/Project Letter Template.md',
+            },
+          },
+          {
+            name: 'Time log',
+            desc:
+              'CSV file where Start and Stop in a project letter record each session ' +
+              '(project, category, letter, start, end, minutes). Open it in a spreadsheet to analyze.',
+            control: {
+              type: 'text',
+              key: 'projectTimeLog',
+              placeholder: 'Projects/project-time-log.csv',
+            },
+          },
+        ],
+      },
+      {
+        type: 'group',
         heading: 'Packaging notes for upload',
         items: [
           {

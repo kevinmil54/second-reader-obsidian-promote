@@ -39,7 +39,58 @@ export function candidateTitle(rawText: string): string {
     .trim();
 }
 const HEADING_RE = /^#{1,6}\s/;
-const ALREADY_LINK_RE = /^\[\[.*\]\]$/;
+// A candidate that has been promoted starts with the link to its note:
+// [[file]] or [[file|full wording]].
+const LEADING_LINK_RE = /^(\[\[([^\]|]+)(?:\|[^\]]*)?\]\])\s*(.*)$/;
+
+export type CandidateLine =
+  | { kind: 'new'; title: string }
+  | { kind: 'promoted'; link: string; target: string; extra: string }
+  | { kind: 'skip' };
+
+// What a checked line under the candidates heading asks for. Text typed after
+// the link of an already-promoted candidate belongs to that note, not a new
+// one; promoting it would make a note whose title has a link in it, named
+// like the old one with "(2)" added. A line with a link anywhere else is left
+// alone for the same reason.
+export function classifyCandidate(rawText: string): CandidateLine {
+  const text = candidateTitle(rawText);
+  if (!text) return { kind: 'skip' };
+  const lead = LEADING_LINK_RE.exec(text);
+  if (lead) return { kind: 'promoted', link: lead[1], target: lead[2].split('#')[0].trim(), extra: lead[3].trim() };
+  if (text.includes('[[')) return { kind: 'skip' };
+  return { kind: 'new', title: text };
+}
+
+// Templates and older built-in notes put the title in an H1 as well as in the
+// title: property. Obsidian already shows the note's name above the text, so
+// the heading only repeats it; drop it from what gets created.
+export function dropTitleHeading(template: string): string {
+  return template.replace(
+    /^#[ \t]+(?:\{\{\s*title\s*\}\}|<%\s*tp\.file\.title\s*%>)[ \t]*\r?\n(?:[ \t]*\r?\n)?/m,
+    ''
+  );
+}
+
+// Adds a line of text under "## Core idea" in an existing note (or at the end
+// when there is no such heading), after whatever is already there.
+export function appendToCoreIdea(note: string, extra: string): string {
+  const line = `- ${extra}`;
+  const lines = note.split('\n');
+  const at = lines.findIndex((l) => /^##\s+core idea\s*$/i.test(l.trim()));
+  if (at < 0) return note.replace(/\s*$/, '\n\n') + line + '\n';
+  let end = lines.length;
+  for (let i = at + 1; i < lines.length; i++) {
+    if (/^#{1,6}\s/.test(lines[i])) {
+      end = i;
+      break;
+    }
+  }
+  let insert = end;
+  while (insert > at + 1 && lines[insert - 1].trim() === '') insert--;
+  lines.splice(insert, 0, line);
+  return lines.join('\n');
+}
 
 // Windows-reserved device names; forbidding them keeps a title safe on
 // Windows without affecting how it looks on macOS.
@@ -245,6 +296,7 @@ export class Promoter {
     const lines = content.split('\n');
     let inSection = false;
     let promoted = 0;
+    let changed = false;
 
     this.processing.add(file.path);
     try {
@@ -262,10 +314,23 @@ export class Promoter {
         if (!m) continue;
 
         const rawText = m[2].trim();
-        if (!rawText || ALREADY_LINK_RE.test(rawText)) continue; // nothing to do, or already promoted
-
-        const title = candidateTitle(rawText);
-        if (!title) continue;
+        const kind = classifyCandidate(rawText);
+        if (kind.kind === 'skip') continue;
+        if (kind.kind === 'promoted') {
+          if (!kind.extra) continue; // already promoted, nothing new
+          const target = app.metadataCache.getFirstLinkpathDest(kind.target, file.path);
+          if (!target) continue;
+          try {
+            await app.vault.process(target, (t) => appendToCoreIdea(t, kind.extra));
+            lines[i] = `${m[1]}${kind.link}`;
+            changed = true;
+            new Notice(`Added to "${target.basename}".`);
+          } catch (e) {
+            console.error('Second Reader promote failed:', e);
+          }
+          continue;
+        }
+        const title = kind.title;
 
         const itemIndent = (line.match(/^(\s*)/) || ['', ''])[1].length;
         const { details, nextIdx } = collectDetailLines(lines, i + 1, itemIndent);
@@ -281,7 +346,7 @@ export class Promoter {
         i = nextIdx - 1; // skip the detail lines we already consumed (kept as-is in this note)
       }
 
-      if (promoted) {
+      if (promoted || changed) {
         await app.vault.modify(file, lines.join('\n'));
       }
     } finally {
@@ -349,7 +414,7 @@ export class Promoter {
       : null;
 
     if (templateFile instanceof TFile) {
-      const raw = await app.vault.read(templateFile);
+      const raw = dropTitleHeading(await app.vault.read(templateFile));
       const withTopics = /\{\{\s*topics\s*\}\}/.test(raw)
         ? raw
         : ensureTopicsLine(raw, topicsValue);
@@ -376,8 +441,6 @@ export class Promoter {
       `created: ${today}`,
       `source: "[[${sourceFile.basename}]]"`,
       '---',
-      '',
-      `# ${rawTitle}`,
       '',
       ...(details ? [details, ''] : []),
       '## Related notes',

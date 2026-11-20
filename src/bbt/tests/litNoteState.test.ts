@@ -38,7 +38,11 @@ async function generate(template: string, annotations: any[] = []) {
     '',
     template,
     PersistExtension.prepareTemplateData(
-      { ...ITEM, annotations, newAnnotations: unsyncedAnnotations(annotations, '') },
+      {
+        ...ITEM,
+        annotations,
+        newAnnotations: unsyncedAnnotations(annotations, ''),
+      },
       ''
     )
   );
@@ -48,14 +52,60 @@ describe('PDF link in generated notes', () => {
   test("records the student's own open-PDF link and shows an Open PDF link", async () => {
     const note = await generate(CURRENT);
     expect(note).toContain('pdf: zotero://open-pdf/library/items/AFFWWLL5\n');
-    expect(note).toContain('> **Zotero:** [Open PDF](zotero://open-pdf/library/items/AFFWWLL5) · [Open in Zotero](');
+    expect(note).toContain(
+      '> **Zotero:** [Open PDF](zotero://open-pdf/library/items/AFFWWLL5) · [Open in Zotero]('
+    );
   });
 
   test('a paper with no PDF gets an empty pdf: line and no Open PDF link', async () => {
-    const note = await renderTemplate('', CURRENT, PersistExtension.prepareTemplateData(
-      { ...ITEM, attachments: [{}], annotations: [], newAnnotations: [] }, ''));
+    const note = await renderTemplate(
+      '',
+      CURRENT,
+      PersistExtension.prepareTemplateData(
+        { ...ITEM, attachments: [{}], annotations: [], newAnnotations: [] },
+        ''
+      )
+    );
     expect(note).toMatch(/^pdf: *$/m);
     expect(note).not.toContain('Open PDF');
+  });
+});
+
+describe('literatureNoteState: generated lines', () => {
+  test('a note imported without a PDF is untouched', async () => {
+    const note = await (async () =>
+      renderTemplate(
+        '',
+        CURRENT,
+        PersistExtension.prepareTemplateData(
+          { ...ITEM, attachments: [], annotations: [], newAnnotations: [] },
+          ''
+        )
+      ))();
+    expect(literatureNoteState(note, BP)).toBe('untouched');
+  });
+
+  test('author information filled in by the tool is not student work', async () => {
+    const note = (await generate(CURRENT)).replace(
+      '## Author information\n',
+      `## Author information
+- **Lead author:** [[Authors/Jinfa Cai|Jinfa Cai]] (1st of 2 authors)
+- **Affiliation on this paper:** University of Delaware
+
+![[Authors/Jinfa Cai#About]]
+![[Attachments/Authors/Jinfa Cai.jpg|200]]
+*Photo: someone, via [Wikimedia Commons](https://x)*
+`
+    );
+    expect(literatureNoteState(note, BP)).toBe('untouched');
+  });
+
+  test('the same lines typed outside Author information still count', async () => {
+    const note = (await generate(CURRENT)).replace(
+      "## Why I'm reading this\n",
+      "## Why I'm reading this\n- **Lead author:** me\n"
+    );
+    expect(literatureNoteState(note, BP)).toBe('worked');
   });
 });
 
@@ -66,13 +116,19 @@ describe('literatureNoteState', () => {
 
   test('a freshly imported note is untouched — for every template version ever shipped', async () => {
     for (const template of [CURRENT, ...PAST]) {
-      expect(literatureNoteState(await generate(template), BP)).toBe('untouched');
+      expect(literatureNoteState(await generate(template), BP)).toBe(
+        'untouched'
+      );
     }
   });
 
   test('synced highlights alone count as "highlights"', async () => {
     const note = await generate(CURRENT, [
-      { id: 'AAAA1111', annotatedText: 'Reading is thinking', pageLabel: '265' },
+      {
+        id: 'AAAA1111',
+        annotatedText: 'Reading is thinking',
+        pageLabel: '265',
+      },
     ]);
     expect(literatureNoteState(note, BP)).toBe('highlights');
   });
@@ -80,10 +136,19 @@ describe('literatureNoteState', () => {
   test('typing in any section counts as worked', async () => {
     const note = await generate(CURRENT);
     const cases = [
-      note.replace('## Key ideas/findings/arguments', '## Key ideas/findings/arguments\n- teachers value explanation'),
-      note.replace('## Open questions this raises\n\n- ', '## Open questions this raises\n\n- why would that be?'),
+      note.replace(
+        '## Key ideas/findings/arguments',
+        '## Key ideas/findings/arguments\n- teachers value explanation'
+      ),
+      note.replace(
+        '## Open questions this raises\n\n- ',
+        '## Open questions this raises\n\n- why would that be?'
+      ),
       note.replace('> "..." (p. )', '> "a quote I typed myself" (p. 270)'),
-      note.replace('- [ ] \n', '- [x] [[Explanation is the core of good teaching]]\n'),
+      note.replace(
+        '- [ ] \n',
+        '- [x] [[Explanation is the core of good teaching]]\n'
+      ),
       note + '\nA thought at the very end.\n',
     ];
     for (const c of cases) expect(literatureNoteState(c, BP)).toBe('worked');
@@ -92,7 +157,10 @@ describe('literatureNoteState', () => {
   test('worked wins over highlights', async () => {
     const note = (
       await generate(CURRENT, [{ id: 'AAAA1111', annotatedText: 'x', page: 1 }])
-    ).replace('## Key ideas/findings/arguments', '## Key ideas/findings/arguments\n- mine');
+    ).replace(
+      '## Key ideas/findings/arguments',
+      '## Key ideas/findings/arguments\n- mine'
+    );
     expect(literatureNoteState(note, BP)).toBe('worked');
   });
 
@@ -106,7 +174,10 @@ describe('literatureNoteState', () => {
 
   test('an older note with typed content is worked', async () => {
     const old = PAST[PAST.length - 1];
-    const note = (await generate(old)).replace(/\n- \n/, '\n- something I wrote\n');
+    const note = (await generate(old)).replace(
+      /\n- \n/,
+      '\n- something I wrote\n'
+    );
     expect(literatureNoteState(note, BP)).toBe('worked');
   });
 });

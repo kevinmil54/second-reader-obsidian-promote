@@ -59,6 +59,8 @@ How it avoids clobbering your typing:
 
 The template fills in `{{title}}`, `{{date}}`, `{{source}}`, `{{tags}}`, `{{topics}}` and `{{details}}`. `{{topics}}` comes from the literature note's `topics:` property, so a paper's topics become the starting topics of each note promoted from it.
 
+A line that is already a link is not promoted again. If you type more after the link and tick the box, the new text goes into that note's Core idea instead of making a second note.
+
 ## 6. Synthesis notes
 
 Once you have enough permanent notes on one topic (default 4), the plugin creates a **synthesis note** for that topic in `Synthesis notes/` and keeps one list in it: the permanent notes on that topic **that you haven't linked yet**.
@@ -70,6 +72,10 @@ Once you have enough permanent notes on one topic (default 4), the plugin create
 - **Create synthesis notes for topics with enough permanent notes** catches older topics.
 
 Project notes (`type: project`) work the same way with **Cite a permanent note here**, showing all permanent notes, with the ones sharing a topic with the project's `synthesis:` notes first.
+
+## 6a. Projects
+
+**New project** asks for a category and a name and makes a folder with a project note and a project letter. The letter's **▶️ Start** and **🛑 Stop** links time each writing session; Stop shows the session and the project's total, and each session is saved as a row in `Projects/project-time-log.csv`. Categories, folders, templates and the log path are in Settings > Second Reader > Projects.
 
 ## 7. For instructors: running a class
 
@@ -91,6 +97,7 @@ Project notes (`type: project`) work the same way with **Cite a permanent note h
 | Template engine | `src/bbt/template.env.ts` |
 | Promote | `src/promote.ts` |
 | Synthesis | `src/synthesisCore.ts` (logic), `src/synthesis.ts` (vault) |
+| Projects and the project timer | `src/projectsCore.ts` (logic), `src/projects.ts` (vault) |
 | Link colors | `src/litNoteState.ts` |
 | PDF utility download and checksum | `src/pdfUtilityIntegrity.ts` |
 | Settings (Obsidian 1.13+ declarative API) | `src/settings/settings.tsx` |

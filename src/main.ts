@@ -52,6 +52,8 @@ import {
 } from './noteNamingUI';
 import { DEFAULT_PROMOTE_SETTINGS, Promoter } from './promote';
 import { DEFAULT_SYNTHESIS_SETTINGS, Synthesizer } from './synthesis';
+import { ProjectTools } from './projects';
+import { DEFAULT_PROJECT_SETTINGS, NEW_PROJECT_PARAM, PROJECT_TIMER_PARAM } from './projectsCore';
 import {
   applyTemplateUpgrade,
   askToUpgradeTemplates,
@@ -97,6 +99,7 @@ const LEGACY_ZOTERO_PLUGIN_IDS = [
 const DEFAULT_SETTINGS: ZoteroConnectorSettings = {
   ...DEFAULT_PROMOTE_SETTINGS,
   ...DEFAULT_SYNTHESIS_SETTINGS,
+  ...DEFAULT_PROJECT_SETTINGS,
   database: 'Zotero',
   noteImportFolder: '',
   pdfExportImageDPI: 120,
@@ -147,6 +150,8 @@ export default class ZoteroConnector extends Plugin {
     const promoter = new Promoter(this, () => this.settings);
     promoter.register();
     new Synthesizer(this, () => this.settings, () => this.saveSettings()).register();
+    const projects = new ProjectTools(this, () => this.settings);
+    projects.register();
     this.linkColors = new LiteratureLinkColors(this);
     this.linkColors.register();
     this.app.workspace.onLayoutReady(() => this.loadVaultTemplates());
@@ -183,7 +188,11 @@ export default class ZoteroConnector extends Plugin {
 
     // Syllabus "open pdf" links: obsidian://second-reader?open-pdf=<note>
     // Syllabus "package" links: obsidian://second-reader?package-week=N&syllabus=<note>
+    // Project links: obsidian://second-reader?project-timer=start|stop and ?new-project=1
     this.registerObsidianProtocolHandler(PROTOCOL_ACTION, (params) => {
+      const timer = params[PROJECT_TIMER_PARAM];
+      if (timer === 'start' || timer === 'stop') void projects.timer(timer);
+      if (params[NEW_PROJECT_PARAM] !== undefined) void projects.newProject();
       const note = params[OPEN_PDF_PARAM];
       if (note) void this.openPdfForNote(note);
       const week = Number(params[PACKAGE_WEEK_PARAM]);

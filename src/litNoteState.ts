@@ -6,19 +6,20 @@
 // "Something of their own" is any body line that isn't template text. Every
 // version of the template students may have received is passed in, so an
 // instruction line from an older template never counts as student writing.
-
 import { splitLeadingComments } from './templateSettings';
 
 export type LitNoteState = 'untouched' | 'highlights' | 'worked';
 
-export const TEMPLATE_VERSION_SEPARATOR = '<<<SECOND-READER-TEMPLATE-VERSION>>>';
+export const TEMPLATE_VERSION_SEPARATOR =
+  '<<<SECOND-READER-TEMPLATE-VERSION>>>';
 
 const FRONTMATTER = /^---\r?\n[\s\S]*?\r?\n---[ \t]*(?:\r?\n|$)/;
 const NOTE_PERSIST_BLOCK = /%% begin (.+?) %%[\w\W]*?%% end \1 %%/g;
 // In a template, a persist block's lines only ever render inside the block,
 // which is stripped from notes anyway — and its lines are patterns like
 // `> "{{...}}"` that would otherwise swallow quotes a student typed.
-const TEMPLATE_PERSIST_BLOCK = /\{%-?\s*persist\b[\s\S]*?\{%-?\s*endpersist\s*-?%\}/g;
+const TEMPLATE_PERSIST_BLOCK =
+  /\{%-?\s*persist\b[\s\S]*?\{%-?\s*endpersist\s*-?%\}/g;
 const NUNJUCKS = /\{\{[\s\S]*?\}\}|\{%[\s\S]*?%\}/g;
 
 // Empty slots the template leaves for the student to fill in.
@@ -34,6 +35,34 @@ const PLACEHOLDERS = [
 
 function escapeRegExp(s: string) {
   return s.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+}
+
+// Lines the author-information tool writes under "## Author information".
+// They are generated, not typed, so they never count as the student's work.
+const AUTHOR_INFO_LINES = [
+  /^- \*\*(Lead author|Born–died|Born|About \(Wikidata\)|Affiliation on this paper|Links):\*\*/,
+  /^!\[\[Attachments\/Authors\//,
+  /^\*Photo: /,
+  /^!\[\[[^\]]+#About\]\]$/,
+];
+
+// `{% if x %}…{% endif %}` inside a line is optional text: a note imported
+// without a PDF simply lacks it. (An if with an else is just "anything".)
+const INLINE_IF = /\{%-?\s*if\b[^%]*?%\}([\s\S]*?)\{%-?\s*endif\s*-?%\}/g;
+
+function plainPattern(text: string): string {
+  return text.split(NUNJUCKS).map(escapeRegExp).join('.*?');
+}
+
+function linePattern(line: string): string {
+  let out = '';
+  let last = 0;
+  for (const m of line.matchAll(INLINE_IF)) {
+    out += plainPattern(line.slice(last, m.index));
+    out += /\{%-?\s*else\b/.test(m[1]) ? '.*?' : `(?:${plainPattern(m[1])})?`;
+    last = (m.index as number) + m[0].length;
+  }
+  return out + plainPattern(line.slice(last));
 }
 
 export interface Boilerplate {
@@ -61,13 +90,7 @@ export function buildBoilerplate(templates: string[]): Boilerplate {
       // anything), so it can't identify template text.
       const literal = line.replace(NUNJUCKS, '').trim();
       if (!literal) continue;
-      const source =
-        '^' +
-        line
-          .split(NUNJUCKS)
-          .map(escapeRegExp)
-          .join('.*?') +
-        '$';
+      const source = '^' + linePattern(line) + '$';
       if (!seenPatterns.has(source)) {
         seenPatterns.add(source);
         patterns.push(new RegExp(source));
@@ -103,9 +126,16 @@ export function literatureNoteState(
     return '';
   });
 
+  let inAuthorInfo = false;
   for (const raw of withoutBlocks.split(/\r?\n/)) {
     const line = raw.trim();
-    if (line && !isTemplateLine(line, bp)) return 'worked';
+    if (!line) continue;
+    if (/^#{1,6}\s/.test(line)) {
+      inAuthorInfo = /^#{1,6}\s+Author information\s*$/i.test(line);
+      continue;
+    }
+    if (inAuthorInfo && AUTHOR_INFO_LINES.some((p) => p.test(line))) continue;
+    if (!isTemplateLine(line, bp)) return 'worked';
   }
   return hasQuotes ? 'highlights' : 'untouched';
 }
